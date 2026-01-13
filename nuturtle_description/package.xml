@@ -14,7 +14,10 @@
 
   <exec_depend>ros2launch</exec_depend>
 
+  <depend>turtlebot3</depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>
+
 </package>

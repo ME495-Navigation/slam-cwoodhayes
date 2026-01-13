@@ -1,0 +1,4 @@
+# citations file per the these rules:
+# https://nu-msr.github.io/citation_rules.html
+
+[1] Claude Sonnet 4.5. Anthropic. Used on Jan 13, 2026. Transcript Available: https://claude.ai/chat/d91db934-e507-4d7d-aa56-30ef49e996d2
