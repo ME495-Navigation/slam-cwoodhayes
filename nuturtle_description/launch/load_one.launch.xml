@@ -25,9 +25,9 @@
 
     <!-- RViz - visualization tool -->
     <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
-        required="true" if="$(var use_rviz)">
-        <arg name="-d" value="$(find-pkg-share turtlebot3_description)/rviz/model.rviz"
-            if="$(eval '$(var use_rviz)')" />
+        on_exit="shutdown" if="$(var use_rviz)"
+        args="-d $(find-pkg-share turtlebot3_description)/rviz/model.rviz"
+        >
     </node>
     <!--########################### End_Citation [1] #########################-->
 
