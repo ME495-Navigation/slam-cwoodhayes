@@ -45,16 +45,23 @@ if(BUILD_TESTING)
     add_test(NAME test_all COMMAND tests)
 endif()
 
-# turtlelib library
+# CREATE LIBRARIES AND EXECUTABLES
 add_library(turtlelib
   src/geometry2d.cpp
 )
+target_include_directories(turtlelib PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+add_executable(converter src/converter.cpp)
+target_link_libraries(converter turtlelib)
 
 # below is taken from matt's course notes:
 # https://nu-msr.github.io/navigation/lectures/cmake_basics.html#ament-cmake-1-P-1
 
 # install the include files by copying the whole include directory
-install(DIRECTORY include/turtlelib DESTINATION include)
+install(DIRECTORY include/ DESTINATION include)
 
 # Create a CMake Exported Target containing the lib and exe.
 # Also create CMake Export called project_name-targets
