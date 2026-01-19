@@ -1,0 +1,11 @@
+/**:
+  ros__parameters:
+    # m
+    wheel_radius: 0.033
+    # m
+    track_width: 0.16
+    motor_cmd_max: 265
+    motor_cmd_per_rad_sec: 0.024
+    # 12-bit encoder, so 2^12 for a full revolution. 2^12/(2pi) = 
+    encoder_ticks_per_rad: 651.8986
+    collision_radius: 0.11
