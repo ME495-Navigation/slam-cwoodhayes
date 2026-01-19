@@ -29,11 +29,11 @@ int main() {
             continue;
         }
         if (unit == "deg") {
-            converted_angle = turtlelib::deg2rad(angle);
+            converted_angle = turtlelib::normalize_angle(turtlelib::deg2rad(angle));
             other_unit = "rad";
         }
         else if (unit == "rad") {
-            converted_angle = turtlelib::rad2deg(angle);
+            converted_angle = turtlelib::rad2deg(turtlelib::normalize_angle(angle));
             other_unit = "deg";
         }
         else {
