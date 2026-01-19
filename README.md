@@ -32,5 +32,6 @@ URDF files for Nuturtle
         (default: 'purple')
 ```
 * `ros2 launch nuturtle_description load_all.launch.xml --show-arguments`
-This launchfile accepts no arguments; however, the above command will display 
-arguments from the `load_one` launchfile as above due to a known bug in `launch`. 
+
+The `load_all` launchfile accepts no arguments; however, the above command will display 
+arguments from the `load_one` launchfile as shown above due to a known bug in `launch`. 
