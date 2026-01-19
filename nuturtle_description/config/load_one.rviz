@@ -144,16 +144,6 @@ Visualization Manager:
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
-        ${namespace}base_footprint:
-          Value: false
-        ${namespace}base_link:
-          Value: false
-        ${namespace}base_scan:
-          Value: false
-        ${namespace}caster_back_link:
-          Value: false
-        ${namespace}imu_link:
-          Value: false
         All Enabled: false
         base_footprint:
           Value: false
@@ -175,7 +165,18 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        base_footprint:
+          base_link:
+            base_scan:
+              {}
+            caster_back_link:
+              {}
+            imu_link:
+              {}
+            wheel_left_link:
+              {}
+            wheel_right_link:
+              {}
       Update Interval: 0
       Value: true
     - Angle Tolerance: 0.10000000149011612
@@ -220,7 +221,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: odom
+    Fixed Frame: base_footprint
     Frame Rate: 30
   Name: root
   Tools:
@@ -266,10 +267,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1247966289520264
+      Pitch: 0.6647961735725403
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.835404396057129
+      Yaw: 1.9104043245315552
     Saved: ~
 Window Geometry:
   Displays:
