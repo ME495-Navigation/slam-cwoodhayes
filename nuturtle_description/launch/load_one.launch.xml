@@ -5,29 +5,34 @@
     <arg name="use_rviz" default="true" description="Launch RViz for visualization" />
     <arg name="use_jsp" default="true"
         description="Launch joint_state_publisher for default joint states" />
+    <arg name="color" default="purple"
+        description="Determines namespace for nodes launched by this file, and colors the URDF model."
+    />
 
     <!-- Get the URDF file path from our own copy of the turtlebot3 files-->
     <let name="urdf_path"
         value="$(find-pkg-share nuturtle_description)/urdf/turtlebot3_burger.urdf.xacro" />
 
     <!-- Read the URDF file content -->
-    <let name="robot_description" value="$(command '$(exec-in-pkg xacro xacro) $(var urdf_path)')" />
+    <let name="robot_description" value="$(command '$(exec-in-pkg xacro xacro) $(var urdf_path) color:=$(var color)')" />
 
     <!-- Robot State Publisher - publishes TF transforms based on URDF and joint states -->
     <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher"
-        output="screen">
+        output="screen" namespace="$(var color)">
         <param name="robot_description" value="$(var robot_description)" />
+        <!-- Conor note - I opted to use the namespace arg in the URDF rather than a frame_prefix here. -->
+        <!-- <param name="frame_prefix" value="$(var color)_"/> -->
     </node>
 
     <!-- Joint State Publisher - publishes default joint states if enabled -->
     <node pkg="joint_state_publisher" exec="joint_state_publisher" name="joint_state_publisher"
-        output="screen" if="$(var use_jsp)" />
+        output="screen" if="$(var use_jsp)" namespace="$(var color)" />
 
     <!-- RViz - visualization tool -->
     <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
         on_exit="shutdown" if="$(var use_rviz)"
-        args="-d $(find-pkg-share nuturtle_description)/config/load_one.rviz"
-        >
+        args="-d $(find-pkg-share nuturtle_description)/config/load_one_$(var color).rviz"
+        namespace="$(var color)">
     </node>
     <!--########################### End_Citation [1] #########################-->
 
