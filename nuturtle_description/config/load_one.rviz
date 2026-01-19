@@ -1,3 +1,5 @@
+# Adapted from turtlebot3-description's model.rviz
+# just changes the default base frame & removes some unnecessary frames.
 Panels:
   - Class: rviz_common/Displays
     Help Height: 78
