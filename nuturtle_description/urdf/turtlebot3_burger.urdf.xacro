@@ -84,7 +84,7 @@
   <joint name="${namespace}wheel_left_joint" type="continuous">
     <parent link="${namespace}base_link"/>
     <child link="${namespace}wheel_left_link"/>
-    <origin xyz="0.0 0.08 0.023" rpy="-1.57 0 0"/>
+    <origin xyz="0.0 ${props['track_width']/2} 0.023" rpy="-1.57 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
@@ -114,7 +114,7 @@
   <joint name="${namespace}wheel_right_joint" type="continuous">
     <parent link="${namespace}base_link"/>
     <child link="${namespace}wheel_right_link"/>
-    <origin xyz="0.0 -0.080 0.023" rpy="-1.57 0 0"/>
+    <origin xyz="0.0 -${props['track_width']/2} 0.023" rpy="-1.57 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
