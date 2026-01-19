@@ -7,6 +7,8 @@
 #include <print>
 #include <numbers>
 
+/// @brief Convert angles between degrees and radians from user input.
+/// @return program exit code. 0 on success.
 int main() {
     while (true) {
         std::print("Enter an angle: <angle> <deg|rad>, (CTRL-D to exit)\n");
