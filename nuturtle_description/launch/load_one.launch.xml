@@ -7,7 +7,12 @@
         description="Launch joint_state_publisher for default joint states" />
     <arg name="color" default="purple"
         description="Determines namespace for nodes launched by this file, and colors the URDF model."
-    />
+    >
+        <choice value="red"/>
+        <choice value="green"/>
+        <choice value="blue"/>
+        <choice value="purple"/>
+    </arg>
 
     <!-- Get the URDF file path from our own copy of the turtlebot3 files-->
     <let name="urdf_path"
