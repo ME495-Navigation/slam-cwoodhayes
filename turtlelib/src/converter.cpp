@@ -14,10 +14,19 @@ int main() {
         double converted_angle;
         std::string unit;
         std::string other_unit;
+        constexpr std::string_view errstr = "Invalid input: please enter <angle> <deg|rad>, (CTRL-D to exit)\n";
 
         if (!(std::cin >> angle >> unit)) {
-            std::print("Exiting.\n");
-            break;
+            if (std::cin.eof()) {
+                std::print("Exiting.\n");
+                break;
+            } 
+            else {
+                std::print(errstr);
+                std::cin.clear();
+                std::cin.ignore(10000, '\n');
+            }
+            continue;
         }
         if (unit == "deg") {
             converted_angle = turtlelib::deg2rad(angle);
@@ -28,7 +37,8 @@ int main() {
             other_unit = "deg";
         }
         else {
-            std::print("Invalid input: please enter <angle> <deg|rad>, (CTRL-D to exit)");
+            std::print(errstr);
+            continue;
         }
 
         std::print("{} {} is {} {}.\n", angle, unit, converted_angle, other_unit);
