@@ -26,6 +26,9 @@ endif()
 # Install launch files.
 install(DIRECTORY
   launch
+  meshes
+  config
+  urdf
   DESTINATION share/${PROJECT_NAME}/
 )
 
