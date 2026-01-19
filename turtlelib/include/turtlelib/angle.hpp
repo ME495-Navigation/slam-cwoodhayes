@@ -4,7 +4,7 @@
 /// \brief Functions for handling angles
 
 #include <numbers>
-
+#include <cmath>
 
 namespace turtlelib
 {
@@ -16,11 +16,7 @@ namespace turtlelib
     /// \return true if abs(d1 - d2) < epsilon
     constexpr bool almost_equal(double d1, double d2, double epsilon=1.0e-12)
     {
-        // HINT: This function must be implemented in the header file in order to be
-        // used by other modules, because it is constexpr.
-        // constexpr means that the function can be computed at compile time
-        // if given compile-time constants as input, and therefore
-        // it's definition must be visible in any compilation unit that uses it.
+        return std::abs(d1 - d2) < epsilon;
     }
 
     /// \brief Convert degrees to radians
@@ -28,11 +24,8 @@ namespace turtlelib
     /// \returns The equivalent angle in radians
     constexpr double deg2rad(double deg)
     {
-        // HINT: C++20 #include<numbers> defines standard values
-        // for many mathematical constants. Prior to C++20 you
-        // would need to define your own constant for pi.
-        // You should use the standardized value now
         using std::numbers::pi;
+        return deg / 360.0 * 2 * pi;
     }
 
     /// \brief Convert radians to degrees
@@ -40,6 +33,8 @@ namespace turtlelib
     /// \returns The equivalent angle in degrees
     constexpr double rad2deg(double rad)
     {
+        using std::numbers::pi;
+        return rad / (2 * pi) * 360.0;
     }
 
     /// \brief Wrap an angle to (-PI, PI]
@@ -47,7 +42,17 @@ namespace turtlelib
     /// \return An equivalent angle the range (-PI, PI]
     constexpr double normalize_angle(double rad)
     {
-        // NOTE: You will receive partial credit only if this function uses loops.
+        using std::numbers::pi;
+
+        // need to do modulo manually to comply with constexpr
+        auto quo = rad / (2.0 * pi);
+        auto floor_quo = static_cast<long long>(quo);
+        auto rem = rad - floor_quo * (2.0 * pi);
+
+        if (rem > pi) {
+            rem -= 2.0*pi;
+        }
+        return rem;
     }
 
     /// static_assertions test compile time assumptions.
