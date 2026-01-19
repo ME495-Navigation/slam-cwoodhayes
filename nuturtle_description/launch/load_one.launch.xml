@@ -21,7 +21,9 @@
 
     <!-- Joint State Publisher - publishes default joint states if enabled -->
     <node pkg="joint_state_publisher" exec="joint_state_publisher" name="joint_state_publisher"
-        output="screen" if="$(var use_jsp)" />
+        output="screen" if="$(var use_jsp)" >
+        <param name="robot_description" value="$(var robot_description)"/>
+    </node>
 
     <!-- RViz - visualization tool -->
     <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
