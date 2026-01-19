@@ -5,6 +5,8 @@
 <robot name="turtlebot3_burger"
   xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:arg name="namespace" default=""/>
+  <xacro:arg name="color" default="purple"/>
+  <xacro:property name="color" value="$(arg color)"/>
   <xacro:property name="namespace" value="$(arg namespace)"/>
   <xacro:property name="yaml_file" value="$(find nuturtle_description)/config/diff_params.yaml"/>
   <xacro:property name="props" value="${xacro.load_yaml(yaml_file)['/**']['ros__parameters']}"/>
@@ -50,6 +52,10 @@
     <color rgba="1.0 1.0 1.0 1.0"/>
   </material>
 
+  <material name="purple">
+    <color rgba="0.3 0.16 0.52 1.0"/>
+  </material>
+
   <link name="${namespace}base_footprint"/>
 
   <joint name="${namespace}base_joint" type="fixed">
@@ -64,7 +70,7 @@
       <geometry>
         <mesh filename="package://nuturtle_description/meshes/burger_base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="light_black"/>
+      <material name="${color}"/>
     </visual>
 
     <collision>
