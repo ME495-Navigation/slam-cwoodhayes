@@ -52,6 +52,9 @@ namespace turtlelib
         if (rem > pi) {
             rem -= 2.0*pi;
         }
+        if (rem < -pi) {
+            rem += 2.0*pi;
+        }
         if (rem == -pi) {
             rem = pi;
         }
@@ -111,6 +114,7 @@ namespace turtlelib
     static_assert(almost_equal(normalize_angle(-2.0 * pi), 0.0), "normalize_angle -2pi failed");
     static_assert(almost_equal(normalize_angle(pi / 2.0), pi / 2.0), "normalize_angle pi/2 failed");
     static_assert(almost_equal(normalize_angle(7.0 * pi / 4.0), -pi / 4.0), "normalize_angle 7pi/4 failed");
+    static_assert(almost_equal(normalize_angle(1), 1), "normalize angle 1 failed");
     // ############################ End_Citation [2] ############################
 }
 #endif
