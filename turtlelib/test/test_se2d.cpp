@@ -34,7 +34,7 @@ TEST_CASE("Twist2D operator>>", "[Miguel]")
     REQUIRE(tw3.y == 2.0);
 }
 
-TEST_CASE("test constructors")
+TEST_CASE("test constructors", "[Conor]")
 {
     // Check that default constructor is correct
     turtlelib::Transform2D tf;
@@ -60,7 +60,7 @@ TEST_CASE("test constructors")
     REQUIRE(tf4.translation().y == 2);
 }
 
-TEST_CASE("Transform a point")
+TEST_CASE("Transform a point", "[Miguel]")
 {
     // origin with no transformation
     turtlelib::Transform2D tf;
@@ -92,7 +92,7 @@ TEST_CASE("Transform a point")
     REQUIRE(pt5.y == -1);
 }
 
-TEST_CASE("Transform a vector")
+TEST_CASE("Transform a vector", "[Conor]")
 {
     SECTION("origin, no transformation") {
         turtlelib::Transform2D tf;
@@ -142,7 +142,7 @@ TEST_CASE("Transform a vector")
 
 // ############## End_Citation[0] ####################
 
-TEST_CASE("Transform a twist") {
+TEST_CASE("Transform a twist", "[Conor]") {
     auto v = Vector2D{1, 2};
     auto tf = Transform2D(v, std::numbers::pi);
 
@@ -176,7 +176,7 @@ TEST_CASE("Transform a twist") {
     }
 }
 
-TEST_CASE("Transform2D operator>>")
+TEST_CASE("Transform2D operator>>", "[Conor]")
 {
     SECTION("no brackets, radians") {
         std::stringstream stream{"3.14 rad 1 2"};
@@ -208,7 +208,7 @@ TEST_CASE("Transform2D operator>>")
 
 }
 
-TEST_CASE("Transform2D operator*")
+TEST_CASE("Transform2D operator*", "[Conor]")
 {
     // this is also implicitly testing operator*=
     SECTION("Multiply two transforms") {
@@ -254,7 +254,7 @@ TEST_CASE("Transform2D operator*")
     }
 }
 
-TEST_CASE("Transform2D std::format")
+TEST_CASE("Transform2D std::format", "[Conor]")
 {
     SECTION("Format without unit specifier") {
         Transform2D tf(Vector2D{1.0, 2.0}, deg2rad(45));
@@ -302,7 +302,7 @@ TEST_CASE("Transform2D std::format")
     }
 }
 
-TEST_CASE("Twist2D std::format")
+TEST_CASE("Twist2D std::format", "[Conor]")
 {
     SECTION("Format without unit specifier") {
         Twist2D tw{deg2rad(30), 1.0, 2.0};
@@ -344,7 +344,7 @@ TEST_CASE("Twist2D std::format")
     }
 }
 
-TEST_CASE("Transform2D::inv()")
+TEST_CASE("Transform2D::inv()", "[Conor]")
 {
     SECTION("Identity transform inverse") {
         Transform2D tf;
