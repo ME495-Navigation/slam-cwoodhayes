@@ -141,3 +141,18 @@ TEST_CASE("Transform a vector")
 }
 
 // ############## End_Citation[0] ####################
+
+TEST_CASE("Transform a twist") {
+    auto v = Vector2D{1,2};
+    auto tf = Transform2D(v, std::numbers::pi);
+
+    SECTION("Transform a null twist.") {
+        // should do nothing
+        auto tw = Twist2D();
+        
+        auto out = tf(tw);
+        REQUIRE(out.x == 0);
+        REQUIRE(out.y == 0);
+        REQUIRE(out.omega == 0);
+    }
+}

@@ -99,19 +99,23 @@ namespace turtlelib
 
     Twist2D Transform2D::operator()(Twist2D v) const
     {
-        // TODO: implement
-        return v;
+        double omega_new = v.omega;
+        double vx_new = tw_.y * v.omega + cos(tw_.omega) * v.x - sin(tw_.omega) * v.y;
+        double vy_new = -tw_.x * v.omega + sin(tw_.omega) * v.x + cos(tw_.omega) * v.y;
+        
+        return {omega_new, vx_new, vy_new};
     }
 
     Transform2D Transform2D::inv() const
     {
-        // TODO: implement
-        return Transform2D();
+        auto v = Vector2D{-tw_.x, -tw_.y};
+        return Transform2D(v, -tw_.omega);
     }
 
     Transform2D & Transform2D::operator*=(const Transform2D & rhs)
     {
-        // TODO: implement
+        auto twist = Twist2D{rhs.rotation(), rhs.translation().x, rhs.translation().y};
+        tw_ = (*this)(twist);
         return *this;
     }
 
