@@ -382,8 +382,8 @@ TEST_CASE("Transform2D::inv()")
         auto tf_inv = tf.inv();
         
         REQUIRE_THAT(tf_inv.rotation(), WithinAbs(-angle, 0.00001));
-        REQUIRE_THAT(tf_inv.translation().x, WithinAbs(-2.0, 0.00001));
-        REQUIRE_THAT(tf_inv.translation().y, WithinAbs(-3.0, 0.00001));
+        REQUIRE_THAT(tf_inv.translation().x, WithinAbs(-3.0, 0.00001));
+        REQUIRE_THAT(tf_inv.translation().y, WithinAbs(2.0, 0.00001));
     }
 
     SECTION("Inverse is true inverse - T * T_inv = Identity") {
