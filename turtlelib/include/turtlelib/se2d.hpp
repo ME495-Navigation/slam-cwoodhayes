@@ -5,7 +5,8 @@
 
 
 #include<iosfwd>
-/// NOTE: Include other needed headers here
+#include<format>
+#include "turtlelib/geometry2d.hpp"
 
 
 namespace turtlelib
@@ -92,7 +93,7 @@ namespace turtlelib
 
         /// \brief see std::formatter for the Transform2D
         template<class CharT>
-        friend struct std::formatter<Transform2D, CharT>;
+        friend struct std::formatter;
 
     };
 
@@ -126,8 +127,17 @@ namespace turtlelib
 /// format-spec values are accepted and apply to all numbers that
 /// are put into the string
 template<class CharT>
-std::formatter<Transform2D, CharT>
+class std::formatter<turtlelib::Transform2D, CharT>
 {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        // TODO parse as described above
+        return ctx.begin();
+    }
+
+    auto format(const turtlelib::Transform2D& tf, std::format_context& ctx) const {
+        // TODO format as described above
+        return std::format_to(ctx.out(), "");
+    }
 };
 
 /// \brief print the Twist2D as "<w [<unit>], x, y>"
@@ -139,7 +149,16 @@ std::formatter<Transform2D, CharT>
 /// format-spec values are accepted and apply to all numbers inserted
 /// into the string.
 template<class CharT>
-std::formatter<Twist2D, CharT>
+class std::formatter<turtlelib::Twist2D, CharT>
 {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        // TODO parse as described above
+        return ctx.begin();
+    }
+
+    auto format(const turtlelib::Twist2D& tf, std::format_context& ctx) const {
+        // TODO format as described above
+        return std::format_to(ctx.out(), "");
+    }
 };
 #endif

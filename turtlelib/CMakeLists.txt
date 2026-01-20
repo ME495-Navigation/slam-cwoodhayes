@@ -52,6 +52,7 @@ endif()
 # CREATE LIBRARIES AND EXECUTABLES
 add_library(turtlelib
   src/geometry2d.cpp
+  src/se2d.cpp
 )
 target_include_directories(turtlelib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
