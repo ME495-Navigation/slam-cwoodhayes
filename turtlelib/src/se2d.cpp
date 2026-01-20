@@ -11,65 +11,53 @@ namespace turtlelib
     std::istream & operator>>(std::istream & is, Twist2D & tw)
     {
         char c = is.peek();
+        bool brackets = (c == '<');
         
-        if (c == '<') {
-            // Format: <w [<unit>], x, y>
+        if (brackets) {
             // consume '<'
             is.get(); 
-            is >> tw.omega;
-            
-            // Check for optional unit
-            // skip whitespace
-            is >> std::ws; 
-            c = is.peek();
-            if (std::isalpha(c)) {
-                std::string unit;
-                is >> unit;
-                if (unit[0] == 'd' || unit[0] == 'D') {
-                    tw.omega = normalize_angle(deg2rad(tw.omega));
-                }
-                else if (unit[0] == 'r' || unit[0] == 'R') {
-                    // If 'r' or 'R', already in radians
-                    tw.omega = normalize_angle(tw.omega);
-                }
-                else {
-                    // TODO raise some kind of error? what's idiomatic?
-                }
+        }
+        
+        is >> tw.omega;
+        
+        // Check for optional unit
+        // skip whitespace
+        is >> std::ws; 
+        c = is.peek();
+        if (std::isalpha(c)) {
+            std::string unit;
+            is >> unit;
+            if (unit[0] == 'd' || unit[0] == 'D') {
+                tw.omega = normalize_angle(deg2rad(tw.omega));
             }
-            
-            is.get(); // consume ','
-            is >> tw.x;
-            is.get(); // consume ','
-            is >> tw.y;
-            is.get(); // consume '>'
-        } else {
-            // Format: w [<unit>] x y
-            is >> tw.omega;
-            
-            // Check for optional unit
-            is >> std::ws; // skip whitespace
-            c = is.peek();
-            if (std::isalpha(c)) {
-                std::string unit;
-                is >> unit;
-                if (unit[0] == 'd' || unit[0] == 'D') {
-                    // Convert degrees to radians
-                    tw.omega = normalize_angle(deg2rad(tw.omega));
-                }
-                else if (unit[0] == 'r' || unit[0] == 'R') {
-                    // If 'r' or 'R', already in radians
-                    tw.omega = normalize_angle(tw.omega);
-                }
-                else {
-                    // TODO raise some kind of error? what's idiomatic?
-                }
+            else if (unit[0] == 'r' || unit[0] == 'R') {
+                // If 'r' or 'R', already in radians
+                tw.omega = normalize_angle(tw.omega);
             }
-            
-            is >> tw.x >> tw.y;
+            else {
+                // TODO raise some kind of error? what's idiomatic?
+            }
+        }
+        
+        if (brackets) {
+            // consume ','
+            is.get(); 
+        }
+        is >> tw.x;
+        if (brackets) {
+            // consume ','
+            is.get(); 
+        }
+        is >> tw.y;
+        
+        if (brackets) {
+            // consume '>'
+            is.get(); 
         }
         
         return is;
     }
+
 
 
     Transform2D::Transform2D()
