@@ -13,3 +13,8 @@ Task B.1
 Task B.2
 Task B.3
 Task B.4
+
+Task B.5
+Task B.6
+# note - for now, I've left the twist () operator broken.
+# i don't feel like fixing it now and I think I can move on without it.
