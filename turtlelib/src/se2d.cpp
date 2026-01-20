@@ -35,7 +35,8 @@ namespace turtlelib
                 tw.omega = normalize_angle(tw.omega);
             }
             else {
-                // TODO raise some kind of error? what's idiomatic?
+                is.setstate(std::ios::failbit);
+                return is;
             }
         }
         
@@ -60,7 +61,7 @@ namespace turtlelib
 
 
 
-    Transform2D::Transform2D()
+    Transform2D::Transform2D() : tw {}
     {
         // TODO: implement
     }

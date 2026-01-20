@@ -3,7 +3,7 @@
 #include "turtlelib/se2d.hpp"
 #include "turtlelib/angle.hpp"
 
-TEST_CASE("Create a twist with format 'w x y' and 'x <unit> x y' and <w x y>, with radians and degrees", "std::istream & operator>>")
+TEST_CASE("Create a twist with format 'w x y' and 'x <unit> x y' and <w x y>, with radians and degrees", "[Miguel]")
 {
     std::stringstream stream{"1 1 1"};
     turtlelib::Twist2D tw1;

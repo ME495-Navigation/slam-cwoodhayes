@@ -94,6 +94,9 @@ namespace turtlelib
         /// \brief see std::formatter for the Transform2D
         template<class CharT>
         friend struct std::formatter;
+    
+        // TODO make private
+        Twist2D tw;
 
     };
 

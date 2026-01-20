@@ -41,6 +41,7 @@ if(BUILD_TESTING)
     add_executable(tests 
       test/test_angle.cpp 
       test/test_geometry2d.cpp
+      test/test_se2d.cpp
     )
     target_link_libraries(tests Catch2::Catch2WithMain turtlelib)
 
