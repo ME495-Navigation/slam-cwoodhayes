@@ -7,7 +7,7 @@ namespace turtlelib
 {
     std::istream & operator>>(std::istream & is, Point2D & p)
     {
-        
+        return is;
     }
 
     Vector2D operator-(const Point2D & head, const Point2D & tail)

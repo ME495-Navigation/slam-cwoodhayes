@@ -38,8 +38,11 @@ if(BUILD_TESTING)
     include(Catch)
 
     # A test is just an executable that is linked against the unit testing library
-    add_executable(tests test/test_angle.cpp)
-    target_link_libraries(tests Catch2::Catch2WithMain)
+    add_executable(tests 
+      test/test_angle.cpp 
+      test/test_geometry2d.cpp
+    )
+    target_link_libraries(tests Catch2::Catch2WithMain turtlelib)
 
     # register the test with CTest, telling it what executable to run
     catch_discover_tests(tests)
