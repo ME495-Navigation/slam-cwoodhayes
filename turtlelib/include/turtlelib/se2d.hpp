@@ -7,6 +7,7 @@
 #include<iosfwd>
 #include<format>
 #include "turtlelib/geometry2d.hpp"
+#include "turtlelib/angle.hpp"
 
 
 namespace turtlelib
@@ -132,14 +133,43 @@ namespace turtlelib
 template<class CharT>
 class std::formatter<turtlelib::Transform2D, CharT>
 {
+private:
+    char unit_spec = '\0'; // 'R', 'D', or '\0' for none
+
+public:
     constexpr auto parse(std::format_parse_context& ctx) {
-        // TODO parse as described above
-        return ctx.begin();
+        auto it = ctx.begin();
+        
+        // Check for optional unit specifier (R or D)
+        if (it != ctx.end() && (*it == 'R' || *it == 'D' || *it == 'r' || *it == 'd')) {
+            unit_spec = *it;
+            ++it;
+        }
+        
+        // Return iterator at '}'
+        while (it != ctx.end() && *it != '}') {
+            ++it;
+        }
+        
+        return it;
     }
 
     auto format(const turtlelib::Transform2D& tf, std::format_context& ctx) const {
-        // TODO format as described above
-        return std::format_to(ctx.out(), "");
+        auto angle = tf.rotation();
+        auto trans = tf.translation();
+        
+        // Convert to degrees if D was specified
+        std::string unit_str = "";
+        if (unit_spec == 'D' || unit_spec == 'd') {
+            angle = turtlelib::rad2deg(angle);
+            unit_str = " deg";
+        } else if (unit_spec == 'R' || unit_spec == 'r') {
+            unit_str = " rad";
+        }
+        
+        // Format as "{angle [unit], x y}"
+        return std::format_to(ctx.out(), "{{{}{}, {}, {}}}", 
+                             angle, unit_str, trans.x, trans.y);
     }
 };
 
@@ -154,14 +184,42 @@ class std::formatter<turtlelib::Transform2D, CharT>
 template<class CharT>
 class std::formatter<turtlelib::Twist2D, CharT>
 {
+private:
+    char unit_spec = '\0'; // 'R', 'D', or '\0' for none
+
+public:
     constexpr auto parse(std::format_parse_context& ctx) {
-        // TODO parse as described above
-        return ctx.begin();
+        auto it = ctx.begin();
+        
+        // Check for optional unit specifier (R or D)
+        if (it != ctx.end() && (*it == 'R' || *it == 'D' || *it == 'r' || *it == 'd')) {
+            unit_spec = *it;
+            ++it;
+        }
+        
+        // Return iterator at '}'
+        while (it != ctx.end() && *it != '}') {
+            ++it;
+        }
+        
+        return it;
     }
 
-    auto format(const turtlelib::Twist2D& tf, std::format_context& ctx) const {
-        // TODO format as described above
-        return std::format_to(ctx.out(), "");
+    auto format(const turtlelib::Twist2D& tw, std::format_context& ctx) const {
+        auto omega = tw.omega;
+        
+        // Convert to degrees if D was specified
+        std::string unit_str = "";
+        if (unit_spec == 'D' || unit_spec == 'd') {
+            omega = turtlelib::rad2deg(omega);
+            unit_str = " deg/s";
+        } else if (unit_spec == 'R' || unit_spec == 'r') {
+            unit_str = " rad/s";
+        }
+        
+        // Format as "<omega [unit], x, y>"
+        return std::format_to(ctx.out(), "<{}{}, {}, {}>", 
+                             omega, unit_str, tw.x, tw.y);
     }
 };
 #endif

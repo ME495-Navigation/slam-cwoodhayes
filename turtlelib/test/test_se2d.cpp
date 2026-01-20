@@ -242,9 +242,8 @@ TEST_CASE("Transform2D operator*")
         double orig_angle1 = tf1.rotation();
         Vector2D orig_trans2 = tf2.translation();
         double orig_angle2 = tf2.rotation();
-
         // Perform multiplication
-        Transform2D result = tf1 * tf2;
+        [[maybe_unused]] Transform2D result = tf1 * tf2;
 
         // Verify operands were not modified
         REQUIRE_THAT(tf1.translation().x, WithinAbs(orig_trans1.x, 0.00001));
@@ -253,5 +252,89 @@ TEST_CASE("Transform2D operator*")
         REQUIRE_THAT(tf2.translation().x, WithinAbs(orig_trans2.x, 0.00001));
         REQUIRE_THAT(tf2.translation().y, WithinAbs(orig_trans2.y, 0.00001));
         REQUIRE_THAT(tf2.rotation(), WithinAbs(orig_angle2, 0.00001));
+    }
+}
+
+TEST_CASE("Transform2D std::format")
+{
+    SECTION("Format without unit specifier") {
+        Transform2D tf(Vector2D{1.0, 2.0}, deg2rad(45));
+        std::string result = std::format("{}", tf);
+        // Should contain angle in radians, x, and y
+        REQUIRE(result.find("{") != std::string::npos);
+        REQUIRE(result.find("}") != std::string::npos);
+        REQUIRE(result.find(",") != std::string::npos);
+    }
+
+    SECTION("Format with radians unit specifier") {
+        Transform2D tf(Vector2D{1.0, 2.0}, deg2rad(45));
+        std::string result = std::format("{:R}", tf);
+        // Should contain "rad" unit
+        REQUIRE(result.find("rad") != std::string::npos);
+        REQUIRE(result.find("{") != std::string::npos);
+    }
+
+    SECTION("Format with degrees unit specifier") {
+        Transform2D tf(Vector2D{1.0, 2.0}, deg2rad(45));
+        std::string result = std::format("{:D}", tf);
+        // Should contain "deg" unit and angle should be ~45
+        REQUIRE(result.find("deg") != std::string::npos);
+        REQUIRE(result.find("45") != std::string::npos);
+    }
+
+    SECTION("Format with precision specifier") {
+        Transform2D tf(Vector2D{1.5, 2.5}, deg2rad(30));
+        std::string result = std::format("{:.2f}", tf);
+        // Should contain formatted numbers with 2 decimal places
+        REQUIRE(result.find("{") != std::string::npos);
+    }
+
+    SECTION("Format identity transform") {
+        Transform2D tf;
+        std::string result = std::format("{:D}", tf);
+        // Identity should have 0 angle and translation
+        REQUIRE(result.find("0") != std::string::npos);
+    }
+}
+
+TEST_CASE("Twist2D std::format")
+{
+    SECTION("Format without unit specifier") {
+        Twist2D tw{deg2rad(30), 1.0, 2.0};
+        std::string result = std::format("{}", tw);
+        // Should contain angle in radians, x, and y in angle brackets
+        REQUIRE(result.find("<") != std::string::npos);
+        REQUIRE(result.find(">") != std::string::npos);
+        REQUIRE(result.find(",") != std::string::npos);
+    }
+
+    SECTION("Format with radians unit specifier") {
+        Twist2D tw{deg2rad(30), 1.0, 2.0};
+        std::string result = std::format("{:R}", tw);
+        // Should contain "rad/s" unit
+        REQUIRE(result.find("rad/s") != std::string::npos);
+        REQUIRE(result.find("<") != std::string::npos);
+    }
+
+    SECTION("Format with degrees unit specifier") {
+        Twist2D tw{deg2rad(45), 1.0, 2.0};
+        std::string result = std::format("{:D}", tw);
+        // Should contain "deg/s" unit and omega should be ~45
+        REQUIRE(result.find("deg/s") != std::string::npos);
+        REQUIRE(result.find("45") != std::string::npos);
+    }
+
+    SECTION("Format with precision specifier") {
+        Twist2D tw{deg2rad(30), 1.5, 2.5};
+        std::string result = std::format("{:.2f}", tw);
+        // Should contain formatted numbers with 2 decimal places
+        REQUIRE(result.find("<") != std::string::npos);
+    }
+
+    SECTION("Format zero twist") {
+        Twist2D tw;
+        std::string result = std::format("{:D}", tw);
+        // Zero twist should have 0 for all values
+        REQUIRE(result.find("0") != std::string::npos);
     }
 }
