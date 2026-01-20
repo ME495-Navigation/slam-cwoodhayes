@@ -102,7 +102,6 @@ namespace turtlelib
 
     };
 
-
     /// \brief Read a transformation from stdin
     /// Should be able to read input either as:
     ///  "theta [<unit>] dx dy" (i.e., three numbers separated by whitespace, angle assumed to be radians)

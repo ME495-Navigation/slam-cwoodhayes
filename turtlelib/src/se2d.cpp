@@ -135,10 +135,10 @@ namespace turtlelib
     {
         double angle, x, y;
         char c = is.peek();
-        bool brackets = (c == '<');
+        bool brackets = (c == '{');
         
         if (brackets) {
-            // consume '<'
+            // consume '{'
             is.get(); 
         }
         
@@ -176,7 +176,7 @@ namespace turtlelib
         is >> y;
         
         if (brackets) {
-            // consume '>'
+            // consume '}'
             is.get(); 
         }
 
