@@ -288,6 +288,12 @@ TEST_CASE("Transform2D std::format")
         // Should contain formatted numbers with 2 decimal places
         REQUIRE(result.find("{") != std::string::npos);
     }
+    SECTION("Format with precision specifier") {
+        Transform2D tw{Vector2D{1.5, 2.5}, deg2rad(30)};
+        std::string result = std::format("{:D.2f}", tw);
+        // Should contain formatted numbers with 2 decimal places
+        REQUIRE(result == "{30 deg, 1.50, 2.50}");
+    }
 
     SECTION("Format identity transform") {
         Transform2D tf;
@@ -326,9 +332,9 @@ TEST_CASE("Twist2D std::format")
 
     SECTION("Format with precision specifier") {
         Twist2D tw{deg2rad(30), 1.5, 2.5};
-        std::string result = std::format("{:.2f}", tw);
+        std::string result = std::format("{:D.2f}", tw);
         // Should contain formatted numbers with 2 decimal places
-        REQUIRE(result.find("<") != std::string::npos);
+        REQUIRE(result == "<30 deg/s, 1.50, 2.50>");
     }
 
     SECTION("Format zero twist") {

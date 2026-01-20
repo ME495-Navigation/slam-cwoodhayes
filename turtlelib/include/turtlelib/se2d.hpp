@@ -122,7 +122,7 @@ namespace turtlelib
 
 /// \brief A formatter for Transform2D
 /// Creates a string representation of a Transform2D
-/// as "{<angle> [<unit>], <x> <y>}"
+/// as "{<angle> [<unit>], <x>, <y>}"
 /// An R at the beginning of the format-spec makes [<unit>] rad
 /// A D  at the beginning of the format-spec makes [<unit>] deg
 /// No R or D means no unit is printed but the angle is in radians.
