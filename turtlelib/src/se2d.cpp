@@ -4,14 +4,73 @@
 #include "turtlelib/se2d.hpp"
 #include <iostream>
 #include <cmath>
+#include "turtlelib/angle.hpp"
 
 namespace turtlelib
 {
     std::istream & operator>>(std::istream & is, Twist2D & tw)
     {
-        // TODO: implement
+        char c = is.peek();
+        
+        if (c == '<') {
+            // Format: <w [<unit>], x, y>
+            // consume '<'
+            is.get(); 
+            is >> tw.omega;
+            
+            // Check for optional unit
+            // skip whitespace
+            is >> std::ws; 
+            c = is.peek();
+            if (std::isalpha(c)) {
+                std::string unit;
+                is >> unit;
+                if (unit[0] == 'd' || unit[0] == 'D') {
+                    tw.omega = normalize_angle(deg2rad(tw.omega));
+                }
+                else if (unit[0] == 'r' || unit[0] == 'R') {
+                    // If 'r' or 'R', already in radians
+                    tw.omega = normalize_angle(tw.omega);
+                }
+                else {
+                    // TODO raise some kind of error? what's idiomatic?
+                }
+            }
+            
+            is.get(); // consume ','
+            is >> tw.x;
+            is.get(); // consume ','
+            is >> tw.y;
+            is.get(); // consume '>'
+        } else {
+            // Format: w [<unit>] x y
+            is >> tw.omega;
+            
+            // Check for optional unit
+            is >> std::ws; // skip whitespace
+            c = is.peek();
+            if (std::isalpha(c)) {
+                std::string unit;
+                is >> unit;
+                if (unit[0] == 'd' || unit[0] == 'D') {
+                    // Convert degrees to radians
+                    tw.omega = normalize_angle(deg2rad(tw.omega));
+                }
+                else if (unit[0] == 'r' || unit[0] == 'R') {
+                    // If 'r' or 'R', already in radians
+                    tw.omega = normalize_angle(tw.omega);
+                }
+                else {
+                    // TODO raise some kind of error? what's idiomatic?
+                }
+            }
+            
+            is >> tw.x >> tw.y;
+        }
+        
         return is;
     }
+
 
     Transform2D::Transform2D()
     {
