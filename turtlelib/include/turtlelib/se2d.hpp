@@ -135,6 +135,7 @@ class std::formatter<turtlelib::Transform2D, CharT>
 {
 private:
     char unit_spec = '\0'; // 'R', 'D', or '\0' for none
+    std::formatter<double, CharT> double_formatter;
 
 public:
     constexpr auto parse(std::format_parse_context& ctx) {
@@ -146,12 +147,9 @@ public:
             ++it;
         }
         
-        // Return iterator at '}'
-        while (it != ctx.end() && *it != '}') {
-            ++it;
-        }
-        
-        return it;
+        // Pass the remaining format spec to the double formatter
+        ctx.advance_to(it);
+        return double_formatter.parse(ctx);
     }
 
     auto format(const turtlelib::Transform2D& tf, std::format_context& ctx) const {
@@ -168,8 +166,20 @@ public:
         }
         
         // Format as "{angle [unit], x y}"
-        return std::format_to(ctx.out(), "{{{}{}, {}, {}}}", 
-                             angle, unit_str, trans.x, trans.y);
+        auto out = ctx.out();
+        *out++ = '{';
+        out = double_formatter.format(angle, ctx);
+        for (auto c : unit_str) {
+            *out++ = c;
+        }
+        *out++ = ',';
+        *out++ = ' ';
+        out = double_formatter.format(trans.x, ctx);
+        *out++ = ',';
+        *out++ = ' ';
+        out = double_formatter.format(trans.y, ctx);
+        *out++ = '}';
+        return out;
     }
 };
 
@@ -186,6 +196,7 @@ class std::formatter<turtlelib::Twist2D, CharT>
 {
 private:
     char unit_spec = '\0'; // 'R', 'D', or '\0' for none
+    std::formatter<double, CharT> double_formatter;
 
 public:
     constexpr auto parse(std::format_parse_context& ctx) {
@@ -197,12 +208,9 @@ public:
             ++it;
         }
         
-        // Return iterator at '}'
-        while (it != ctx.end() && *it != '}') {
-            ++it;
-        }
-        
-        return it;
+        // Pass the remaining format spec to the double formatter
+        ctx.advance_to(it);
+        return double_formatter.parse(ctx);
     }
 
     auto format(const turtlelib::Twist2D& tw, std::format_context& ctx) const {
@@ -218,8 +226,20 @@ public:
         }
         
         // Format as "<omega [unit], x, y>"
-        return std::format_to(ctx.out(), "<{}{}, {}, {}>", 
-                             omega, unit_str, tw.x, tw.y);
+        auto out = ctx.out();
+        *out++ = '<';
+        out = double_formatter.format(omega, ctx);
+        for (auto c : unit_str) {
+            *out++ = c;
+        }
+        *out++ = ',';
+        *out++ = ' ';
+        out = double_formatter.format(tw.x, ctx);
+        *out++ = ',';
+        *out++ = ' ';
+        out = double_formatter.format(tw.y, ctx);
+        *out++ = '>';
+        return out;
     }
 };
 #endif
