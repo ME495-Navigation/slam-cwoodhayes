@@ -92,7 +92,7 @@ namespace turtlelib
         // Only rotate the vector (no translation, by definition of vector transform)
         double cos_theta = std::cos(tw_.omega);
         double sin_theta = std::sin(tw_.omega);
-        
+
         return Vector2D{v.x * cos_theta - v.y * sin_theta,
                         v.x * sin_theta + v.y * cos_theta};
     }
@@ -102,8 +102,10 @@ namespace turtlelib
         double omega_new = v.omega;
         double vx_new = tw_.y * v.omega + cos(tw_.omega) * v.x - sin(tw_.omega) * v.y;
         double vy_new = -tw_.x * v.omega + sin(tw_.omega) * v.x + cos(tw_.omega) * v.y;
+
+        auto out = Twist2D{normalize_angle(omega_new), vx_new, vy_new};
         
-        return {omega_new, vx_new, vy_new};
+        return out;
     }
 
     Transform2D Transform2D::inv() const
