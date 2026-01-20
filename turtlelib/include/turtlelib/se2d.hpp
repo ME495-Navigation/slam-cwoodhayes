@@ -107,7 +107,6 @@ namespace turtlelib
     /// Should be able to read input either as:
     ///  "theta [<unit>] dx dy" (i.e., three numbers separated by whitespace, angle assumed to be radians)
     //   "{<angle> [<unit>], <x>, <y>}" (as output by std::format)
-    ///  "{<angle> [<unit>], <x>, <y>}" (as output by std::format)
     ///  [<unit>] is optional and can be any string without spaces that starts with a d for deg or r for rad
     ///  If [<unit>] is omitted, assume the unit is radians
     std::istream & operator>>(std::istream & is, Transform2D & tf);

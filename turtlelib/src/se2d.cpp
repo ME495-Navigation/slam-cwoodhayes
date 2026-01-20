@@ -123,7 +123,6 @@ namespace turtlelib
 
     Vector2D Transform2D::translation() const
     {
-        // TODO: implement
         return Vector2D{tw_.x, tw_.y};
     }
 
@@ -134,13 +133,64 @@ namespace turtlelib
 
     std::istream & operator>>(std::istream & is, Transform2D & tf)
     {
-        // TODO: implement
+        double angle, x, y;
+        char c;
+        
+        // Peek at the first character to determine format
+        is >> std::ws; // skip whitespace
+        c = is.peek();
+        
+        if (c == '{') {
+            // Format: "{<angle> [<unit>], <x>, <y>}"
+            is >> c; // consume '{'
+            is >> angle;
+            
+            // Check for optional unit
+            is >> std::ws;
+            c = is.peek();
+            if (c != ',' && !std::isdigit(c) && c != '-' && c != '+') {
+                // There's a unit string
+                std::string unit;
+                is >> unit;
+                if (!unit.empty() && (unit[0] == 'd' || unit[0] == 'D')) {
+                    angle = deg2rad(angle);
+                }
+            }
+            
+            is >> std::ws;
+            is >> c; // consume ','
+            is >> x;
+            is >> std::ws;
+            is >> c; // consume ','
+            is >> y;
+            is >> std::ws;
+            is >> c; // consume '}'
+        } else {
+            // Format: "theta [<unit>] dx dy"
+            is >> angle;
+            
+            // Check for optional unit
+            is >> std::ws;
+            c = is.peek();
+            if (!std::isdigit(c) && c != '-' && c != '+' && c != '.') {
+                // There's a unit string
+                std::string unit;
+                is >> unit;
+                if (!unit.empty() && (unit[0] == 'd' || unit[0] == 'D')) {
+                    angle = deg2rad(angle);
+                }
+            }
+            
+            is >> x >> y;
+        }
+        
+        tf = Transform2D{{x, y}, angle};
         return is;
     }
 
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
     {
-        // TODO: implement
-        return lhs *= rhs;
+        lhs *= rhs;
+        return lhs;
     }
 }

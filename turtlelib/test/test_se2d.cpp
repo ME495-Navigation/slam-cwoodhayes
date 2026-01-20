@@ -175,3 +175,34 @@ TEST_CASE("Transform a twist") {
         REQUIRE_THAT(out.y, WithinAbs(7.142, 0.001));
     }
 }
+
+TEST_CASE("Transform2D operator>>")
+{
+    SECTION("no brackets, radians") {
+        std::stringstream stream{"3.142 rad 1 2"};
+        turtlelib::Transform2D tf;
+        stream >> tf;
+        REQUIRE(tf.rotation() == 3.142);
+        REQUIRE(tf.translation().x == 1.0);
+        REQUIRE(tf.translation().y == 2.0);
+    }
+
+    SECTION("no brackets, degrees") {
+        std::stringstream stream{"0 d 1 2"};
+        turtlelib::Transform2D tf;
+        stream >> tf;
+        REQUIRE(tf.rotation() == 0.0);
+        REQUIRE(tf.translation().x == 1.0);
+        REQUIRE(tf.translation().y == 2.0);
+    }
+
+    SECTION("brackets, radians") {
+        std::stringstream stream{"{3.142 rad, 1, 2}"};
+        turtlelib::Transform2D tf;
+        stream >> tf;
+        REQUIRE(tf.rotation() == 3.142);
+        REQUIRE(tf.translation().x == 1.0);
+        REQUIRE(tf.translation().y == 2.0);
+    }
+
+}
