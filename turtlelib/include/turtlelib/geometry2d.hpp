@@ -6,6 +6,7 @@
 
 // NOTE: Put additional include files here
 #include<format>
+#include<sstream>
 
 // Note: <iosfwd> contains forward definitions for iostream objects
 // allowing implementation of custom iostream operators without
@@ -131,7 +132,9 @@ public:
     }
 
     auto format(const turtlelib::Vector2D& v, std::format_context& ctx) const {
-        return std::format_to(ctx.out(), "[{}, {}]", v.x, v.y);
+        std::ostringstream oss;
+        oss << v;
+        return std::format_to(ctx.out(), "{}", oss.str());
     }
 };
 
