@@ -77,14 +77,24 @@ namespace turtlelib
 
     Point2D Transform2D::operator()(Point2D p) const
     {
-        // TODO: implement
-        return p;
+        // Rotate the point, then translate
+        double cos_theta = std::cos(tw_.omega);
+        double sin_theta = std::sin(tw_.omega);
+        
+        double rotated_x = p.x * cos_theta - p.y * sin_theta;
+        double rotated_y = p.x * sin_theta + p.y * cos_theta;
+        
+        return Point2D{rotated_x + tw_.x, rotated_y + tw_.y};
     }
 
     Vector2D Transform2D::operator()(Vector2D v) const
     {
-        // TODO: implement
-        return v;
+        // Only rotate the vector (no translation, by definition of vector transform)
+        double cos_theta = std::cos(tw_.omega);
+        double sin_theta = std::sin(tw_.omega);
+        
+        return Vector2D{v.x * cos_theta - v.y * sin_theta,
+                        v.x * sin_theta + v.y * cos_theta};
     }
 
     Twist2D Transform2D::operator()(Twist2D v) const

@@ -1,9 +1,12 @@
 // ############## Begin_Citation[0] ####################
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
+
 #include "turtlelib/se2d.hpp"
 #include "turtlelib/angle.hpp"
 
 using namespace turtlelib;
+using namespace Catch::Matchers;
 
 TEST_CASE("Twist2D operator>>", "[Miguel]")
 {
@@ -57,7 +60,7 @@ TEST_CASE("test constructors")
     REQUIRE(tf4.translation().y == 2);
 }
 
-TEST_CASE("Transform a point", "Transform2D")
+TEST_CASE("Transform a point")
 {
     // origin with no transformation
     turtlelib::Transform2D tf;
@@ -89,36 +92,52 @@ TEST_CASE("Transform a point", "Transform2D")
     REQUIRE(pt5.y == -1);
 }
 
-TEST_CASE("Transform a vector", "Transform2D")
+TEST_CASE("Transform a vector")
 {
-    // origin with no transformation
-    turtlelib::Transform2D tf;
-    turtlelib::Vector2D vc;
-    auto vc2 = tf(vc);
-    REQUIRE(vc2.x == vc.x);
-    REQUIRE(vc2.y == vc.y);
+    SECTION("origin, no transformation") {
+        turtlelib::Transform2D tf;
+        turtlelib::Vector2D vc;
+        // origin with no transformation
+        auto vc2 = tf(vc);
+        REQUIRE(vc2.x == 0);
+        REQUIRE(vc2.y == 0);
+    }
 
-    // origin with pure rotation
-    double rot = turtlelib::deg2rad(45);
-    turtlelib::Transform2D tf2(rot);
-    auto vc3 = tf2(vc2);
-    REQUIRE(vc3.x == vc2.x);
-    REQUIRE(vc3.y == vc2.y);
+    SECTION("origin with pure rotation") {
+        double rot = turtlelib::deg2rad(45);
+        turtlelib::Transform2D tf(rot);
+        turtlelib::Vector2D vc;
+        auto vc2 = tf(vc);
+        REQUIRE(vc2.x == vc.x);
+        REQUIRE(vc2.y == vc.y);
+    }
 
-    // origin with pure translation
-    turtlelib::Vector2D oo;
-    oo.x = 1;
-    oo.y = -1;
-    turtlelib::Transform2D tf4(oo);
-    auto vc4 = tf4(vc3);
-    REQUIRE(vc4.x == oo.x);
-    REQUIRE(vc4.y == oo.y);
+    SECTION("origin with pure translation") {
+        // translation is ignored by vectors
 
-    // from this point, translate and rotate
-    turtlelib::Transform2D tf5(oo, rot);
-    auto vc5 = tf5(vc4);
-    REQUIRE(vc5.x == 1 + std::sqrt(2));
-    REQUIRE(vc5.y == -1);
+        turtlelib::Vector2D vc;
+        turtlelib::Vector2D oo;
+        oo.x = 1;
+        oo.y = -1;
+        turtlelib::Transform2D tf(oo);
+        auto vc2 = tf(vc);
+        REQUIRE(vc2.x == 0);
+        REQUIRE(vc2.y == 0);
+    }
+
+    SECTION("translate and rotate") {
+        // translation is ignored
+        double rot = turtlelib::deg2rad(45);
+        turtlelib::Vector2D oo;
+        oo.x = 1;
+        oo.y = -1;
+        turtlelib::Transform2D tf(oo, rot);
+        turtlelib::Vector2D vc {1, 1};
+        auto vc2 = tf(vc);
+        
+        REQUIRE_THAT(vc2.x, WithinAbs(0.0, 0.00001));
+        REQUIRE_THAT(vc2.y, WithinAbs(std::sqrt(2), 0.00001));
+    }
 }
 
 // ############## End_Citation[0] ####################
