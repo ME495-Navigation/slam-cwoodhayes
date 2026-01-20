@@ -95,8 +95,8 @@ namespace turtlelib
         template<class CharT>
         friend struct std::formatter;
     
-        // TODO make private
-        Twist2D tw;
+    private:
+        Twist2D tw_;
 
     };
 
