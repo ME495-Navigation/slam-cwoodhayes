@@ -116,4 +116,5 @@ template<class CharT>
 class std::formatter<turtlelib::Vector2D, CharT>
 {
 };
+
 #endif
