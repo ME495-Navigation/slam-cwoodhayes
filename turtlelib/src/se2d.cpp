@@ -60,26 +60,20 @@ namespace turtlelib
     }
 
 
-
     Transform2D::Transform2D() : tw_ {}
-    {
-        // TODO: implement
-    }
+    {}
 
-    Transform2D::Transform2D(Vector2D trans)
-    {
-        // TODO: implement
-    }
+    Transform2D::Transform2D(Vector2D trans) : 
+    tw_ {0.0, trans.x, trans.y}
+    {}
 
-    Transform2D::Transform2D(double radians)
-    {
-        // TODO: implement
-    }
+    Transform2D::Transform2D(double radians) : 
+    tw_ {radians, 0.0, 0.0}
+    {}
 
-    Transform2D::Transform2D(Vector2D trans, double radians)
-    {
-        // TODO: implement
-    }
+    Transform2D::Transform2D(Vector2D trans, double radians) :
+    tw_ {radians, trans.x, trans.y}
+    {}
 
     Point2D Transform2D::operator()(Point2D p) const
     {
@@ -114,13 +108,12 @@ namespace turtlelib
     Vector2D Transform2D::translation() const
     {
         // TODO: implement
-        return Vector2D{0.0, 0.0};
+        return Vector2D{tw_.x, tw_.y};
     }
 
     double Transform2D::rotation() const
     {
-        // TODO: implement
-        return 0.0;
+        return tw_.omega;
     }
 
     std::istream & operator>>(std::istream & is, Transform2D & tf)

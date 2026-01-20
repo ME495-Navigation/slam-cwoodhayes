@@ -5,7 +5,7 @@
 
 using namespace turtlelib;
 
-TEST_CASE("Create a twist with format 'w x y' and 'x <unit> x y' and <w x y>, with radians and degrees", "[Miguel]")
+TEST_CASE("Twist2D operator>>", "[Miguel]")
 {
     std::stringstream stream{"1 1 1"};
     turtlelib::Twist2D tw1;
@@ -31,7 +31,7 @@ TEST_CASE("Create a twist with format 'w x y' and 'x <unit> x y' and <w x y>, wi
     REQUIRE(tw3.y == 2.0);
 }
 
-TEST_CASE("test constructors", "Transform2D")
+TEST_CASE("test constructors")
 {
     // Check that default constructor is correct
     turtlelib::Transform2D tf;
@@ -120,8 +120,5 @@ TEST_CASE("Transform a vector", "Transform2D")
     REQUIRE(vc5.x == 1 + std::sqrt(2));
     REQUIRE(vc5.y == -1);
 }
-
-// TODO: need test for transforming a Twist2D
-
 
 // ############## End_Citation[0] ####################
