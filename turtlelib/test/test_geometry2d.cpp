@@ -130,4 +130,21 @@ TEST_CASE("Normalize vectors", "Vector2D normalize")
     REQUIRE(vec2.x == 3.0/5.0);
     REQUIRE(vec2.y == 4.0/5.0);
 }
+
 // ############ End_Citation[0] ###############
+
+TEST_CASE("Format Point2D") {
+    turtlelib::Point2D p {
+        1.2, 3.4
+    };
+    auto str = std::format("{}", p);
+    REQUIRE(str == "(1.2, 3.4)");
+}
+
+TEST_CASE("Format Vector2D") {
+    turtlelib::Vector2D p {
+        1.2, 3.4
+    };
+    auto str = std::format("{}", p);
+    REQUIRE(str == "[1.2, 3.4]");
+}
