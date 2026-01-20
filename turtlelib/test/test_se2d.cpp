@@ -210,6 +210,7 @@ TEST_CASE("Transform2D operator>>")
 
 TEST_CASE("Transform2D operator*")
 {
+    // this is also implicitly testing operator*=
     SECTION("Multiply two transforms") {
         Vector2D trans1{2.0, 0.0};
         double angle1 = deg2rad(90);
@@ -219,10 +220,8 @@ TEST_CASE("Transform2D operator*")
         double angle2 = deg2rad(45);
         Transform2D tf2(trans2, angle2);
 
-        // Result of tf1 * tf2
         Transform2D result = tf1 * tf2;
 
-        // Verify result is correct
         REQUIRE_THAT(result.rotation(), WithinAbs(deg2rad(135), 0.00001));
         REQUIRE_THAT(result.translation().x, WithinAbs(2.0, 0.00001));
         REQUIRE_THAT(result.translation().y, WithinAbs(1.0, 0.00001));
@@ -342,5 +341,76 @@ TEST_CASE("Twist2D std::format")
         std::string result = std::format("{:D}", tw);
         // Zero twist should have 0 for all values
         REQUIRE(result.find("0") != std::string::npos);
+    }
+}
+
+TEST_CASE("Transform2D::inv()")
+{
+    SECTION("Identity transform inverse") {
+        Transform2D tf;
+        auto tf_inv = tf.inv();
+        
+        REQUIRE(tf_inv.rotation() == 0.0);
+        REQUIRE(tf_inv.translation().x == 0.0);
+        REQUIRE(tf_inv.translation().y == 0.0);
+    }
+
+    SECTION("Pure translation inverse") {
+        Vector2D trans{3.0, 4.0};
+        Transform2D tf(trans);
+        auto tf_inv = tf.inv();
+        
+        REQUIRE(tf_inv.rotation() == 0.0);
+        REQUIRE(tf_inv.translation().x == -3.0);
+        REQUIRE(tf_inv.translation().y == -4.0);
+    }
+
+    SECTION("Pure rotation inverse") {
+        double angle = deg2rad(45);
+        Transform2D tf(angle);
+        auto tf_inv = tf.inv();
+        
+        REQUIRE_THAT(tf_inv.rotation(), WithinAbs(-angle, 0.00001));
+        REQUIRE(tf_inv.translation().x == 0.0);
+        REQUIRE(tf_inv.translation().y == 0.0);
+    }
+
+    SECTION("Combined rotation and translation inverse") {
+        Vector2D trans{2.0, 3.0};
+        double angle = deg2rad(90);
+        Transform2D tf(trans, angle);
+        auto tf_inv = tf.inv();
+        
+        REQUIRE_THAT(tf_inv.rotation(), WithinAbs(-angle, 0.00001));
+        REQUIRE_THAT(tf_inv.translation().x, WithinAbs(-2.0, 0.00001));
+        REQUIRE_THAT(tf_inv.translation().y, WithinAbs(-3.0, 0.00001));
+    }
+
+    SECTION("Inverse is true inverse - T * T_inv = Identity") {
+        Vector2D trans{1.5, 2.5};
+        double angle = deg2rad(30);
+        Transform2D tf(trans, angle);
+        
+        // Create a point to transform
+        Point2D p{5.0, 7.0};
+        
+        // Apply transform then inverse transform
+        auto p_transformed = tf(p);
+        auto p_back = tf.inv()(p_transformed);
+        
+        REQUIRE_THAT(p_back.x, WithinAbs(p.x, 0.00001));
+        REQUIRE_THAT(p_back.y, WithinAbs(p.y, 0.00001));
+    }
+
+    SECTION("Double inverse returns original") {
+        Vector2D trans{1.0, 2.0};
+        double angle = deg2rad(45);
+        Transform2D tf(trans, angle);
+        
+        auto tf_inv_inv = tf.inv().inv();
+        
+        REQUIRE_THAT(tf_inv_inv.rotation(), WithinAbs(angle, 0.00001));
+        REQUIRE_THAT(tf_inv_inv.translation().x, WithinAbs(trans.x, 0.00001));
+        REQUIRE_THAT(tf_inv_inv.translation().y, WithinAbs(trans.y, 0.00001));
     }
 }

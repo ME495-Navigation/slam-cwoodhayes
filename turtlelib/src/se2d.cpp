@@ -122,8 +122,15 @@ namespace turtlelib
 
     Transform2D Transform2D::inv() const
     {
-        auto v = Vector2D{-tw_.x, -tw_.y};
-        return Transform2D(v, -tw_.omega);
+        double cosw = std::cos(tw_.omega);
+        double sinw = std::sin(tw_.omega);
+        
+        // Rotate the translation by -omega
+        double inv_x = -(tw_.x * cosw + tw_.y * sinw);
+        double inv_y = -(-tw_.x * sinw + tw_.y * cosw);
+        
+        // rotate by -omega
+        return Transform2D(Vector2D{inv_x, inv_y}, -tw_.omega);
     }
 
     Transform2D &Transform2D::operator*=(const Transform2D &rhs)
