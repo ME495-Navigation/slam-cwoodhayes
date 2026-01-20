@@ -134,57 +134,54 @@ namespace turtlelib
     std::istream & operator>>(std::istream & is, Transform2D & tf)
     {
         double angle, x, y;
-        char c;
+        char c = is.peek();
+        bool brackets = (c == '<');
         
-        // Peek at the first character to determine format
-        is >> std::ws; // skip whitespace
-        c = is.peek();
-        
-        if (c == '{') {
-            // Format: "{<angle> [<unit>], <x>, <y>}"
-            is >> c; // consume '{'
-            is >> angle;
-            
-            // Check for optional unit
-            is >> std::ws;
-            c = is.peek();
-            if (c != ',' && !std::isdigit(c) && c != '-' && c != '+') {
-                // There's a unit string
-                std::string unit;
-                is >> unit;
-                if (!unit.empty() && (unit[0] == 'd' || unit[0] == 'D')) {
-                    angle = deg2rad(angle);
-                }
-            }
-            
-            is >> std::ws;
-            is >> c; // consume ','
-            is >> x;
-            is >> std::ws;
-            is >> c; // consume ','
-            is >> y;
-            is >> std::ws;
-            is >> c; // consume '}'
-        } else {
-            // Format: "theta [<unit>] dx dy"
-            is >> angle;
-            
-            // Check for optional unit
-            is >> std::ws;
-            c = is.peek();
-            if (!std::isdigit(c) && c != '-' && c != '+' && c != '.') {
-                // There's a unit string
-                std::string unit;
-                is >> unit;
-                if (!unit.empty() && (unit[0] == 'd' || unit[0] == 'D')) {
-                    angle = deg2rad(angle);
-                }
-            }
-            
-            is >> x >> y;
+        if (brackets) {
+            // consume '<'
+            is.get(); 
         }
         
-        tf = Transform2D{{x, y}, angle};
+        is >> angle;
+        
+        // Check for optional unit
+        // skip whitespace
+        is >> std::ws; 
+        c = is.peek();
+        if (std::isalpha(c)) {
+            std::string unit;
+            is >> unit;
+            if (unit[0] == 'd' || unit[0] == 'D') {
+                angle = normalize_angle(deg2rad(angle));
+            }
+            else if (unit[0] == 'r' || unit[0] == 'R') {
+                // If 'r' or 'R', already in radians
+                angle = normalize_angle(angle);
+            }
+            else {
+                is.setstate(std::ios::failbit);
+                return is;
+            }
+        }
+        
+        if (brackets) {
+            // consume ','
+            is.get(); 
+        }
+        is >> x;
+        if (brackets) {
+            // consume ','
+            is.get(); 
+        }
+        is >> y;
+        
+        if (brackets) {
+            // consume '>'
+            is.get(); 
+        }
+
+        tf = Transform2D({x, y}, angle);
+        
         return is;
     }
 
