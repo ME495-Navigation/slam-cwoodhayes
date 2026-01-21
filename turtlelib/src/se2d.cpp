@@ -111,7 +111,9 @@ namespace turtlelib
 
     Twist2D Transform2D::operator()(Twist2D v) const
     {
+        // in 2d twists, rotation is the same for every frame
         double omega_new = v.omega;
+        // translation 
         double vx_new = tw_.y * v.omega + cos(tw_.omega) * v.x - sin(tw_.omega) * v.y;
         double vy_new = -tw_.x * v.omega + sin(tw_.omega) * v.x + cos(tw_.omega) * v.y;
 
