@@ -54,6 +54,7 @@ endif()
 add_library(turtlelib
   src/geometry2d.cpp
   src/se2d.cpp
+  src/svg.cpp
 )
 target_include_directories(turtlelib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -62,6 +63,9 @@ target_include_directories(turtlelib PUBLIC
 
 add_executable(converter src/converter.cpp)
 target_link_libraries(converter turtlelib)
+
+add_executable(svg src/int_test_svg.cpp)
+target_link_libraries(svg turtlelib)
 
 # below is taken from matt's course notes:
 # https://nu-msr.github.io/navigation/lectures/cmake_basics.html#ament-cmake-1-P-1
