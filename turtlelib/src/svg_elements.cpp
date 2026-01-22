@@ -78,7 +78,7 @@ namespace turtlelib {
 <g id="{}">
     <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="{}" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
     <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="{}" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
-    <text x="{:.6f}" y="{:.6f}">{}</text>
+    <text x="{:.6f}" y="{:.6f}">{{{}}}</text>
 </g>
         )'''";
 
