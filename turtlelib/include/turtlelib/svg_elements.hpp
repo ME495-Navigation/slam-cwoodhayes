@@ -37,7 +37,6 @@ namespace turtlelib
     };
 
     /// @brief Abstract base class for drawable elements in SVG
-    /// These elements speak in SVG-frame (left handed), not User Frame.
     class DrawingElement {
     public:
         virtual ~DrawingElement() = default;
