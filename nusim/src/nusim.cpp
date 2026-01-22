@@ -190,6 +190,7 @@ private:
             marker.id = marker_id++;
             marker.type = visualization_msgs::msg::Marker::CUBE;
             marker.action = visualization_msgs::msg::Marker::ADD;
+            marker.ns = "red";
 
             marker.pose.position.x = x_pos;
             marker.pose.position.y = y_pos;

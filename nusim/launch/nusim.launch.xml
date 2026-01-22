@@ -16,6 +16,7 @@
     </node>
 
     <node pkg="nusim" exec="nusim">
+        <param from="$(find-pkg-share nusim)/$(var config_file)"/>
     </node>
 
 </launch>
