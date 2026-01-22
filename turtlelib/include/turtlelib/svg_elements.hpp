@@ -102,14 +102,14 @@ namespace turtlelib
         /// @param x_color stroke color for x-axis (default: red)
         /// @param y_color stroke color for y-axis (default: green)
         DrawableFrame(std::string id, Transform2D f, std::string name, std::string x_color = "red", std::string y_color = "green") 
-            : DrawingElement(id, x_color), frame_(f), name_(name), y_color_(y_color) {}
+            : DrawingElement(id, x_color), tf_(f), name_(name), y_color_(y_color) {}
         
         /// @brief Draw the coordinate frame as an SVG element
         /// @return SVG string representation
         std::string draw(SvgSpec spec) const override;
         
     private:
-        Transform2D frame_;
+        Transform2D tf_;
         std::string name_;
         std::string y_color_;
     };

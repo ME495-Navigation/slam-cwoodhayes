@@ -27,10 +27,10 @@ namespace turtlelib {
         constexpr auto fmt = R"'''(
 <circle id={} cx="{:.1f}" cy="{:.1f}" r="3" stroke="{}" fill="{}" stroke-width="1"/>
         )'''";
-        auto spt = spec.user_point_to_svg_point(point_);
+        auto p_px = spec.user_point_to_svg_point(point_);
 
         return std::format(fmt,
-            id_, spt.first, spt.second, color_, color_
+            id_, p_px.first, p_px.second, color_, color_
         );
     }
 
@@ -39,9 +39,9 @@ namespace turtlelib {
         constexpr auto fmt = R"'''(
 <line id={} x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="{}" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
         )'''";
-        auto vpt = spec.user_point_to_svg_point(Point2D() + vector_);
+        auto v_px = spec.user_point_to_svg_point(Point2D() + vector_);
         return std::format(fmt,
-            id_, vpt.first, spec.uf_origin_px.first, vpt.second, spec.uf_origin_px.second, color_
+            id_, v_px.first, spec.uf_origin_px.first, v_px.second, spec.uf_origin_px.second, color_
         );
     }
 
@@ -56,11 +56,23 @@ namespace turtlelib {
 
         // hardcoding the size of these in svg canvas-space for now.
         auto axis_len = 96.0;
+        std::pair<double, double> name_offset = {5.0, 5.0};
 
-        // y axis point
-        Transform2D({96.0});
+        // derive the head locations of the axes.
+        auto y_head = tf_(Point2D(0, axis_len));
+        auto x_head = tf_(Point2D(axis_len, 0));
+
+        auto yh_px = spec.user_point_to_svg_point(y_head);
+        auto xh_px = spec.user_point_to_svg_point(x_head);
+        auto origin_px = spec.uf_origin_px;
+
+        return std::format(fmt,
+            id_,
+            origin_px.first, xh_px.first, origin_px.second, xh_px.second, color_,
+            origin_px.first, yh_px.first, origin_px.second, yh_px.second, y_color_,
+            origin_px.first + name_offset.first, origin_px.second - name_offset.second, name_
+        );
         
-        auto origin = frame_.translation();
         return std::string();
     }
 }
