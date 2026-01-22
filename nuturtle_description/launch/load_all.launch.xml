@@ -20,16 +20,16 @@
 
     <!-- position the turtles according to the instructions -->
      <node pkg="tf2_ros" exec="static_transform_publisher"
-        args="--frame-id nusim/world --child-frame-id red_base_footprint --x 0.25"
+        args="--frame-id nusim/world --child-frame-id red/base_footprint --x 0.25"
      />
      <node pkg="tf2_ros" exec="static_transform_publisher"
-        args="--frame-id nusim/world --child-frame-id green_base_footprint --y 0.5"
+        args="--frame-id nusim/world --child-frame-id green/base_footprint --y 0.5"
      />
      <node pkg="tf2_ros" exec="static_transform_publisher"
-        args="--frame-id nusim/world --child-frame-id blue_base_footprint --x -0.5"
+        args="--frame-id nusim/world --child-frame-id blue/base_footprint --x -0.5"
      />
      <node pkg="tf2_ros" exec="static_transform_publisher"
-        args="--frame-id nusim/world --child-frame-id purple_base_footprint --y -1.0"
+        args="--frame-id nusim/world --child-frame-id purple/base_footprint --y -1.0"
      />
 
     <!-- run a single rviz instance showing all of them -->

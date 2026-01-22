@@ -6,6 +6,10 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
+        - /TF1/Frames1
+        - /RedRobot1
+        - /GreenRobot1
         - /BlueRobot1
         - /PurpleRobot1
       Splitter Ratio: 0.5
@@ -50,63 +54,63 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        blue_base_footprint:
+        blue/base_footprint:
           Value: false
-        blue_base_link:
+        blue/base_link:
           Value: true
-        blue_base_scan:
+        blue/base_scan:
           Value: false
-        blue_caster_back_link:
+        blue/caster_back_link:
           Value: false
-        blue_imu_link:
+        blue/imu_link:
           Value: false
-        blue_wheel_left_link:
+        blue/wheel_left_link:
           Value: false
-        blue_wheel_right_link:
+        blue/wheel_right_link:
           Value: false
-        green_base_footprint:
+        green/base_footprint:
           Value: false
-        green_base_link:
+        green/base_link:
           Value: true
-        green_base_scan:
+        green/base_scan:
           Value: false
-        green_caster_back_link:
+        green/caster_back_link:
           Value: false
-        green_imu_link:
+        green/imu_link:
           Value: false
-        green_wheel_left_link:
+        green/wheel_left_link:
           Value: false
-        green_wheel_right_link:
+        green/wheel_right_link:
           Value: false
         nusim/world:
           Value: true
-        purple_base_footprint:
+        purple/base_footprint:
           Value: false
-        purple_base_link:
+        purple/base_link:
           Value: true
-        purple_base_scan:
+        purple/base_scan:
           Value: false
-        purple_caster_back_link:
+        purple/caster_back_link:
           Value: false
-        purple_imu_link:
+        purple/imu_link:
           Value: false
-        purple_wheel_left_link:
+        purple/wheel_left_link:
           Value: false
-        purple_wheel_right_link:
+        purple/wheel_right_link:
           Value: false
-        red_base_footprint:
+        red/base_footprint:
           Value: false
-        red_base_link:
+        red/base_link:
           Value: true
-        red_base_scan:
+        red/base_scan:
           Value: false
-        red_caster_back_link:
+        red/caster_back_link:
           Value: false
-        red_imu_link:
+        red/imu_link:
           Value: false
-        red_wheel_left_link:
+        red/wheel_left_link:
           Value: false
-        red_wheel_right_link:
+        red/wheel_right_link:
           Value: false
       Marker Scale: 1
       Name: TF
@@ -115,53 +119,53 @@ Visualization Manager:
       Show Names: true
       Tree:
         nusim/world:
-          blue_base_footprint:
-            blue_base_link:
-              blue_base_scan:
+          blue/base_footprint:
+            blue/base_link:
+              blue/base_scan:
                 {}
-              blue_caster_back_link:
+              blue/caster_back_link:
                 {}
-              blue_imu_link:
+              blue/imu_link:
                 {}
-              blue_wheel_left_link:
+              blue/wheel_left_link:
                 {}
-              blue_wheel_right_link:
+              blue/wheel_right_link:
                 {}
-          green_base_footprint:
-            green_base_link:
-              green_base_scan:
+          green/base_footprint:
+            green/base_link:
+              green/base_scan:
                 {}
-              green_caster_back_link:
+              green/caster_back_link:
                 {}
-              green_imu_link:
+              green/imu_link:
                 {}
-              green_wheel_left_link:
+              green/wheel_left_link:
                 {}
-              green_wheel_right_link:
+              green/wheel_right_link:
                 {}
-          purple_base_footprint:
-            purple_base_link:
-              purple_base_scan:
+          purple/base_footprint:
+            purple/base_link:
+              purple/base_scan:
                 {}
-              purple_caster_back_link:
+              purple/caster_back_link:
                 {}
-              purple_imu_link:
+              purple/imu_link:
                 {}
-              purple_wheel_left_link:
+              purple/wheel_left_link:
                 {}
-              purple_wheel_right_link:
+              purple/wheel_right_link:
                 {}
-          red_base_footprint:
-            red_base_link:
-              red_base_scan:
+          red/base_footprint:
+            red/base_link:
+              red/base_scan:
                 {}
-              red_caster_back_link:
+              red/caster_back_link:
                 {}
-              red_imu_link:
+              red/imu_link:
                 {}
-              red_wheel_left_link:
+              red/wheel_left_link:
                 {}
-              red_wheel_right_link:
+              red/wheel_right_link:
                 {}
       Update Interval: 0
       Value: true
@@ -222,35 +226,35 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        red_base_footprint:
+        base_footprint:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        red_base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        red_base_scan:
+        base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        red_caster_back_link:
+        base_scan:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        red_imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        red_wheel_left_link:
+        caster_back_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        red_wheel_right_link:
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_right_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -259,7 +263,7 @@ Visualization Manager:
         Inertia: false
         Mass: false
       Name: RedRobot
-      TF Prefix: ""
+      TF Prefix: red
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -281,35 +285,35 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        green_base_footprint:
+        base_footprint:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        green_base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        green_base_scan:
+        base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        green_caster_back_link:
+        base_scan:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        green_imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        green_wheel_left_link:
+        caster_back_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        green_wheel_right_link:
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_right_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -318,7 +322,7 @@ Visualization Manager:
         Inertia: false
         Mass: false
       Name: GreenRobot
-      TF Prefix: ""
+      TF Prefix: green
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -340,35 +344,35 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        blue_base_footprint:
+        base_footprint:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        blue_base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        blue_base_scan:
+        base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        blue_caster_back_link:
+        base_scan:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        blue_imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        blue_wheel_left_link:
+        caster_back_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        blue_wheel_right_link:
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_right_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -377,7 +381,7 @@ Visualization Manager:
         Inertia: false
         Mass: false
       Name: BlueRobot
-      TF Prefix: ""
+      TF Prefix: blue
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -399,35 +403,35 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        purple_base_footprint:
+        base_footprint:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        purple_base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        purple_base_scan:
+        base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        purple_caster_back_link:
+        base_scan:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        purple_imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        purple_wheel_left_link:
+        caster_back_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        purple_wheel_right_link:
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_right_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -436,14 +440,14 @@ Visualization Manager:
         Inertia: false
         Mass: false
       Name: PurpleRobot
-      TF Prefix: ""
+      TF Prefix: purple
       Update Interval: 0
       Value: true
       Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: red_base_footprint
+    Fixed Frame: nusim/world
     Frame Rate: 30
   Name: root
   Tools:
@@ -489,10 +493,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6647956371307373
+      Pitch: 0.8647969961166382
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.580405831336975
+      Yaw: 6.253591537475586
     Saved: ~
 Window Geometry:
   Displays:
@@ -509,4 +513,4 @@ Window Geometry:
     collapsed: true
   Width: 1916
   X: 0
-  Y: 1080
+  Y: 0
