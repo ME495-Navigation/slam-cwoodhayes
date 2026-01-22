@@ -21,21 +21,21 @@ namespace turtlelib
     std::string Svg::draw(turtlelib::Point2D p)
     {
         auto id = std::to_string(elements_.size());
-        elements_.insert({id, p});
+        elements_.insert({id, std::make_unique<DrawablePoint>(p)});
         return id;
     }
 
     std::string Svg::draw(turtlelib::Vector2D v)
     {
         auto id = std::to_string(elements_.size());
-        elements_.insert({id, v});
+        elements_.insert({id, std::make_unique<DrawableVector>(v)});
         return id;
     }
 
     std::string Svg::draw(turtlelib::Transform2D f)
     {
         auto id = std::to_string(elements_.size());
-        elements_.insert({id, f});
+        elements_.insert({id, std::make_unique<DrawableFrame>(f)});
         return id;
     }
 
@@ -79,28 +79,27 @@ namespace turtlelib
         ofile << spec.to_svg_elem() << "\n";
 
         // ##################### Begin_Citation [2] ####################
-        auto process = [&template_point, &template_vector, &template_frame](auto&& obj) -> std::string {
-            using T = std::decay_t<decltype(obj)>;
-            if constexpr (std::is_same_v<T, Point2D>) {
-                // draw a point
-                return "point";
-            } else if constexpr (std::is_same_v<T, Vector2D>) {
-                // draw vector object
-                return "vector";
-            } else if constexpr (std::is_same_v<T, Transform2D>) {
-                // draw coordinate frame 
-                return "transform";
-            }
-            return "";
-        };
-
-        for (const auto& [id, geometry] : elements_) {
-            auto svg_element = std::visit(process, geometry);
+        for (const auto& [id, element] : elements_) {
+            auto svg_element = element->draw();
             ofile << svg_element << "\n";
         }
         // ##################### End_Citation [2] ####################
 
         // Close SVG
         ofile << "</svg>\n";
+    }
+
+
+    // TODO refactor into separate file
+    std::string DrawablePoint::draw() const {
+        return "point";
+    }
+
+    std::string DrawableVector::draw() const {
+        return "vec";
+    }
+
+    std::string DrawableFrame::draw() const {
+        return "frame";
     }
 }

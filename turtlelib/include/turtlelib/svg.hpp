@@ -6,6 +6,7 @@
 #include <string>
 #include <filesystem>
 #include <unordered_map>
+#include <memory>
 #include "turtlelib/se2d.hpp"
 #include "turtlelib/geometry2d.hpp"
 
@@ -32,7 +33,54 @@ namespace turtlelib
         std::string to_svg_elem();
     };
 
-    using DrawingElement = std::variant<Vector2D, Transform2D, Point2D>;
+    /// @brief Abstract base class for drawable elements in SVG
+    class DrawingElement {
+    public:
+        virtual ~DrawingElement() = default;
+        
+        /// @brief Render the element to an SVG string
+        /// @return SVG representation of this element
+        virtual std::string draw() const = 0;
+    };
+
+    /// @brief Drawable point element
+    class DrawablePoint : public DrawingElement {
+    public:
+        DrawablePoint(Point2D p) : point_(p) {}
+        
+        /// @brief Draw the point as an SVG element
+        /// @return SVG string representation
+        std::string draw() const override;
+        
+    private:
+        Point2D point_;
+    };
+
+    /// @brief Drawable vector element
+    class DrawableVector : public DrawingElement {
+    public:
+        DrawableVector(Vector2D v) : vector_(v) {}
+        
+        /// @brief Draw the vector as an SVG element
+        /// @return SVG string representation
+        std::string draw() const override;
+        
+    private:
+        Vector2D vector_;
+    };
+
+    /// @brief Drawable coordinate frame element
+    class DrawableFrame : public DrawingElement {
+    public:
+        DrawableFrame(Transform2D f) : frame_(f) {}
+        
+        /// @brief Draw the coordinate frame as an SVG element
+        /// @return SVG string representation
+        std::string draw() const override;
+        
+    private:
+        Transform2D frame_;
+    };
 
     /// @brief create and modify simple .svg drawings
     /// User specifies points, vectors, and coordinate frames in their own coordinate frame
@@ -66,7 +114,7 @@ namespace turtlelib
         void write_file(std::filesystem::path svg_path, SvgSpec spec = {});
 
     private:
-        std::unordered_map<std::string, DrawingElement> elements_;
+        std::unordered_map<std::string, std::unique_ptr<DrawingElement>> elements_;
 
         std::pair<double, double> xbound_;
         std::pair<double, double> ybound_;
