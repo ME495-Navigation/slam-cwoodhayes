@@ -17,7 +17,11 @@ find_package(std_msgs REQUIRED)
 
 # Add nodes
 add_executable(nusim src/nusim.cpp)
-ament_target_dependencies(nusim rclcpp std_msgs)
+target_link_libraries(nusim PUBLIC
+  ${std_msgs_TARGETS}
+  rclcpp::rclcpp
+)
+
 
 # Install nodes
 install(TARGETS nusim DESTINATION lib/${PROJECT_NAME})
