@@ -20,8 +20,8 @@ int main() {
     auto v2_id = svg.draw(Vector2D{-1.5, 2.5});
 
     // Draw 2 coordinate frames
-    auto f1_id = svg.draw(Transform2D{{0.0, 0.0}, 0.0});  // Identity at origin
-    auto f2_id = svg.draw(Transform2D{{2.0, 1.0}, std::numbers::pi / 4});  // Frame rotated 45 degrees at (2, 1)
+    auto f1_id = svg.draw(Transform2D{{0.0, 0.0}, 0.0}, "W");  // Identity at origin
+    auto f2_id = svg.draw(Transform2D{{2.0, 1.0}, std::numbers::pi / 4}, "B");  // Frame rotated 45 degrees at (2, 1)
 
     // Write to file with default SvgSpec
     svg.write_file("test_output.svg");

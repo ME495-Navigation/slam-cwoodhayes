@@ -5,19 +5,6 @@
 
 namespace turtlelib
 {
-    std::string SvgSpec::to_svg_elem()
-    {
-        return std::format(
-            "<svg width=\"{:.6f}in\" height=\"{:.6f}in\" viewBox=\"{:.6f} {:.6f} {:.6f} {:.6f}\" xmlns=\"http://www.w3.org/2000/svg\">",
-            page_width_in,
-            page_height_in,
-            box_origin_px.first,
-            box_origin_px.second,
-            box_bottom_right_px.first,
-            box_bottom_right_px.second
-        );
-    }
-
     std::string Svg::draw(turtlelib::Point2D p)
     {
         auto id = std::to_string(elements_.size());
@@ -32,10 +19,10 @@ namespace turtlelib
         return id;
     }
 
-    std::string Svg::draw(turtlelib::Transform2D f)
+    std::string Svg::draw(turtlelib::Transform2D f, std::string name)
     {
         auto id = std::to_string(elements_.size());
-        elements_.insert({id, std::make_unique<DrawableFrame>(f)});
+        elements_.insert({id, std::make_unique<DrawableFrame>(f, name)});
         return id;
     }
 
@@ -48,23 +35,6 @@ namespace turtlelib
     </marker>
 </defs>
         )'''";
-        // string templates for each element type
-
-        auto template_point = R"'''(
-<circle id={} cx="{:.1f}" cy="{:.1f}" r="3" stroke="purple" fill="purple" stroke-width="1"/>
-        )'''";
-        auto template_vector = R"'''(
-<line id={} x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="purple" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
-        )'''";
-        auto template_frame = R"'''(
-<g id={}>
-    <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="red" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
-    <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="green" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
-    <text x="{:.6f}" y="{:.6f}">{a}</text>
-</g>
-        )'''";
-
-
         // open the file for writing
         if (!svg_path.parent_path().empty()) {
             std::filesystem::create_directories(svg_path.parent_path());
@@ -75,31 +45,15 @@ namespace turtlelib
             throw std::runtime_error("Could not open file: " + svg_path.string());
         }
 
-        // Write SVG header
+        // write svg header and vector definition
         ofile << spec.to_svg_elem() << "\n";
+        ofile << vec_def << "\n";
 
-        // ##################### Begin_Citation [2] ####################
+        // write all elements
         for (const auto& [id, element] : elements_) {
-            auto svg_element = element->draw();
+            auto svg_element = element->draw(spec);
             ofile << svg_element << "\n";
         }
-        // ##################### End_Citation [2] ####################
-
-        // Close SVG
         ofile << "</svg>\n";
-    }
-
-
-    // TODO refactor into separate file
-    std::string DrawablePoint::draw() const {
-        return "point";
-    }
-
-    std::string DrawableVector::draw() const {
-        return "vec";
-    }
-
-    std::string DrawableFrame::draw() const {
-        return "frame";
     }
 }

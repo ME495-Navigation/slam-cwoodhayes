@@ -55,6 +55,7 @@ add_library(turtlelib
   src/geometry2d.cpp
   src/se2d.cpp
   src/svg.cpp
+  src/svg_elements.cpp
 )
 target_include_directories(turtlelib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
