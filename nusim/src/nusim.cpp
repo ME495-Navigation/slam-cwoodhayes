@@ -6,6 +6,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
+#include "std_srvs/srv/empty.hpp"
 
 using namespace std::chrono_literals;
 
@@ -27,6 +28,10 @@ public:
             std::chrono::duration<double>(1.0 / rate), 
             std::bind(&NUSimulator::timer_callback, this));
         
+        reset_service_ = this->create_service<std_srvs::srv::Empty>(
+            "~/reset",
+            std::bind(&NUSimulator::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
+        
         RCLCPP_INFO(this->get_logger(), "nusimulator node constructed.");
     }
 
@@ -37,8 +42,17 @@ private:
         message.data = count_++;
         publisher_->publish(message);
     }
+
+    void reset_callback(
+        const std::shared_ptr<std_srvs::srv::Empty::Request>,
+        std::shared_ptr<std_srvs::srv::Empty::Response>)
+    {
+        count_ = 0;
+        RCLCPP_INFO(this->get_logger(), "Simulation reset: timestep set to 0");
+    }
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
+    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
     size_t count_;
 };
 
