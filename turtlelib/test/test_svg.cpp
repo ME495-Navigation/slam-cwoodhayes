@@ -8,8 +8,7 @@ using namespace turtlelib;
 
 TEST_CASE("SVG stringify", "[Conor]")
 {
-    constexpr auto expected_output = R"'''(
-<svg width="8.500000in" height="11.000000in" viewBox="0.000000 0.000000 816.000000 1056.000000" xmlns="http://www.w3.org/2000/svg">
+    constexpr auto expected_output = R"'''(<svg width="8.500000in" height="11.000000in" viewBox="0.000000 0.000000 816.000000 1056.000000" xmlns="http://www.w3.org/2000/svg">
 
 <defs>
   <marker style="overflow:visible" id="Arrow1Sstart" refX="0.0" refY="0.0" orient="auto">
@@ -44,7 +43,7 @@ TEST_CASE("SVG stringify", "[Conor]")
 <circle id="0" cx="504.0" cy="336.0" r="3" stroke="blue" fill="blue" stroke-width="1"/>
         
 </svg>
-    )'''";
+)'''";
     // Create an Svg canvas with x bounds [-5, 5] and y bounds [-5, 5]
     Svg svg({-5.0, 5.0}, {-5.0, 5.0});
 
