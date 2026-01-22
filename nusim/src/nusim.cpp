@@ -21,10 +21,25 @@ public:
     NUSimulator()
         : Node("nusimulator"), count_(0)
     {
-        auto param_desc = rcl_interfaces::msg::ParameterDescriptor();
-        param_desc.description = "Sim rate in Hz";
-        this->declare_parameter("rate", 100.0, param_desc);
+        // declare parameters
+        // - rate
+        auto rate_desc = rcl_interfaces::msg::ParameterDescriptor();
+        rate_desc.description = "Sim rate in Hz";
+        this->declare_parameter("rate", 100.0, rate_desc);
         double rate = this->get_parameter("rate").as_double();
+
+        // - start pose
+        auto x0_desc = rcl_interfaces::msg::ParameterDescriptor();
+        x0_desc.description = "Initial x position";
+        this->declare_parameter("x0", 0.0, x0_desc);
+        
+        auto y0_desc = rcl_interfaces::msg::ParameterDescriptor();
+        y0_desc.description = "Initial y position";
+        this->declare_parameter("y0", 0.0, y0_desc);
+        
+        auto theta0_desc = rcl_interfaces::msg::ParameterDescriptor();
+        theta0_desc.description = "Initial theta angle";
+        this->declare_parameter("theta0", 0.0, theta0_desc);
         
         publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
         timer_ = this->create_wall_timer(
