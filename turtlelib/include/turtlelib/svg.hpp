@@ -27,13 +27,15 @@ namespace turtlelib
 
         /// @brief Draw a point on the canvas
         /// @param p point specified in User Frame
+        /// @param color stroke and fill color (default: purple)
         /// @return string ID of the point in the svg
-        std::string draw(turtlelib::Point2D p);
+        std::string draw(turtlelib::Point2D p, std::string color = "purple");
 
         /// @brief Draw a vector on the canvas
         /// @param v vector specified in User Frame
+        /// @param color stroke color (default: purple)
         /// @return string ID of the vector in the svg
-        std::string draw(turtlelib::Vector2D v);
+        std::string draw(turtlelib::Vector2D v, std::string color = "purple");
 
         /// @brief Draw a coordinate frame on the canvas
         /// @param f frame location & orientation relative to User Frame

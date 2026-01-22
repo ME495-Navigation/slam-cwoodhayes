@@ -5,17 +5,17 @@
 
 namespace turtlelib
 {
-    std::string Svg::draw(turtlelib::Point2D p)
+    std::string Svg::draw(turtlelib::Point2D p, std::string color)
     {
         auto id = std::to_string(elements_.size());
-        elements_.insert({id, std::make_unique<DrawablePoint>(id, p)});
+        elements_.insert({id, std::make_unique<DrawablePoint>(id, p, color)});
         return id;
     }
 
-    std::string Svg::draw(turtlelib::Vector2D v)
+    std::string Svg::draw(turtlelib::Vector2D v, std::string color)
     {
         auto id = std::to_string(elements_.size());
-        elements_.insert({id, std::make_unique<DrawableVector>(id, v)});
+        elements_.insert({id, std::make_unique<DrawableVector>(id, v, color)});
         return id;
     }
 

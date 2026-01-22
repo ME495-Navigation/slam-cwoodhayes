@@ -12,12 +12,12 @@ int main() {
     Svg svg({-5.0, 5.0}, {-5.0, 5.0});
 
     // Draw 2 points
-    auto p1_id = svg.draw(Point2D{1.0, 2.0});
-    auto p2_id = svg.draw(Point2D{-3.0, 1.5});
+    auto p1_id = svg.draw(Point2D{1.0, 2.0}, "blue");
+    auto p2_id = svg.draw(Point2D{-3.0, 1.5}, "green");
 
     // Draw 2 vectors
-    auto v1_id = svg.draw(Vector2D{2.0, 3.0});
-    auto v2_id = svg.draw(Vector2D{-1.5, 2.5});
+    auto v1_id = svg.draw(Vector2D{2.0, 3.0}, "pink");
+    auto v2_id = svg.draw(Vector2D{-1.5, 2.5}, "purple");
 
     // Draw 2 coordinate frames
     auto f1_id = svg.draw(Transform2D{{0.0, 0.0}, 0.0}, "W");  // Identity at origin
