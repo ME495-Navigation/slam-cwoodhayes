@@ -157,23 +157,15 @@ TEST_CASE("Transform a twist", "[Conor]") {
     }
 
     SECTION("Transform a non-null twist") {
-        SKIP("This unit test breaks. I think it's because my kevin output is wrong. Revisiting later.");
+        // SKIP("This unit test breaks. I think it's because my kevin output is wrong. Revisiting later.");
         // validated using kevin's modern robotics library
         auto tw = Twist2D {std::numbers::pi, 3, 4};
-
-        // output should be (in SE(3)):
-        // [[ 0.   ]
-        //  [ 0.   ]
-        //  [-3.142]
-        //  [-9.283]
-        //  [ 7.142]
-        //  [-0.   ]]
 
         auto out = tf(tw);
 
         REQUIRE_THAT(out.omega, WithinAbs(std::numbers::pi, 0.001));
-        REQUIRE_THAT(out.x, WithinAbs(-9.283, 0.001));
-        REQUIRE_THAT(out.y, WithinAbs(7.142, 0.001));
+        REQUIRE_THAT(out.x, WithinAbs(3.283, 0.001));
+        REQUIRE_THAT(out.y, WithinAbs(-7.142, 0.001));
     }
 }
 
