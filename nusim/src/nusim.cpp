@@ -1,3 +1,6 @@
+/// \file
+/// \brief contains SLAM simulator node.
+
 #include <chrono>
 #include <functional>
 #include <memory>
