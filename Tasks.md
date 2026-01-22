@@ -25,3 +25,8 @@ Task B.9
 Task C.1
 Task C.2
 Task C.3
+Task C.4
+# even though I use transient local, rviz doesn't show the walls if i only publish them once.
+# i saw this issue in python as well. So i did add them to the timer callback instead of just calling 
+# in the constructor for simplicity; the wall data is small so this doesn't cost much.
+
