@@ -2,6 +2,7 @@
 
 #include <format>
 #include <fstream>
+#include <sstream>
 
 namespace turtlelib
 {
@@ -26,7 +27,7 @@ namespace turtlelib
         return id;
     }
 
-    void Svg::write_file(std::filesystem::path svg_path, SvgSpec spec)
+    std::string Svg::to_string(turtlelib::SvgSpec spec) const
     {
         auto vec_def = R"'''(
 <defs>
@@ -35,6 +36,23 @@ namespace turtlelib
     </marker>
 </defs>
         )'''";
+
+        std::stringstream ss;
+        ss << spec.to_svg_elem() << "\n";
+        ss << vec_def << "\n";
+
+        // write all elements
+        for (const auto& [id, element] : elements_) {
+            auto svg_element = element->draw(spec);
+            ss << svg_element << "\n";
+        }
+        ss << "</svg>\n";
+
+        return ss.str();
+    }
+
+    void Svg::write_file(std::filesystem::path svg_path, SvgSpec spec)
+    {
         // open the file for writing
         if (!svg_path.parent_path().empty()) {
             std::filesystem::create_directories(svg_path.parent_path());
@@ -45,15 +63,6 @@ namespace turtlelib
             throw std::runtime_error("Could not open file: " + svg_path.string());
         }
 
-        // write svg header and vector definition
-        ofile << spec.to_svg_elem() << "\n";
-        ofile << vec_def << "\n";
-
-        // write all elements
-        for (const auto& [id, element] : elements_) {
-            auto svg_element = element->draw(spec);
-            ofile << svg_element << "\n";
-        }
-        ofile << "</svg>\n";
+        ofile << to_string(spec);
     }
 }

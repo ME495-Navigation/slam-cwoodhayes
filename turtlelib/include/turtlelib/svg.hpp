@@ -48,6 +48,11 @@ namespace turtlelib
         /// @param spec spec for the svg file to write
         void write_file(std::filesystem::path svg_path, turtlelib::SvgSpec spec = {});
 
+        /// @brief Generate the SVG content as a string
+        /// @param spec spec for the svg file to write
+        /// @return string containing the complete SVG markup
+        std::string to_string(turtlelib::SvgSpec spec = {}) const;
+
     private:
         std::unordered_map<std::string, std::unique_ptr<DrawingElement>> elements_;
 

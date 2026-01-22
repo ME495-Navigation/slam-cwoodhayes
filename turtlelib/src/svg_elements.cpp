@@ -6,26 +6,10 @@
 namespace turtlelib {
     std::pair<double, double> SvgSpec::user_point_to_svg_point(Point2D p) {
         // hardcoding this per matt's instructions in the example svg below:
-        /*
-     The viewBox sets the conversion from pixels to inches and is
-     the frame in which you draw.
 
-     The viewBox frame, in this case has:
-       96 pixels per inch (a line 96 pixels long is one inch long).
-       The origin is in the upper-left corner of the page.
-       The x pixel value increases to the right.
-       The y pixel value increases down.
-       (This is a left-handed coordinate system).
-
-     When drawing, we will conceive of the image as follows:
-       1 unit in turtlelib (e.g., meters) corresponds to 1 inch in the svg.
-
-       The "fixed frame" is implicitly the midpoint of the page (in viewBox coordinates),
-       with x axis positive to the right and y axis positive up.
-
-       Therefore coordinate frame resulting from the identity transform
-       is drawn at the center of the page with x-axis right and y axis up.
-        */
+        // maybe at some point I'll come back and set these values 
+        // dynamically according to the spec. but for now i am fine with
+        // hardcoding this, since we are required to use these values are in the instructions
         constexpr double pixels_per_unit = 96.0;  // 96 pixels per inch
         
         // Convert from user frame (right-handed, origin at center) to SVG frame (left-handed, origin at top-left)

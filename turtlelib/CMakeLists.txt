@@ -42,6 +42,7 @@ if(BUILD_TESTING)
       test/test_angle.cpp 
       test/test_geometry2d.cpp
       test/test_se2d.cpp
+      test/test_svg.cpp
     )
     target_link_libraries(tests Catch2::Catch2WithMain turtlelib)
 
