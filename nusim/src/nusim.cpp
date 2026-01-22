@@ -11,6 +11,9 @@
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
 
+#include "turtlelib/se2d.hpp"
+#include "turtlelib/geometry2d.hpp"
+
 using namespace std::chrono_literals;
 
 /// @brief Simulator node.
@@ -19,7 +22,7 @@ class NUSimulator : public rclcpp::Node
 public:
     /// @brief Node constructor 
     NUSimulator()
-        : Node("nusimulator"), count_(0)
+        : Node("nusimulator"), count_(0), gt_pose_()
     {
         // declare parameters
         // - rate
@@ -40,6 +43,7 @@ public:
         auto theta0_desc = rcl_interfaces::msg::ParameterDescriptor();
         theta0_desc.description = "Initial theta angle";
         this->declare_parameter("theta0", 0.0, theta0_desc);
+        gt_pose_ = get_pose0();
         
         publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
         timer_ = this->create_wall_timer(
@@ -66,12 +70,28 @@ private:
         std::shared_ptr<std_srvs::srv::Empty::Response>)
     {
         count_ = 0;
-        RCLCPP_INFO(this->get_logger(), "Simulation reset: timestep set to 0");
+        gt_pose_ = get_pose0();
+        const auto msg = std::format("Simulation reset: timestep set to 0, robot reset to initial pose ({}).", gt_pose_);
+        RCLCPP_INFO(this->get_logger(), msg.c_str());
     }
+
+    /// @brief get the initial pose of the robot from parameters
+    /// @return tf for the initial pose (x0, y0, theta0)
+    turtlelib::Transform2D get_pose0() {
+        double x = this->get_parameter("x0").as_double();
+        double y = this->get_parameter("y0").as_double();
+        double theta = this->get_parameter("theta0").as_double();
+        return {{x, y}, theta};
+    }
+
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
+
+    /// @brief simulation timestep
     size_t count_;
+    /// @brief ground truth pose of the robot
+    turtlelib::Transform2D gt_pose_;
 };
 
 int main(int argc, char *argv[])
