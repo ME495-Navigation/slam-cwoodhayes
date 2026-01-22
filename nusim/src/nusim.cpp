@@ -57,6 +57,27 @@ public:
         ay_desc.description = "length of the arena in the world Y direction";
         this->declare_parameter("arena_y_length", 10.0, ay_desc);
 
+        // - cylindrical obstacles
+        auto obs_x_desc = rcl_interfaces::msg::ParameterDescriptor();
+        obs_x_desc.description = "X coordinates of obstacles";
+        this->declare_parameter("obstacles.x", std::vector<double>{}, obs_x_desc);
+        
+        auto obs_y_desc = rcl_interfaces::msg::ParameterDescriptor();
+        obs_y_desc.description = "Y coordinates of obstacles";
+        this->declare_parameter("obstacles.y", std::vector<double>{}, obs_y_desc);
+        
+        auto obs_r_desc = rcl_interfaces::msg::ParameterDescriptor();
+        obs_r_desc.description = "Radius of obstacles";
+        this->declare_parameter("obstacles.r", 0.0, obs_r_desc);
+        
+        // Validate that x and y have same length
+        auto obs_x = this->get_parameter("obstacles.x").as_double_array();
+        auto obs_y = this->get_parameter("obstacles.y").as_double_array();
+        if (obs_x.size() != obs_y.size()) {
+            RCLCPP_ERROR(this->get_logger(), "obstacles.x and obstacles.y must have the same length");
+            throw std::runtime_error("obstacles.x and obstacles.y must have the same length");
+        }
+
         publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
         timer_ = this->create_wall_timer(
             std::chrono::duration<double>(1.0 / rate), 
@@ -73,6 +94,9 @@ public:
         qos.transient_local();
         walls_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/real_walls", qos);
         
+        // create obstacles publisher
+        obstacles_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles", qos);
+        
         RCLCPP_INFO(this->get_logger(), "nusimulator node constructed.");
     }
 
@@ -83,10 +107,11 @@ private:
         message.data = count_++;
         publisher_->publish(message);
         
-        // publish arena walls slowly
+        // publish arena & obstacle markers slowly
         // rviz doesn't get them if they are only published once on startup
         if (count_ % 100 == 0) {
             publish_arena();
+            publish_cyl_obstacles();
         }
         
         // broadcast transform from nusim/world to red/base_footprint
@@ -187,9 +212,49 @@ private:
         walls_publisher_->publish(marker_array);
     }
 
+    /// @brief publish cylindrical obstacles as configured on startup.
+    void publish_cyl_obstacles() {
+        auto obs_x = this->get_parameter("obstacles.x").as_double_array();
+        auto obs_y = this->get_parameter("obstacles.y").as_double_array();
+        double obs_r = this->get_parameter("obstacles.r").as_double();
+        const double cyl_height = 0.25;
+
+        auto marker_array = visualization_msgs::msg::MarkerArray();
+
+        for (size_t i = 0; i < obs_x.size(); ++i) {
+            auto marker = visualization_msgs::msg::Marker();
+            marker.header.frame_id = "nusim/world";
+            marker.header.stamp = this->get_clock()->now();
+            marker.ns = "red";
+            marker.id = i;
+            marker.type = visualization_msgs::msg::Marker::CYLINDER;
+            marker.action = visualization_msgs::msg::Marker::ADD;
+
+            marker.pose.position.x = obs_x[i];
+            marker.pose.position.y = obs_y[i];
+            marker.pose.position.z = cyl_height / 2.0;
+            marker.pose.orientation.w = 1.0;
+
+            marker.scale.x = 2.0 * obs_r;  // diameter
+            marker.scale.y = 2.0 * obs_r;  // diameter
+            marker.scale.z = cyl_height;
+
+            // red color
+            marker.color.r = 1.0;
+            marker.color.g = 0.0;
+            marker.color.b = 0.0;
+            marker.color.a = 1.0;
+
+            marker_array.markers.push_back(marker);
+        }
+
+        obstacles_publisher_->publish(marker_array);
+    }
+
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
