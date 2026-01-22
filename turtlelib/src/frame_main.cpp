@@ -41,6 +41,21 @@ turtlelib::Point2D prompt_for_point(std::string point_name) {
     return pt;
 }
 
+turtlelib::Vector2D prompt_for_vector(std::string vector_name) {
+    auto example_vec = turtlelib::Vector2D{1.5, 2.5};
+    auto example_fmt = std::format("{}", example_vec);
+    turtlelib::Vector2D vec;
+
+    cerr << "Please enter vector " << vector_name << ":\n";
+    cerr << "Example format: " << example_fmt << "\n";
+    cerr << "input here: ";
+    cin >> vec;
+    cin.ignore(10000, '\n');
+
+    print(cerr, "You entered {}.\n\n", vec);
+    return vec;
+}
+
 /// @brief normalize a vector (not part of the Vector2D class due to homework's API requirements)
 /// @param v vector
 /// @return normalized vector
@@ -113,38 +128,24 @@ int main() {
     svg.draw(pc, "orange");
 
     // Prompt for vector in frame b
-    cerr << "Please enter vector v_b (in frame {b}):\n";
-    cerr << "Example format: (1.5, 2.5)\n";
-    cerr << "input here: ";
-    turtlelib::Vector2D vb;
-    cin >> vb;
-    cin.ignore(10000, '\n');
-    print(cerr, "You entered {}.\n\n", vb);
+    auto vb = prompt_for_vector("v_b (in frame {b})");
 
     // Normalize vector
     auto vb_hat = normalize_vec(vb);
 
-    // Transform vector to other frames
+    // Draw vectors with tails at other frame origins
+    // vb_hat with tail at b
+    svg.draw_in_frame(vb_hat, Tab, "brown");
+    // vb with tail at b
+    svg.draw_in_frame(vb, Tab, "black");
+
+    // Transform vector to other frames, output, and draw
     auto va = Tab(vb);
     auto vc = Tcb(vb);
-
-    print("v_b: {}\n", vb);
-    print("v_b_hat: {}\n", vb_hat);
     print("v_a: {}\n", va);
     print("v_c: {}\n\n", vc);
-
-    // Draw vectors with tails at frame origins
-    // vb_hat in frame b (brown) - tail at origin
-    svg.draw(vb_hat, "brown");
-    // vb_hat transformed to frame c (black) - tail at origin  
-    auto vb_hat_in_c = Tcb(vb_hat);
-    svg.draw(vb_hat_in_c, "black");
-
-    // va in frame b (purple)
     svg.draw(va, "purple");
-    // va in frame c (orange)
-    auto va_in_c = Tcb(va);
-    svg.draw(va_in_c, "orange");
+    svg.draw_in_frame(vc, Tac, "orange");
 
     // Write to file
     svg.write_file("/tmp/frames.svg");

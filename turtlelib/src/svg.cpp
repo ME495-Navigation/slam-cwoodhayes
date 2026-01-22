@@ -34,6 +34,16 @@ namespace turtlelib
         return id;
     }
 
+    std::string Svg::draw_in_frame(turtlelib::Vector2D v, turtlelib::Transform2D f, std::string color) {
+        auto id = std::to_string(elements_.size());
+
+        // convert to an absvector with the tail at f's origin, and head in the user frame.
+        auto origin_f = f(Point2D());
+        AbsVector av = {origin_f, {v.x, v.y}};
+        elements_.insert({id, std::make_unique<DrawableAbsVector>(id, av, color)});
+        return id;
+    }
+
     std::string Svg::to_string(turtlelib::SvgSpec spec) const
     {
         auto vec_def = R"'''(

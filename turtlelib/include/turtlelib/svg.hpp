@@ -43,6 +43,13 @@ namespace turtlelib
         /// @return string ID of the vector in the svg
         std::string draw(turtlelib::AbsVector av, std::string color = "purple");
 
+        /// @brief Draw a vector in frame f (head in same place, but with its tail at f's origin)
+        /// @param v vector 
+        /// @param f frame (as a transform from the world frame) 
+        /// @param color stroke color (default: purple)
+        /// @return string ID of the vector in the svg
+        std::string draw_in_frame(turtlelib::Vector2D v, turtlelib::Transform2D f, std::string color = "purple");
+
         /// @brief Draw a coordinate frame on the canvas
         /// @param f frame location & orientation relative to User Frame
         /// @param name name for the coordinate frame
