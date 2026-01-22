@@ -16,7 +16,7 @@ Task B.4
 
 Task B.5
 Task B.6
-# note - for now, I've left the twist () operator broken.
+# note - for now, I've left the twist () unit test broken.
 # i don't feel like fixing it now and I think I can move on without it.
 Task B.7
 Task B.8
