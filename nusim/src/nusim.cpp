@@ -68,11 +68,10 @@ public:
         
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
-        // create arena walls
+        // create arena walls publisher
         rclcpp::QoS qos(10);
         qos.transient_local();
         walls_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/real_walls", qos);
-        publish_arena();
         
         RCLCPP_INFO(this->get_logger(), "nusimulator node constructed.");
     }
@@ -83,6 +82,12 @@ private:
         auto message = std_msgs::msg::UInt64();
         message.data = count_++;
         publisher_->publish(message);
+        
+        // publish arena walls slowly
+        // rviz doesn't get them if they are only published once on startup
+        if (count_ % 100 == 0) {
+            publish_arena();
+        }
         
         // broadcast transform from nusim/world to red/base_footprint
         auto transform = geometry_msgs::msg::TransformStamped();
