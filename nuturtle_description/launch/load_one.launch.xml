@@ -19,7 +19,7 @@
         value="$(find-pkg-share nuturtle_description)/urdf/turtlebot3_burger.urdf.xacro" />
 
     <!-- Read the URDF file content -->
-    <let name="robot_description" value="$(command '$(exec-in-pkg xacro xacro) $(var urdf_path)')" />
+    <let name="robot_description" value="$(command '$(exec-in-pkg xacro xacro) $(var urdf_path) color:=$(var color)')" />
 
     <!-- Robot State Publisher - publishes TF transforms based on URDF and joint states -->
     <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher"

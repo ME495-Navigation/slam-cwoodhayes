@@ -6,9 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /LaserScan1
-        - /LaserScan1/Topic1
         - /RobotModel1
+        - /RobotModel1/Links1
         - /TF1
         - /TF1/Frames1
       Splitter Ratio: 0.5
@@ -47,40 +46,6 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: true
     - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz_default_plugins/LaserScan
-      Color: 255; 255; 255
-      Color Transformer: Intensity
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 8052
-      Min Color: 0; 0; 0
-      Min Intensity: 51
-      Name: LaserScan
-      Position Transformer: XYZ
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Flat Squares
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Best Effort
-        Value: /scan
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
-    - Alpha: 1
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
       Description File: ""
@@ -98,35 +63,35 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        red_base_footprint:
+        base_footprint:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        red_base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        red_base_scan:
+        base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        red_caster_back_link:
+        base_scan:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        red_imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        red_wheel_left_link:
+        caster_back_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        red_wheel_right_link:
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_right_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -135,7 +100,7 @@ Visualization Manager:
         Inertia: false
         Mass: false
       Name: RobotModel
-      TF Prefix: ""
+      TF Prefix: red
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -146,19 +111,19 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        red_base_footprint:
+        red/base_footprint:
           Value: false
-        red_base_link:
+        red/base_link:
           Value: true
-        red_base_scan:
+        red/base_scan:
           Value: false
-        red_caster_back_link:
+        red/caster_back_link:
           Value: false
-        red_imu_link:
+        red/imu_link:
           Value: false
-        red_wheel_left_link:
+        red/wheel_left_link:
           Value: false
-        red_wheel_right_link:
+        red/wheel_right_link:
           Value: false
       Marker Scale: 1
       Name: TF
@@ -166,17 +131,17 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        red_base_footprint:
-          red_base_link:
-            red_base_scan:
+        red/base_footprint:
+          red/base_link:
+            red/base_scan:
               {}
-            red_caster_back_link:
+            red/caster_back_link:
               {}
-            red_imu_link:
+            red/imu_link:
               {}
-            red_wheel_left_link:
+            red/wheel_left_link:
               {}
-            red_wheel_right_link:
+            red/wheel_right_link:
               {}
       Update Interval: 0
       Value: true
@@ -222,7 +187,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: red_base_footprint
+    Fixed Frame: red/base_footprint
     Frame Rate: 30
   Name: root
   Tools:
@@ -253,7 +218,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.2459927797317505
+      Distance: 1.0716825723648071
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -268,10 +233,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.144795536994934
+      Pitch: 0.964795708656311
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.8804050087928772
+      Yaw: 0.3354033827781677
     Saved: ~
 Window Geometry:
   Displays:
@@ -288,4 +253,4 @@ Window Geometry:
     collapsed: true
   Width: 1916
   X: 0
-  Y: 1080
+  Y: 0
