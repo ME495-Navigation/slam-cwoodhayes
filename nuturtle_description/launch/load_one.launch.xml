@@ -19,14 +19,13 @@
         value="$(find-pkg-share nuturtle_description)/urdf/turtlebot3_burger.urdf.xacro" />
 
     <!-- Read the URDF file content -->
-    <let name="robot_description" value="$(command '$(exec-in-pkg xacro xacro) $(var urdf_path) color:=$(var color)')" />
+    <let name="robot_description" value="$(command '$(exec-in-pkg xacro xacro) $(var urdf_path)')" />
 
     <!-- Robot State Publisher - publishes TF transforms based on URDF and joint states -->
     <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher"
         output="screen" namespace="$(var color)">
         <param name="robot_description" value="$(var robot_description)" />
-        <!-- Conor note - I opted to use the namespace arg in the URDF rather than a frame_prefix here. -->
-        <!-- <param name="frame_prefix" value="$(var color)_"/> -->
+        <param name="frame_prefix" value="$(var color)/"/>
     </node>
 
     <!-- Joint State Publisher - publishes default joint states if enabled -->
