@@ -24,7 +24,8 @@ class NUSimulator : public rclcpp::Node
 {
 public:
   /// @brief Node constructor
-  NUSimulator() : Node("nusimulator"), count_(0), gt_pose_()
+  NUSimulator()
+  : Node("nusimulator"), count_(0), gt_pose_()
   {
     // declare parameters
     // - rate
