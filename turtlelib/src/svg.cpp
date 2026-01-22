@@ -8,21 +8,21 @@ namespace turtlelib
     std::string Svg::draw(turtlelib::Point2D p)
     {
         auto id = std::to_string(elements_.size());
-        elements_.insert({id, std::make_unique<DrawablePoint>(p)});
+        elements_.insert({id, std::make_unique<DrawablePoint>(id, p)});
         return id;
     }
 
     std::string Svg::draw(turtlelib::Vector2D v)
     {
         auto id = std::to_string(elements_.size());
-        elements_.insert({id, std::make_unique<DrawableVector>(v)});
+        elements_.insert({id, std::make_unique<DrawableVector>(id, v)});
         return id;
     }
 
     std::string Svg::draw(turtlelib::Transform2D f, std::string name)
     {
         auto id = std::to_string(elements_.size());
-        elements_.insert({id, std::make_unique<DrawableFrame>(f, name)});
+        elements_.insert({id, std::make_unique<DrawableFrame>(id, f, name)});
         return id;
     }
 

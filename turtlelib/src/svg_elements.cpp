@@ -30,7 +30,7 @@ namespace turtlelib {
         auto spt = spec.user_point_to_svg_point(point_);
 
         return std::format(fmt,
-            0, spt.first, spt.second
+            id_, spt.first, spt.second
         );
     }
 
@@ -41,7 +41,7 @@ namespace turtlelib {
         )'''";
         auto vpt = spec.user_point_to_svg_point(Point2D() + vector_);
         return std::format(fmt,
-            0, vpt.first, spec.uf_origin_px.first, vpt.second, spec.uf_origin_px.second
+            id_, vpt.first, spec.uf_origin_px.first, vpt.second, spec.uf_origin_px.second
         );
     }
 
@@ -50,7 +50,7 @@ namespace turtlelib {
 <g id={}>
     <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="red" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
     <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="green" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
-    <text x="{:.6f}" y="{:.6f}">{a}</text>
+    <text x="{:.6f}" y="{:.6f}">{}</text>
 </g>
         )'''";
 

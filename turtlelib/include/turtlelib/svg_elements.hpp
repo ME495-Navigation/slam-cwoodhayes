@@ -45,12 +45,23 @@ namespace turtlelib
         /// @brief Render the element to an SVG string
         /// @return SVG representation of this element
         virtual std::string draw(SvgSpec spec) const = 0;
+        
+    protected:
+        /// @brief Constructor for drawable element with an ID
+        /// @param id unique identifier for this element in the SVG
+        explicit DrawingElement(std::string id) : id_(id) {}
+        
+        /// @brief The unique ID of this element
+        std::string id_;
     };
 
     /// @brief Drawable point element
     class DrawablePoint : public DrawingElement {
     public:
-        DrawablePoint(Point2D p) : point_(p) {}
+        /// @brief Construct a drawable point
+        /// @param id unique identifier in the SVG
+        /// @param p the point to draw
+        DrawablePoint(std::string id, Point2D p) : DrawingElement(id), point_(p) {}
         
         /// @brief Draw the point as an SVG element
         /// @return SVG string representation
@@ -63,7 +74,10 @@ namespace turtlelib
     /// @brief Drawable vector element
     class DrawableVector : public DrawingElement {
     public:
-        DrawableVector(Vector2D v): vector_(v) {}
+        /// @brief Construct a drawable vector
+        /// @param id unique identifier in the SVG
+        /// @param v the vector to draw
+        DrawableVector(std::string id, Vector2D v) : DrawingElement(id), vector_(v) {}
         
         /// @brief Draw the vector as an SVG element
         /// @return SVG string representation
@@ -77,9 +91,10 @@ namespace turtlelib
     class DrawableFrame : public DrawingElement {
     public:
         /// @brief Construct the drawable frame
+        /// @param id unique identifier in the SVG
         /// @param f transform to the frame
         /// @param name name of the frame
-        DrawableFrame(Transform2D f, std::string name) : frame_(f), name_(name) {}
+        DrawableFrame(std::string id, Transform2D f, std::string name) : DrawingElement(id), frame_(f), name_(name) {}
         
         /// @brief Draw the coordinate frame as an SVG element
         /// @return SVG string representation
