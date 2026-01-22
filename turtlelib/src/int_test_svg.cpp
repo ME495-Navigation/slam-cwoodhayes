@@ -23,6 +23,9 @@ int main() {
     auto f1_id = svg.draw(Transform2D{{0.0, 0.0}, 0.0}, "W");  // Identity at origin
     auto f2_id = svg.draw(Transform2D{{2.0, 1.0}, std::numbers::pi / 4}, "B");  // Frame rotated 45 degrees at (2, 1)
 
+    // draw an absolute vector
+    svg.draw({{1, 1}, {5, 2}});
+
     // Write to file with default SvgSpec
     svg.write_file("test_output.svg");
 

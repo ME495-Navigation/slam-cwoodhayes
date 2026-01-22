@@ -20,6 +20,13 @@ namespace turtlelib
         return id;
     }
 
+    std::string Svg::draw(turtlelib::AbsVector av, std::string color)
+    {
+        auto id = std::to_string(elements_.size());
+        elements_.insert({id, std::make_unique<DrawableAbsVector>(id, av, color)});
+        return id;
+    }
+
     std::string Svg::draw(turtlelib::Transform2D f, std::string name)
     {
         auto id = std::to_string(elements_.size());

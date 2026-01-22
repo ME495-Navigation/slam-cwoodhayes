@@ -57,6 +57,18 @@ namespace turtlelib {
         );
     }
 
+    std::string DrawableAbsVector::draw(SvgSpec spec) const {
+        // absolute vector with both head and tail specified
+        constexpr auto fmt = R"'''(
+<line id="{}" x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="{}" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
+        )'''";
+        auto tail_px = spec.user_point_to_svg_point(tail_);
+        auto head_px = spec.user_point_to_svg_point(head_);
+        return std::format(fmt,
+            id_, head_px.first, tail_px.first, head_px.second, tail_px.second, color_
+        );
+    }
+
     std::string DrawableFrame::draw(SvgSpec spec) const {
         constexpr auto fmt = R"'''(
 <g id="{}">

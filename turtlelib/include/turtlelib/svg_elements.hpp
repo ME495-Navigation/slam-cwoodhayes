@@ -92,6 +92,26 @@ namespace turtlelib
         Vector2D vector_;
     };
 
+    typedef std::pair<Point2D, Point2D> AbsVector;
+
+    /// @brief Drawable "absolute" vector element, in which both head and tail can be specified (rather than Vector2D, whose tail is always at origin).
+    class DrawableAbsVector : public DrawingElement {
+    public:
+        /// @brief Construct a drawable "absolute" vector
+        /// @param id unique identifier in the SVG
+        /// @param v the vector to draw
+        /// @param color stroke color (default: purple)
+        DrawableAbsVector(std::string id, AbsVector v, std::string color = "purple") : DrawingElement(id, color), head_(v.second), tail_(v.first) {}
+        
+        /// @brief Draw the vector as an SVG element
+        /// @return SVG string representation
+        std::string draw(SvgSpec spec) const override;
+        
+    private:
+        Point2D head_;
+        Point2D tail_;
+    };
+
     /// @brief Drawable coordinate frame element
     class DrawableFrame : public DrawingElement {
     public:
