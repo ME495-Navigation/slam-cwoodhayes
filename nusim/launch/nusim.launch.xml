@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <!-- Launch arguments -->
     <arg name="config_file" default="config/basic_world.yaml" description="YAML file to configure the simulator."/>
-
     <let name="rviz_config" value="$(find-pkg-share nusim)/config/nusim.rviz"/>
 
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml" >
@@ -15,6 +13,9 @@
         on_exit="shutdown"
         args="-d $(var rviz_config)"
         namespace="$(var color)">
+    </node>
+
+    <node pkg="nusim" exec="nusim">
     </node>
 
 </launch>
