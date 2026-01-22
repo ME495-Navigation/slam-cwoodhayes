@@ -5,6 +5,7 @@
 # Package List
 This repository consists of several ROS packages:
 - `nuturtle_description` - contains models, configs, and visualization files for the `turtlebot3` burger, adapted from the official [turtlebot3_description](https://index.ros.org/p/turtlebot3_description/) package.
+- `turtlelib` - a C++ library that implements a variety of geometric helper functions & visualization support using SVG's.
 
 # Nuturtle Description
 URDF files for Nuturtle 
@@ -14,7 +15,7 @@ URDF files for Nuturtle
 * The rqt_graph when all four robots are visualized (Nodes Only, Hide Debug) is:
 ![](images/rqt_graph.svg)
 
-# Launch File Details
+## Launch File Details
 * `ros2 launch nuturtle_description load_one.launch.xml --show-arguments`
 ```
   Arguments (pass arguments as '<name>:=<value>'):
@@ -35,3 +36,10 @@ URDF files for Nuturtle
 
 The `load_all` launchfile accepts no arguments; however, the above command will display 
 arguments from the `load_one` launchfile as shown above due to a known bug in `launch`. 
+
+# turtlelib Description
+Implements geometric primitives and operations upon them.
+- `angle.hpp` - helper functions for working with angles in degrees and radians
+- `geometry2d.hpp` - two-dimensional geometric primitives (Points, Vectors) and operations upon them
+- `se2d.hpp` - two-dimensional SE2 transformations + twists, that can operate on points + vectors
+- `svg.hpp` - visualization functions for the above using SVG files as output.
