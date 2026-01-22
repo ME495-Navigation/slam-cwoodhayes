@@ -6,6 +6,7 @@
 This repository consists of several ROS packages:
 - `nuturtle_description` - contains models, configs, and visualization files for the `turtlebot3` burger, adapted from the official [turtlebot3_description](https://index.ros.org/p/turtlebot3_description/) package.
 - `turtlelib` - a C++ library that implements a variety of geometric helper functions & visualization support using SVG's.
+- `nusim` - a custom turtlebot arena simulator based on RViz which supports our SLAM algorithm development
 
 # Nuturtle Description
 URDF files for Nuturtle 
@@ -43,3 +44,37 @@ Implements geometric primitives and operations upon them.
 - `geometry2d.hpp` - two-dimensional geometric primitives (Points, Vectors) and operations upon them
 - `se2d.hpp` - two-dimensional SE2 transformations + twists, that can operate on points + vectors
 - `svg.hpp` - visualization functions for the above using SVG files as output.
+
+# nusim Description
+A custom turtlebot arena simulator based on rviz. 
+
+## Simulator Setting Parameters
+The following parameters are available on the `nusimulator` node provided
+by this package to control the simulation:
+
+- `rate` - Simulation rate in Hz (default: 100.0)
+- `x0` - Initial ground-truth x position of the turtlebot (default: 0.0)
+- `y0` - Initial ground-truth y position of the turtlebot (default: 0.0)
+- `theta0` - Initial ground-truth orientation of the turtlebot (default: 0.0)
+- `arena_x_length` - Length of the arena in the world X direction (default: 10.0)
+- `arena_y_length` - Length of the arena in the world Y direction (default: 10.0)
+- `obstacles.x` - X coordinates of obstacles (default: empty)
+- `obstacles.y` - Y coordinates of obstacles (default: empty)
+- `obstacles.r` - Radius of obstacles (default: 0.0)
+
+
+## Launch File Details
+This package has one launch file (`nusim.launch.xml`) which spawns a single
+robot in an rviz view, as well as arena walls and cylindrical obstacles.
+The robot's position can be reset to its spawn point with the `/reset` service.
+
+* `ros2 launch nusim nusim.launch.xml --show-arguments`:
+```
+Arguments (pass arguments as '<name>:=<value>'):
+
+    'config_file':
+        YAML file to configure the simulator.
+        (default: 'config/basic_world.yaml')
+```
+
+![rviz screenshot from nusim](nusim/images/nusim1.png)
