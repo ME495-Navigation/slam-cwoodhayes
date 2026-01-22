@@ -69,6 +69,9 @@ target_link_libraries(converter turtlelib)
 add_executable(svg src/int_test_svg.cpp)
 target_link_libraries(svg turtlelib)
 
+add_executable(frame_main src/frame_main.cpp)
+target_link_libraries(frame_main turtlelib)
+
 # below is taken from matt's course notes:
 # https://nu-msr.github.io/navigation/lectures/cmake_basics.html#ament-cmake-1-P-1
 
