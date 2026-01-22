@@ -43,7 +43,7 @@ namespace turtlelib
         /// @param xbound X limits of the SVG canvas in your 2D coordinate frame (User Frame) 
         /// (can be arbitrary i.e. not corresponding to pixels)
         /// @param ybound Y limits of the SVG canvas in your 2D coordinate frame (User Frame).
-        Svg(std::pair<double, double> xbound, std::pair<double, double> ybound);
+        Svg(std::pair<double, double> xbound, std::pair<double, double> ybound) : xbound_(xbound), ybound_(ybound) {}
 
         /// @brief Draw a point on the canvas
         /// @param p point specified in User Frame
@@ -67,6 +67,9 @@ namespace turtlelib
 
     private:
         std::unordered_map<std::string, DrawingElement> elements_;
+
+        std::pair<double, double> xbound_;
+        std::pair<double, double> ybound_;
     };
 };
 
