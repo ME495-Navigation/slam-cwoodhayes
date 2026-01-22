@@ -15,6 +15,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(turtlelib REQUIRED)
 
 # Add nodes
@@ -22,7 +24,9 @@ add_executable(nusim src/nusim.cpp)
 target_link_libraries(nusim PUBLIC
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
+  ${geometry_msgs_TARGETS}
   rclcpp::rclcpp
+  tf2_ros::tf2_ros
   turtlelib::turtlelib
 )
 

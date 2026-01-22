@@ -10,6 +10,8 @@
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "tf2_ros/transform_broadcaster.h"
 
 #include "turtlelib/se2d.hpp"
 #include "turtlelib/geometry2d.hpp"
@@ -54,6 +56,8 @@ public:
             "~/reset",
             std::bind(&NUSimulator::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
         
+        tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+        
         RCLCPP_INFO(this->get_logger(), "nusimulator node constructed.");
     }
 
@@ -63,6 +67,27 @@ private:
         auto message = std_msgs::msg::UInt64();
         message.data = count_++;
         publisher_->publish(message);
+        
+        // broadcast transform from nusim/world to red/base_footprint
+        auto transform = geometry_msgs::msg::TransformStamped();
+        transform.header.stamp = this->get_clock()->now();
+        transform.header.frame_id = "nusim/world";
+        transform.child_frame_id = "red/base_footprint";
+        
+        // set translation from groundtruth pose
+        transform.transform.translation.x = gt_pose_.translation().x;
+        transform.transform.translation.y = gt_pose_.translation().y;
+        transform.transform.translation.z = 0.0;
+        
+        // set rotation, convert angle to quaternion restricted to 2d plane
+        double theta = gt_pose_.rotation();
+        double half_theta = theta / 2.0;
+        transform.transform.rotation.x = 0.0;
+        transform.transform.rotation.y = 0.0;
+        transform.transform.rotation.z = std::sin(half_theta);
+        transform.transform.rotation.w = std::cos(half_theta);
+        
+        tf_broadcaster_->sendTransform(transform);
     }
 
     void reset_callback(
@@ -87,6 +112,7 @@ private:
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
     /// @brief simulation timestep
     size_t count_;
