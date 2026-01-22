@@ -47,12 +47,15 @@ namespace turtlelib
         virtual std::string draw(SvgSpec spec) const = 0;
         
     protected:
-        /// @brief Constructor for drawable element with an ID
+        /// @brief Constructor for drawable element with an ID and color
         /// @param id unique identifier for this element in the SVG
-        explicit DrawingElement(std::string id) : id_(id) {}
+        /// @param color stroke color for this element
+        explicit DrawingElement(std::string id, std::string color) : id_(id), color_(color) {}
         
         /// @brief The unique ID of this element
         std::string id_;
+        /// @brief The stroke color for this element
+        std::string color_;
     };
 
     /// @brief Drawable point element
@@ -61,7 +64,8 @@ namespace turtlelib
         /// @brief Construct a drawable point
         /// @param id unique identifier in the SVG
         /// @param p the point to draw
-        DrawablePoint(std::string id, Point2D p) : DrawingElement(id), point_(p) {}
+        /// @param color stroke color (default: purple)
+        DrawablePoint(std::string id, Point2D p, std::string color = "purple") : DrawingElement(id, color), point_(p) {}
         
         /// @brief Draw the point as an SVG element
         /// @return SVG string representation
@@ -77,7 +81,8 @@ namespace turtlelib
         /// @brief Construct a drawable vector
         /// @param id unique identifier in the SVG
         /// @param v the vector to draw
-        DrawableVector(std::string id, Vector2D v) : DrawingElement(id), vector_(v) {}
+        /// @param color stroke color (default: purple)
+        DrawableVector(std::string id, Vector2D v, std::string color = "purple") : DrawingElement(id, color), vector_(v) {}
         
         /// @brief Draw the vector as an SVG element
         /// @return SVG string representation
@@ -94,7 +99,10 @@ namespace turtlelib
         /// @param id unique identifier in the SVG
         /// @param f transform to the frame
         /// @param name name of the frame
-        DrawableFrame(std::string id, Transform2D f, std::string name) : DrawingElement(id), frame_(f), name_(name) {}
+        /// @param x_color stroke color for x-axis (default: red)
+        /// @param y_color stroke color for y-axis (default: green)
+        DrawableFrame(std::string id, Transform2D f, std::string name, std::string x_color = "red", std::string y_color = "green") 
+            : DrawingElement(id, x_color), frame_(f), name_(name), y_color_(y_color) {}
         
         /// @brief Draw the coordinate frame as an SVG element
         /// @return SVG string representation
@@ -103,6 +111,7 @@ namespace turtlelib
     private:
         Transform2D frame_;
         std::string name_;
+        std::string y_color_;
     };
 };
 

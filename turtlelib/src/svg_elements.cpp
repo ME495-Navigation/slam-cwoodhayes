@@ -25,31 +25,31 @@ namespace turtlelib {
     std::string DrawablePoint::draw(SvgSpec spec) const {
 
         constexpr auto fmt = R"'''(
-<circle id={} cx="{:.1f}" cy="{:.1f}" r="3" stroke="purple" fill="purple" stroke-width="1"/>
+<circle id={} cx="{:.1f}" cy="{:.1f}" r="3" stroke="{}" fill="{}" stroke-width="1"/>
         )'''";
         auto spt = spec.user_point_to_svg_point(point_);
 
         return std::format(fmt,
-            id_, spt.first, spt.second
+            id_, spt.first, spt.second, color_, color_
         );
     }
 
     std::string DrawableVector::draw(SvgSpec spec) const {
         // vector tails are always at the origin
         constexpr auto fmt = R"'''(
-<line id={} x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="purple" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
+<line id={} x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="{}" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
         )'''";
         auto vpt = spec.user_point_to_svg_point(Point2D() + vector_);
         return std::format(fmt,
-            id_, vpt.first, spec.uf_origin_px.first, vpt.second, spec.uf_origin_px.second
+            id_, vpt.first, spec.uf_origin_px.first, vpt.second, spec.uf_origin_px.second, color_
         );
     }
 
     std::string DrawableFrame::draw(SvgSpec spec) const {
         constexpr auto fmt = R"'''(
 <g id={}>
-    <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="red" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
-    <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="green" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
+    <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="{}" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
+    <line x1="{:.6f}" x2="{:.6f}" y1="{:.6f}" y2="{:.6f}" stroke="{}" stroke-width="5" marker-start="url(#Arrow1Sstart)"/> /&gt;
     <text x="{:.6f}" y="{:.6f}">{}</text>
 </g>
         )'''";
