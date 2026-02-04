@@ -64,7 +64,7 @@ namespace turtlelib
 
     Vector2D normalize(Vector2D in)
     {
-        double magnitude = std::sqrt(in.x * in.x + in.y * in.y);
+        double magnitude = std::sqrt(in.x * in.x + in.y * in.y); // const auto
         
         if (magnitude == 0.0) {
             throw std::invalid_argument("Cannot normalize a zero vector");

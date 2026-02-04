@@ -10,8 +10,8 @@ namespace turtlelib
 {
     std::istream &operator>>(std::istream &is, Twist2D &tw)
     {
-        char c = is.peek();
-        bool brackets = (c == '<');
+        char c = is.peek(); // auto
+        bool brackets = (c == '<'); //auto
 
         if (brackets)
         {
@@ -90,13 +90,13 @@ namespace turtlelib
     Point2D Transform2D::operator()(Point2D p) const
     {
         // Rotate the point, then translate
-        double cos_theta = std::cos(tw_.omega);
+        double cos_theta = std::cos(tw_.omega); // auto
         double sin_theta = std::sin(tw_.omega);
 
         double rotated_x = p.x * cos_theta - p.y * sin_theta;
         double rotated_y = p.x * sin_theta + p.y * cos_theta;
 
-        return Point2D{rotated_x + tw_.x, rotated_y + tw_.y};
+        return Point2D{rotated_x + tw_.x, rotated_y + tw_.y}; // Point2D is redundant
     }
 
     Vector2D Transform2D::operator()(Vector2D v) const
@@ -106,7 +106,7 @@ namespace turtlelib
         double sin_theta = std::sin(tw_.omega);
 
         return Vector2D{v.x * cos_theta - v.y * sin_theta,
-                        v.x * sin_theta + v.y * cos_theta};
+                        v.x * sin_theta + v.y * cos_theta}; // no need to say Vector2D
     }
 
     Twist2D Transform2D::operator()(Twist2D v) const
@@ -142,7 +142,7 @@ namespace turtlelib
         double new_omega = normalize_angle(tw_.omega + rhs.rotation());
 
         // New translation is: current translation + rotated rhs translation
-        Vector2D rhs_trans = rhs.translation();
+        Vector2D rhs_trans = rhs.translation(); // auto
         double cos_theta = std::cos(tw_.omega);
         double sin_theta = std::sin(tw_.omega);
 
@@ -165,7 +165,7 @@ namespace turtlelib
 
     std::istream &operator>>(std::istream &is, Transform2D &tf)
     {
-        double angle, x, y;
+        double angle, x, y; // uninitialized variables
         char c = is.peek();
         bool brackets = (c == '{');
 

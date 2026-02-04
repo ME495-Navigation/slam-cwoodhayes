@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 project(turtlelib)
 
-set(CMAKE_CXX_COMPILER g++-14)
+set(CMAKE_CXX_COMPILER g++-14) # Don't set this in CMakeLists.txt, this is forcing your user to use this exact compiler
+
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
