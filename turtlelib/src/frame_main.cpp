@@ -11,7 +11,7 @@ using namespace std;
 
 
 turtlelib::Transform2D prompt_for_tf(std::string tf_name) {
-    auto example_tf = turtlelib::Transform2D({1, 2}, 3);
+    auto example_tf = turtlelib::Transform2D({1, 2}, 3.14);
     auto example_fmt = std::format("{}", example_tf);
     turtlelib::Transform2D tf;
 
@@ -81,9 +81,9 @@ int main() {
     Draw vb_hat with the tail located at in frame b, in brown.
     Draw vbhat with tail located at in frame c, in black.
 
-    Output vb expressed in frame and frame coordinates
-        Draw  va with the tail at in frame b, in purple.
-    Draw va with the tail at in frame c, in orange
+    Output vb expressed in frame {a} and frame {c} coordinates
+    Draw va with the tail at (0, 0) in frame b, in purple.
+    Draw vc with the tail at (0, 0) in frame c, in orange
 
     Output the drawing to /tmp/frames.svg.
     All outputs that are there to prompt the user should be written to stderr
@@ -122,10 +122,11 @@ int main() {
     print("p_b: {}\n", pb);
     print("p_c: {}\n\n", pc);
 
-    // Draw the points
+    // Draw the points (these are all the same point in different frames, so they should be drawn on top of each other in the svg, 
+    // just with different colors as specified in the prompt)
     svg.draw(pa, "purple");
     svg.draw(pb, "brown");
-    svg.draw(pc, "orange");
+    svg.draw(pa, "orange");
 
     // Prompt for vector in frame b
     auto vb = prompt_for_vector("v_b (in frame {b})");
@@ -145,7 +146,7 @@ int main() {
     print("v_a: {}\n", va);
     print("v_c: {}\n\n", vc);
     svg.draw(va, "purple");
-    svg.draw_in_frame(vc, Tac, "orange");
+    svg.draw_in_frame(va, Tac, "orange");
 
     // Write to file
     svg.write_file("/tmp/frames.svg");
