@@ -94,8 +94,6 @@ TEST_CASE("Transform a point", "[Miguel]")
 
 TEST_CASE("Transform a vector", "[Conor]")
 {
-    // no need for sections here. Sections are a form of fixturing
-    // but there is no common setup or teardown
     SECTION("origin, no transformation") {
         turtlelib::Transform2D tf;
         turtlelib::Vector2D vc;
@@ -401,7 +399,7 @@ TEST_CASE("Transform2D::inv()", "[Conor]")
     SECTION("Double inverse returns original") {
         Vector2D trans{1.0, 2.0};
         double angle = deg2rad(45);
-        Transform2D tf(trans, angle);
+        Transform2D tf{trans, angle};
         
         auto tf_inv_inv = tf.inv().inv();
         
