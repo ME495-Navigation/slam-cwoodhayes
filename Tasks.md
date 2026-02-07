@@ -16,8 +16,6 @@ Task B.4
 
 Task B.5
 Task B.6
-# note - for now, I've left the twist () unit test broken.
-# i don't feel like fixing it now and I think I can move on without it.
 Task B.7
 Task B.8
 Task B.9
@@ -27,8 +25,4 @@ Task C.2
 Task C.3
 Task C.4
 Task C.5
-# even though I use transient local, rviz doesn't show the walls or obstacles if i only publish them once.
-# i saw this issue in python as well. So i did add them to the timer callback instead of just calling 
-# in the constructor for simplicity; the wall data is small so this doesn't cost much.
-- This should be fixed, it is due to a bug in your rviz configuration.
 Task C.6

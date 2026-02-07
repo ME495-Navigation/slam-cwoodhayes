@@ -95,6 +95,9 @@ public:
     obstacles_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles", qos);
     RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
+
+    publish_arena();
+    publish_cyl_obstacles();
   }
 
 private:
@@ -103,14 +106,6 @@ private:
     auto message = std_msgs::msg::UInt64();
     message.data = count_++;
     publisher_->publish(message);
-
-    // publish arena & obstacle markers slowly
-    // rviz doesn't get them if they are only published once on startup
-    // This is due to a bug in your rviz configuration.
-    if (count_ % 100 == 0) {
-     publish_arena();
-      publish_cyl_obstacles();
-     }
 
     // broadcast transform from nusim/world to red/base_footprint
     auto transform = geometry_msgs::msg::TransformStamped();

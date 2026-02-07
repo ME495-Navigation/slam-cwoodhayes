@@ -8,6 +8,9 @@ Panels:
         - /Status1
         - /TF1
         - /TF1/Frames1
+        - /MarkerArray - Walls1
+        - /MarkerArray - Obstacles1
+        - /MarkerArray - Obstacles1/Topic1
       Splitter Ratio: 0.5
     Tree Height: 811
   - Class: rviz_common/Selection
@@ -192,7 +195,7 @@ Visualization Manager:
         red: true
       Topic:
         Depth: 5
-        Durability Policy: Volatile
+        Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /nusimulator/real_walls
@@ -201,10 +204,10 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray - Obstacles
       Namespaces:
-        {}
+        red: true
       Topic:
         Depth: 5
-        Durability Policy: Volatile
+        Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /nusimulator/real_obstacles
@@ -278,4 +281,4 @@ Window Geometry:
     collapsed: true
   Width: 1916
   X: 0
-  Y: 0
+  Y: 1080
