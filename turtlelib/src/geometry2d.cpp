@@ -29,12 +29,12 @@ namespace turtlelib
 
     Vector2D operator-(const Point2D & head, const Point2D & tail)
     {
-        return Vector2D{head.x - tail.x, head.y - tail.y};
+        return {head.x - tail.x, head.y - tail.y};
     }
 
     Point2D operator+(const Point2D & tail, const Vector2D & disp)
     {
-        return Point2D{tail.x + disp.x, tail.y + disp.y};
+        return {tail.x + disp.x, tail.y + disp.y};
     }
 
     std::ostream & operator<<(std::ostream & os, const Vector2D & v)

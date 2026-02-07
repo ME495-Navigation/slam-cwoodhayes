@@ -62,6 +62,47 @@ namespace turtlelib
         double y = 0.0;
     };
 
+    /// \brief Add two vectors
+    /// \param v1 The first vector
+    /// \param v2 The second vector
+    /// \return The vector sum v1 + v2
+    Vector2D operator+(const Vector2D& v1, const Vector2D& v2);
+
+    /// \brief Subtract two vectors
+    /// \param v1 The left-hand vector
+    /// \param v2 The right-hand vector
+    /// \return The vector difference v1 - v2
+    Vector2D operator-(const Vector2D& v1, const Vector2D& v2);
+
+    /// \brief Scale a vector by a scalar
+    /// \param v1 The vector to scale
+    /// \param scalar The scaling factor
+    /// \return The scaled vector
+    Vector2D operator*(const Vector2D& v1, const double scalar);
+
+    /// \brief Scale a vector by a scalar
+    /// \param scalar The scaling factor
+    /// \param v1 The vector to scale
+    /// \return The scaled vector
+    Vector2D operator*(const double scalar, const Vector2D& v1);
+
+    /// \brief Compute the dot product of two vectors
+    /// \param v1 The first vector
+    /// \param v2 The second vector
+    /// \return The dot product v1·v2
+    double dot(const Vector2D& v1, const Vector2D& v2);
+
+    /// \brief Compute the magnitude of a vector
+    /// \param v The input vector
+    /// \return The Euclidean norm of v
+    double magnitude(const Vector2D& v);
+
+    /// \brief Compute the angle between two vectors
+    /// \param v1 The first vector
+    /// \param v2 The second vector
+    /// \return The angle between v1 and v2 in radians
+    double angle(const Vector2D& v1, const Vector2D& v2);
+
     /// \brief Subtracting one point from another yields a vector
     /// \param head point corresponding to the head of the vector
     /// \param tail point corresponding to the tail of the vector

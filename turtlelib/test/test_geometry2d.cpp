@@ -1,6 +1,7 @@
 // ############ Begin_Citation[0] ###############
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "turtlelib/geometry2d.hpp"
 #include <cmath>
 
@@ -131,6 +132,58 @@ TEST_CASE("Normalize vectors", "Vector2D normalize")
     REQUIRE(vec2.y == 4.0/5.0);
 }
 
+TEST_CASE("Vector addition and subtraction", "Vector2D operators")
+{
+    turtlelib::Vector2D v1{1.0, 2.0};
+    turtlelib::Vector2D v2{3.0, -4.0};
+
+    auto sum = v1 + v2;
+    REQUIRE(sum.x == 4.0);
+    REQUIRE(sum.y == -2.0);
+
+    auto diff = v1 - v2;
+    REQUIRE(diff.x == -2.0);
+    REQUIRE(diff.y == 6.0);
+}
+
+TEST_CASE("Vector scaling", "Vector2D operator*")
+{
+    turtlelib::Vector2D v{1.5, -2.0};
+
+    auto scaled1 = v * 2.0;
+    REQUIRE(scaled1.x == 3.0);
+    REQUIRE(scaled1.y == -4.0);
+
+    auto scaled2 = 3.0 * v;
+    REQUIRE(scaled2.x == 4.5);
+    REQUIRE(scaled2.y == -6.0);
+}
+
+TEST_CASE("Dot product", "dot")
+{
+    turtlelib::Vector2D v1{1.0, 2.0};
+    turtlelib::Vector2D v2{3.0, 4.0};
+
+    auto res = turtlelib::dot(v1, v2);
+    REQUIRE(res == 11.0);
+}
+
+TEST_CASE("Magnitude", "magnitude")
+{
+    turtlelib::Vector2D v{3.0, 4.0};
+    auto mag = turtlelib::magnitude(v);
+    REQUIRE(mag == 5.0);
+}
+
+TEST_CASE("Angle between vectors", "angle")
+{
+    turtlelib::Vector2D x_axis{1.0, 0.0};
+    turtlelib::Vector2D y_axis{0.0, 1.0};
+
+    auto ang = turtlelib::angle(x_axis, y_axis);
+    REQUIRE_THAT(ang, Catch::Matchers::WithinAbs(M_PI_2, 1e-12));
+}
+
 // ############ End_Citation[0] ###############
 
 TEST_CASE("Format Point2D") {
@@ -165,3 +218,4 @@ TEST_CASE("Format Vector2D") {
     auto str = std::format("{}", p);
     REQUIRE(str == "[1.2, 3.4]");
 }
+
