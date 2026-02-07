@@ -2,6 +2,14 @@
 * Conor Hayes
 * Winter 2025
 
+# System Requirements
+This repo has been tested with the following system configuration:
+- ROS 2 Kilted Kaiju
+- g++-14 compiler
+- Ubuntu 24.04
+
+It likely works with other versions of the above, but this is untested.
+
 # Package List
 This repository consists of several ROS packages:
 - `nuturtle_description` - contains models, configs, and visualization files for the `turtlebot3` burger, adapted from the official [turtlebot3_description](https://index.ros.org/p/turtlebot3_description/) package.
