@@ -1,3 +1,4 @@
+# HOMEWORK 1
 Task 0.1
 Task 0.2
 Task 0.3
@@ -26,3 +27,6 @@ Task C.3
 Task C.4
 Task C.5
 Task C.6
+
+# HOMEWORK 2
+Task B.10
