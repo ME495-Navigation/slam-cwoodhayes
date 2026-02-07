@@ -198,7 +198,7 @@ class std::formatter<turtlelib::Twist2D, CharT>
 {
 private:
     char unit_spec = '\0'; // 'R', 'D', or '\0' for none
-    std::formatter<double, CharT> double_formatter;
+    std::string num_fmt_{};
 
 public:
     constexpr auto parse(std::format_parse_context& ctx) {
@@ -209,10 +209,23 @@ public:
             unit_spec = *it;
             ++it;
         }
-        
-        // Pass the remaining format spec to the double formatter
-        ctx.advance_to(it);
-        return double_formatter.parse(ctx);
+
+        auto spec = std::string{};
+        auto end = ctx.end();
+        while (it != end && *it != '}') {
+            spec.push_back(*it);
+            ++it;
+        }
+
+        if (spec.empty()) {
+            num_fmt_ = "{}";
+        } else {
+            num_fmt_.reserve(spec.size() + 3);
+            num_fmt_ = "{:";
+            num_fmt_ += spec;
+            num_fmt_ += "}";
+        }
+        return it;
     }
 
     auto format(const turtlelib::Twist2D& tw, std::format_context& ctx) const {
@@ -226,22 +239,12 @@ public:
         } else if (unit_spec == 'R' || unit_spec == 'r') {
             unit_str = " rad/s";
         }
-        
-        // Format as "<omega [unit], x, y>"
-        auto out = ctx.out();
-        *out++ = '<';
-        out = double_formatter.format(omega, ctx);
-        for (auto c : unit_str) {
-            *out++ = c;
-        }
-        *out++ = ',';
-        *out++ = ' ';
-        out = double_formatter.format(tw.x, ctx);
-        *out++ = ',';
-        *out++ = ' ';
-        out = double_formatter.format(tw.y, ctx);
-        *out++ = '>';
-        return out;
+
+        auto omega_str = std::vformat(num_fmt_, std::make_format_args(omega));
+        auto x_str = std::vformat(num_fmt_, std::make_format_args(tw.x));
+        auto y_str = std::vformat(num_fmt_, std::make_format_args(tw.y));
+
+        return std::format_to(ctx.out(), "<{}{}, {}, {}>", omega_str, unit_str, x_str, y_str);
     }
 };
 #endif
