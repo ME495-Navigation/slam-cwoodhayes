@@ -135,7 +135,7 @@ class std::formatter<turtlelib::Transform2D, CharT>
 {
 private:
     char unit_spec = '\0'; // 'R', 'D', or '\0' for none
-    std::formatter<double, CharT> double_formatter;
+    std::string num_fmt_{};
 
 public:
     constexpr auto parse(std::format_parse_context& ctx) {
@@ -146,17 +146,29 @@ public:
             unit_spec = *it;
             ++it;
         }
-        
-        // Pass the remaining format spec to the double formatter
-        ctx.advance_to(it);
-        return double_formatter.parse(ctx);
+
+        auto spec = std::string{};
+        auto end = ctx.end();
+        while (it != end && *it != '}') {
+            spec.push_back(*it);
+            ++it;
+        }
+
+        if (spec.empty()) {
+            num_fmt_ = "{}";
+        } else {
+            num_fmt_.reserve(spec.size() + 3);
+            num_fmt_ = "{:";
+            num_fmt_ += spec;
+            num_fmt_ += "}";
+        }
+        return it;
     }
 
     auto format(const turtlelib::Transform2D& tf, std::format_context& ctx) const {
         auto angle = tf.rotation();
         auto trans = tf.translation();
-        
-        // Convert to degrees if D was specified
+
         std::string unit_str = "";
         if (unit_spec == 'D' || unit_spec == 'd') {
             angle = turtlelib::rad2deg(angle);
@@ -164,23 +176,12 @@ public:
         } else if (unit_spec == 'R' || unit_spec == 'r') {
             unit_str = " rad";
         }
-        // it is possible to implement this without going so low level into iterators
-        // by using format_to
-        // Format as "{angle [unit], x y}"
-        auto out = ctx.out();
-        *out++ = '{';
-        out = double_formatter.format(angle, ctx);
-        for (auto c : unit_str) {
-            *out++ = c;
-        }
-        *out++ = ',';
-        *out++ = ' ';
-        out = double_formatter.format(trans.x, ctx);
-        *out++ = ',';
-        *out++ = ' ';
-        out = double_formatter.format(trans.y, ctx);
-        *out++ = '}';
-        return out;
+
+        auto angle_str = std::vformat(num_fmt_, std::make_format_args(angle));
+        auto x_str = std::vformat(num_fmt_, std::make_format_args(trans.x));
+        auto y_str = std::vformat(num_fmt_, std::make_format_args(trans.y));
+
+        return std::format_to(ctx.out(), "{{{}{}, {}, {}}}", angle_str, unit_str, x_str, y_str);
     }
 };
 
