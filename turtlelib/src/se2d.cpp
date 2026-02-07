@@ -8,6 +8,27 @@
 
 namespace turtlelib
 {
+
+    Twist2D & Twist2D::operator*=(const double scalar)
+    {
+        omega *= scalar;
+        x *= scalar;
+        y *= scalar;
+        return *this;
+    }
+
+    Twist2D operator*(const Twist2D& tw, const double scalar)
+    {
+        auto res = tw;
+        res *= scalar;
+        return res;
+    }
+
+    Twist2D operator*(const double scalar, const Twist2D& tw)
+    {
+        return tw * scalar;
+    }
+
     std::istream &operator>>(std::istream &is, Twist2D &tw)
     {
         char c = is.peek(); // auto

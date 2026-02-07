@@ -8,6 +8,21 @@
 using namespace turtlelib;
 using namespace Catch::Matchers;
 
+TEST_CASE("Twist2D scaling", "[Conor]")
+{
+    Twist2D tw{1.0, 2.0, 3.0};
+
+    auto scaled1 = tw * 2.0;
+    REQUIRE(scaled1.omega == 2.0);
+    REQUIRE(scaled1.x == 4.0);
+    REQUIRE(scaled1.y == 6.0);
+
+    tw *= 2.0;
+    REQUIRE(tw.omega == 2.0);
+    REQUIRE(tw.x == 4.0);
+    REQUIRE(tw.y == 6.0);
+}
+
 TEST_CASE("Twist2D operator>>", "[Miguel]")
 {
     std::stringstream stream{"1 1 1"};

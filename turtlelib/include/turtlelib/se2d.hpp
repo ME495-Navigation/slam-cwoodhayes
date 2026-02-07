@@ -24,8 +24,22 @@ namespace turtlelib
 
         /// \brief the linear y velocity
         double y = 0.0;
+
+        /// \brief scale a twist by a scalar
+        /// \param scalar The scaling factor
+        /// \return A reference to this twist after scaling
+        Twist2D & operator*=(const double scalar);
     };
 
+    /// \brief scale a twist by a scalar
+    /// \param tw The twist to scale
+    /// \param scalar The scaling factor
+    Twist2D operator*(const Twist2D& tw, const double scalar);
+
+    /// \brief scale a twist by a scalar
+    /// \param scalar The scaling factor
+    /// \param tw The twist to scale
+    Twist2D operator*(const double scalar, const Twist2D& tw);
 
     /// \brief read the Twist2D in the format "<w [<unit>], x, y>" or as "w [<unit>] x y"
     /// The "" are not part of the input.
