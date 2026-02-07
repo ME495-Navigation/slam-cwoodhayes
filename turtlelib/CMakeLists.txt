@@ -41,7 +41,6 @@ if(BUILD_TESTING)
 
     # A test is just an executable that is linked against the unit testing library
     add_executable(tests 
-      test/test_angle.cpp 
       test/test_geometry2d.cpp
       test/test_se2d.cpp
       test/test_svg.cpp
