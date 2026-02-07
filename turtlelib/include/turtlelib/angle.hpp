@@ -25,7 +25,7 @@ namespace turtlelib
     constexpr double deg2rad(double deg)
     {
         using std::numbers::pi;
-        return deg / 360.0 * 2 * pi; // 2.0
+        return deg / 360.0 * 2.0 * pi;
     }
 
     /// \brief Convert radians to degrees
@@ -34,7 +34,7 @@ namespace turtlelib
     constexpr double rad2deg(double rad)
     {
         using std::numbers::pi;
-        return rad / (2 * pi) * 360.0; //2.0
+        return rad / (2.0 * pi) * 360.0;
     }
 
     /// \brief Wrap an angle to (-PI, PI]
@@ -44,20 +44,13 @@ namespace turtlelib
     {
         using std::numbers::pi;
 
-        // need to do modulo manually to comply with constexpr
-        // Not true in C++ 23: https://en.cppreference.com/w/cpp/numeric/math/fmod
-        auto quo = rad / (2.0 * pi); // const
-        auto floor_quo = static_cast<long long>(quo); // const
-        auto rem = rad - floor_quo * (2.0 * pi);
+        auto rem = std::fmod(rad, 2.0 * pi);
 
         if (rem > pi) {
             rem -= 2.0*pi;
         }
-        if (rem < -pi) {  // could be else if
+        else if (rem <= -pi) {
             rem += 2.0*pi;
-        }
-        if (rem == -pi) { // could add to the previous case
-            rem = pi;
         }
         return rem;
     }
