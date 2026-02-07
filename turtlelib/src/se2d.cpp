@@ -29,6 +29,30 @@ namespace turtlelib
         return tw * scalar;
     }
 
+    Transform2D integrate_twist(const Twist2D& tw)
+    {
+        if (std::abs(tw.omega) < 1e-9)
+        {
+            // Pure translation
+            return Transform2D(Vector2D{tw.x, tw.y}, 0.0);
+        }
+        else
+        {
+            // Rotation + translation
+            // to do this, we translate to the center of rotation, rotate, then translate back
+
+            // displacement from the body frame to the center of rotation
+            // (we get this using the unit twist, hence division by omega)
+            auto p_bs = Vector2D{-tw.y / tw.omega, tw.x / tw.omega};
+
+            auto T_bs = Transform2D(p_bs, 0);
+            auto T_sb = T_bs.inv();
+            auto T_rot = Transform2D(tw.omega);
+
+            return T_bs * T_rot * T_sb;
+        }
+    }
+
     std::istream &operator>>(std::istream &is, Twist2D &tw)
     {
         char c = is.peek(); // auto
