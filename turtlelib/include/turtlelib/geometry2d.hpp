@@ -145,16 +145,28 @@ class std::formatter<turtlelib::Vector2D, CharT>
 {
 public:
     constexpr auto parse(std::format_parse_context& ctx) {
-        // nothing to be done here
-        // you need to handle the format specifiers for doubles
-        return ctx.begin();
+        auto spec_ = std::string{};
+        auto it = ctx.begin();
+        auto end = ctx.end();
+        while (it != end && *it != '}') {
+            spec_.push_back(*it);
+            ++it;
+        }
+
+        fmt_ = "[{:";
+        fmt_ += spec_;
+        fmt_ += "}, {:";
+        fmt_ += spec_;
+        fmt_ += "}]";
+        return it;
     }
 
     auto format(const turtlelib::Vector2D& v, std::format_context& ctx) const {
-        std::ostringstream oss;
-        oss << v;
-        return std::format_to(ctx.out(), "{}", oss.str());
+        return std::vformat_to(ctx.out(), fmt_, std::make_format_args(v.x, v.y));
     }
+
+private:
+    std::string fmt_{};
 };
 
 #endif

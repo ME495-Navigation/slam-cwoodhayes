@@ -149,6 +149,15 @@ TEST_CASE("Format Point2D with precision specifier") {
     REQUIRE(str == "(1.20, 3.40)");
 }
 
+TEST_CASE("Format Vector2D with precision specifier") {
+    turtlelib::Vector2D v {
+        1.2, 3.4
+    };
+    auto str = std::format("{:.2f}", v);
+    REQUIRE(str == "[1.20, 3.40]");
+}
+
+
 TEST_CASE("Format Vector2D") {
     turtlelib::Vector2D p {
         1.2, 3.4
