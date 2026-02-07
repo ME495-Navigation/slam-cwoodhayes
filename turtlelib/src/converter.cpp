@@ -12,8 +12,8 @@
 int main() {
     while (true) {
         std::print("Enter an angle: <angle> <deg|rad>, (CTRL-D to exit)\n");
-        double angle; // ninitialized varaibles
-        double converted_angle;
+        auto angle = 0.0;
+        auto converted_angle = 0.0;
         std::string unit;
         std::string other_unit;
         constexpr std::string_view errstr = "Invalid input: please enter <angle> <deg|rad>, (CTRL-D to exit)\n";
