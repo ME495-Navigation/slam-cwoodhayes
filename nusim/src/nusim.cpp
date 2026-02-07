@@ -88,6 +88,7 @@ public:
     // create arena walls publisher
     rclcpp::QoS qos(10);
     qos.transient_local();
+    walls_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/real_walls", qos);
 
     // create obstacles publisher
