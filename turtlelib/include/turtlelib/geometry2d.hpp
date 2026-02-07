@@ -7,6 +7,7 @@
 // NOTE: Put additional include files here
 #include<format>
 #include<sstream>
+#include<string>
 
 // Note: <iosfwd> contains forward definitions for iostream objects
 // allowing implementation of custom iostream operators without
@@ -110,14 +111,30 @@ class std::formatter<turtlelib::Point2D, CharT>
 {
 public:
     constexpr auto parse(std::format_parse_context& ctx) {
-        // nothing to be done here
-        // Not true, the formatting specifiers for floating-point numbers should be specified here
-        return ctx.begin();
+        // store the format specifiers so we can apply them to both x and y
+        auto spec_ = std::string{};
+        auto it = ctx.begin();
+        auto end = ctx.end();
+        while (it != end && *it != '}') {
+            spec_.push_back(*it);
+            ++it;
+        }
+        
+        // build the actual format string
+        fmt_ = "({:";
+        fmt_ += spec_;
+        fmt_ += "}, {:";
+        fmt_ += spec_;
+        fmt_ += "})";
+        return it;
     }
     
     auto format(const turtlelib::Point2D& p, std::format_context& ctx) const {
-        return std::format_to(ctx.out(), "({}, {})", p.x, p.y);
+        return std::vformat_to(ctx.out(), fmt_, std::make_format_args(p.x, p.y));
     }
+
+private:
+    std::string fmt_{};
 };
 
 /// \brief A formatter for Vector2D
