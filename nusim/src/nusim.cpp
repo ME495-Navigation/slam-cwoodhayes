@@ -27,8 +27,10 @@ public:
   NUSimulator()
   : Node("nusimulator"), count_(0), gt_pose_()
   {
+    // unnecessary use of this->
     // declare parameters
     // - rate
+
     auto rate_desc = rcl_interfaces::msg::ParameterDescriptor();
     rate_desc.description = "Sim rate in Hz";
     this->declare_parameter("rate", 100.0, rate_desc);
@@ -91,7 +93,7 @@ public:
     // create arena walls publisher
     rclcpp::QoS qos(10);
     qos.transient_local();
-    walls_publisher_ =
+    walls_publisher_ = // unnecessary use of this->
       this->create_publisher<visualization_msgs::msg::MarkerArray>("~/real_walls", qos);
 
     // create obstacles publisher
@@ -110,14 +112,15 @@ private:
 
     // publish arena & obstacle markers slowly
     // rviz doesn't get them if they are only published once on startup
+    // This is due to a bug in your rviz configuration.
     if (count_ % 100 == 0) {
-      publish_arena();
+     publish_arena();
       publish_cyl_obstacles();
-    }
+     }
 
     // broadcast transform from nusim/world to red/base_footprint
     auto transform = geometry_msgs::msg::TransformStamped();
-    transform.header.stamp = this->get_clock()->now();
+    transform.header.stamp = this->get_clock()->now(); // unnecessary this
     transform.header.frame_id = "nusim/world";
     transform.child_frame_id = "red/base_footprint";
 
@@ -127,7 +130,7 @@ private:
     transform.transform.translation.z = 0.0;
 
     // set rotation, convert angle to quaternion restricted to 2d plane
-    double theta = gt_pose_.rotation();
+    double theta = gt_pose_.rotation(); // const auto
     double half_theta = theta / 2.0;
     transform.transform.rotation.x = 0.0;
     transform.transform.rotation.y = 0.0;
@@ -154,7 +157,7 @@ private:
   /// @return tf for the initial pose (x0, y0, theta0)
   turtlelib::Transform2D get_pose0()
   {
-    double x = this->get_parameter("x0").as_double();
+      double x = this->get_parameter("x0").as_double(); // nnecessary this, probably these temporaries are unnecessary overall
     double y = this->get_parameter("y0").as_double();
     double theta = this->get_parameter("theta0").as_double();
     return {{x, y}, theta};

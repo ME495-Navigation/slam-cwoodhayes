@@ -94,6 +94,8 @@ TEST_CASE("Transform a point", "[Miguel]")
 
 TEST_CASE("Transform a vector", "[Conor]")
 {
+    // no need for sections here. Sections are a form of fixturing
+    // but there is no common setup or teardown
     SECTION("origin, no transformation") {
         turtlelib::Transform2D tf;
         turtlelib::Vector2D vc;
@@ -157,6 +159,7 @@ TEST_CASE("Transform a twist", "[Conor]") {
     }
 
     SECTION("Transform a non-null twist") {
+        // Is this still being skipped?
         // SKIP("This unit test breaks. I think it's because my kevin output is wrong. Revisiting later.");
         // validated using kevin's modern robotics library
         auto tw = Twist2D {std::numbers::pi, 3, 4};

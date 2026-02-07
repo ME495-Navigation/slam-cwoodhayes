@@ -111,6 +111,7 @@ class std::formatter<turtlelib::Point2D, CharT>
 public:
     constexpr auto parse(std::format_parse_context& ctx) {
         // nothing to be done here
+        // Not true, the formatting specifiers for floating-point numbers should be specified here
         return ctx.begin();
     }
     
@@ -128,6 +129,7 @@ class std::formatter<turtlelib::Vector2D, CharT>
 public:
     constexpr auto parse(std::format_parse_context& ctx) {
         // nothing to be done here
+        // you need to handle the format specifiers for doubles
         return ctx.begin();
     }
 

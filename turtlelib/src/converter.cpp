@@ -12,7 +12,7 @@
 int main() {
     while (true) {
         std::print("Enter an angle: <angle> <deg|rad>, (CTRL-D to exit)\n");
-        double angle;
+        double angle; // ninitialized varaibles
         double converted_angle;
         std::string unit;
         std::string other_unit;

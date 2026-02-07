@@ -164,7 +164,8 @@ public:
         } else if (unit_spec == 'R' || unit_spec == 'r') {
             unit_str = " rad";
         }
-        
+        // it is possible to implement this without going so low level into iterators
+        // by using format_to
         // Format as "{angle [unit], x y}"
         auto out = ctx.out();
         *out++ = '{';
