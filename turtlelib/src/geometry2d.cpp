@@ -32,6 +32,41 @@ namespace turtlelib
         return {head.x - tail.x, head.y - tail.y};
     }
 
+    Vector2D operator+(const Vector2D& v1, const Vector2D& v2)
+    {
+        return {v1.x + v2.x, v1.y + v2.y};
+    }
+
+    Vector2D operator-(const Vector2D& v1, const Vector2D& v2)
+    {
+        return {v1.x - v2.x, v1.y - v2.y};
+    }
+
+    Vector2D operator*(const Vector2D& v1, const double scalar)
+    {
+        return {v1.x * scalar, v1.y * scalar};
+    }
+
+    Vector2D operator*(const double scalar, const Vector2D& v1)
+    {
+        return {v1.x * scalar, v1.y * scalar};
+    }
+
+    double dot(const Vector2D& v1, const Vector2D& v2)
+    {
+        return v1.x * v2.x + v1.y * v2.y;
+    }
+
+    double magnitude(const Vector2D& v)
+    {
+        return std::sqrt(v.x * v.x + v.y * v.y);
+    }
+
+    double angle(const Vector2D& v1, const Vector2D& v2)
+    {
+        return std::acos(dot(v1, v2) / (magnitude(v1) * magnitude(v2)));
+    }
+
     Point2D operator+(const Point2D & tail, const Vector2D & disp)
     {
         return {tail.x + disp.x, tail.y + disp.y};
