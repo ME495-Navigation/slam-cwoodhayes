@@ -8,6 +8,27 @@
 
 namespace turtlelib
 {
+    Vector2D & Vector2D::operator+=( const Vector2D& rhs )
+    {
+        x += rhs.x;
+        y += rhs.y;
+        return *this;
+    }
+
+    Vector2D & Vector2D::operator-=( const Vector2D& rhs )
+    {
+        x -= rhs.x;
+        y -= rhs.y;
+        return *this;
+    }
+
+    Vector2D & Vector2D::operator*=( const double scalar )
+    {
+        x *= scalar;
+        y *= scalar;
+        return *this;
+    }
+
     std::istream & operator>>(std::istream & is, Point2D & p)
     {
         char c = is.peek();
@@ -27,6 +48,8 @@ namespace turtlelib
         return is;
     }
 
+    
+
     Vector2D operator-(const Point2D & head, const Point2D & tail)
     {
         return {head.x - tail.x, head.y - tail.y};
@@ -34,22 +57,28 @@ namespace turtlelib
 
     Vector2D operator+(const Vector2D& v1, const Vector2D& v2)
     {
-        return {v1.x + v2.x, v1.y + v2.y};
+        auto res = v1;
+        res += v2;
+        return res;
     }
 
     Vector2D operator-(const Vector2D& v1, const Vector2D& v2)
     {
-        return {v1.x - v2.x, v1.y - v2.y};
+        auto res = v1;
+        res -= v2;
+        return res;
     }
 
     Vector2D operator*(const Vector2D& v1, const double scalar)
     {
-        return {v1.x * scalar, v1.y * scalar};
+        auto res = v1;
+        res *= scalar;
+        return res;
     }
 
     Vector2D operator*(const double scalar, const Vector2D& v1)
     {
-        return {v1.x * scalar, v1.y * scalar};
+        return v1 * scalar;
     }
 
     double dot(const Vector2D& v1, const Vector2D& v2)

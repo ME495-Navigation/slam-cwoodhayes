@@ -60,6 +60,21 @@ namespace turtlelib
 
         /// \brief the y coordinate
         double y = 0.0;
+
+        /// @brief Adds another vector to this vector
+        /// @param rhs The vector to add
+        /// @return A reference to this vector after addition
+        Vector2D & operator+=( const Vector2D& rhs );
+
+        /// @brief Subtracts another vector from this vector
+        /// @param rhs The vector to subtract
+        /// @return A reference to this vector after subtraction
+        Vector2D & operator-=( const Vector2D& rhs );
+
+        /// @brief Scales this vector by a scalar
+        /// @param scalar The scaling factor
+        /// @return A reference to this vector after scaling
+        Vector2D & operator*=( const double scalar );
     };
 
     /// \brief Add two vectors

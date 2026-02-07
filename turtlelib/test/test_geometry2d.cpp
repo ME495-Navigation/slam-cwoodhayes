@@ -144,6 +144,14 @@ TEST_CASE("Vector addition and subtraction", "Vector2D operators")
     auto diff = v1 - v2;
     REQUIRE(diff.x == -2.0);
     REQUIRE(diff.y == 6.0);
+
+    v1 += v2;
+    REQUIRE(v1.x == 4.0);
+    REQUIRE(v1.y == -2.0);
+
+    v1 -= v2;
+    REQUIRE(v1.x == 1.0);
+    REQUIRE(v1.y == 2.0);
 }
 
 TEST_CASE("Vector scaling", "Vector2D operator*")
@@ -157,6 +165,10 @@ TEST_CASE("Vector scaling", "Vector2D operator*")
     auto scaled2 = 3.0 * v;
     REQUIRE(scaled2.x == 4.5);
     REQUIRE(scaled2.y == -6.0);
+
+    v *= 2.0;
+    REQUIRE(v.x == 3.0);
+    REQUIRE(v.y == -4.0);
 }
 
 TEST_CASE("Dot product", "dot")
