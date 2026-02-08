@@ -6,13 +6,16 @@
 #include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "turtlelib/diff_drive.hpp"
+#include "turtlelib/angle.hpp"
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
+#include "tf2_ros/transform_broadcaster.h"
 
 #include <functional>
+#include <ranges>
 
 /// \brief Node for controlling the turtle in turtlesim.
 ///
@@ -72,20 +75,23 @@ public:
       desc.description = "Distance between the wheels";
       declare_parameter("track_width", 0.5, desc);
     }
-    auto body_id = get_parameter("body_id").as_string();
-    auto odom_id = get_parameter("odom_id").as_string();
-    auto wheel_left = get_parameter("wheel_left").as_string();
-    auto wheel_right = get_parameter("wheel_right").as_string();
+    body_id_ = get_parameter("body_id").as_string();
+    odom_id_ = get_parameter("odom_id").as_string();
+    wheel_left_ = get_parameter("wheel_left").as_string();
+    wheel_right_ = get_parameter("wheel_right").as_string();
+
     auto wheel_radius = get_parameter("wheel_radius").as_double();
     auto track_width = get_parameter("track_width").as_double();
 
-    if (wheel_left.empty() || wheel_right.empty()) {
+    if (wheel_left_.empty() || wheel_right_.empty()) {
         RCLCPP_ERROR(get_logger(), "wheel_left and wheel_right parameters must be specified");
         throw std::runtime_error("Missing required wheel parameters");
     }
 
     // construct DiffDrive object with parameters
     diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
+
+    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
     RCLCPP_INFO(get_logger(), "odometry node constructed.");
   }
@@ -94,13 +100,72 @@ private:
   /// @brief Callback function for joint_states topic. Computes and publishes tbot3 odometry.
   void joint_states_cb(const sensor_msgs::msg::JointState::SharedPtr msg)
   {
+    // grab new wheel states from the msg by their names
+    auto left_it = std::ranges::find(msg->name, wheel_left_);
+    auto right_it = std::ranges::find(msg->name, wheel_right_);
+    if (left_it == msg->name.end() || right_it == msg->name.end()) {
+        auto errmsg = std::format("Wheel joint names '{}' and '{}' not found in joint_states message", wheel_left_, wheel_right_);
+        RCLCPP_ERROR(get_logger(), errmsg.c_str());
+        return;
+    }
+    auto left_idx = std::distance(msg->name.begin(), left_it);
+    auto right_idx = std::distance(msg->name.begin(), right_it);
+    auto left_pos = msg->position[left_idx];
+    auto right_pos = msg->position[right_idx];
+
+    // calculate odometry with FK using diff_drive.
+    // returns transform odom -> body
+    auto T_odomb = diff_drive_->forward_kinematics(left_pos, right_pos);
+
     auto odom_msg = nav_msgs::msg::Odometry();
+    // header specifies timestamp + parent frame (odom)
+    odom_msg.header.stamp = msg->header.stamp;
+    odom_msg.header.frame_id = odom_id_;
+
+    // child frame is the body frame of the robot (base_footprint)
+    odom_msg.child_frame_id = body_id_;
+
+    // fill in the pose.
+    odom_msg.pose.pose.position.x = T_odomb.translation().x;
+    odom_msg.pose.pose.position.y = T_odomb.translation().y;
+    odom_msg.pose.pose.position.z = 0.0;
+    const auto quat = turtlelib::angle_to_2d_planar_quaternion(T_odomb.rotation());
+    odom_msg.pose.pose.orientation.x = quat[0];
+    odom_msg.pose.pose.orientation.y = quat[1];
+    odom_msg.pose.pose.orientation.z = quat[2];
+    odom_msg.pose.pose.orientation.w = quat[3];
+
+    // fill in the twist in the body frame.
+    // odom_msg.twist.twist.angular.z = 
     // TODO
+
+    // publish odometry msg
+    odom_pub_->publish(odom_msg);
+
+    // now, publish the TF equivalent.
+    auto tf = geometry_msgs::msg::TransformStamped();
+    tf.header.stamp = get_clock()->now();
+    tf.header.frame_id = odom_id_;
+    tf.child_frame_id = body_id_;
+
+    tf.transform.translation.x = T_odomb.translation().x;
+    tf.transform.translation.y = T_odomb.translation().y;
+    tf.transform.translation.z = 0.0;
+    tf.transform.rotation.x = quat[0];
+    tf.transform.rotation.y = quat[1];
+    tf.transform.rotation.z = quat[2];
+    tf.transform.rotation.w = quat[3];
+    tf_broadcaster_->sendTransform(tf);
   }
 
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
+  std::string body_id_;
+  std::string odom_id_;
+  std::string wheel_left_;
+  std::string wheel_right_;
 };
 
 int main(int argc, char * argv[])
