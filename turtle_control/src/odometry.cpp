@@ -72,8 +72,20 @@ public:
       desc.description = "Distance between the wheels";
       declare_parameter("track_width", 0.5, desc);
     }
+    auto body_id = get_parameter("body_id").as_string();
+    auto odom_id = get_parameter("odom_id").as_string();
+    auto wheel_left = get_parameter("wheel_left").as_string();
+    auto wheel_right = get_parameter("wheel_right").as_string();
+    auto wheel_radius = get_parameter("wheel_radius").as_double();
+    auto track_width = get_parameter("track_width").as_double();
+
+    if (wheel_left.empty() || wheel_right.empty()) {
+        RCLCPP_ERROR(get_logger(), "wheel_left and wheel_right parameters must be specified");
+        throw std::runtime_error("Missing required wheel parameters");
+    }
+
     // construct DiffDrive object with parameters
-    // diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
+    diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
 
     RCLCPP_INFO(get_logger(), "odometry node constructed.");
   }

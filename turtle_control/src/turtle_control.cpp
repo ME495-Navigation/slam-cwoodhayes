@@ -104,7 +104,7 @@ private:
 
     auto joint_states = sensor_msgs::msg::JointState{};
     joint_states.header.stamp = now();
-    joint_states.name = {"left_wheel", "right_wheel"};
+    joint_states.name = {"wheel_left_joint", "wheel_right_joint"};
     joint_states.position = diff_drive_->get_wheel_angles();
     joint_states.velocity = diff_drive_->get_wheel_velocities();
     joint_states_pub_->publish(joint_states);

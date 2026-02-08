@@ -38,9 +38,14 @@
     </include>
 
     <node pkg="turtle_control" exec="turtle_control" name="turtle_control" output="screen"
-        on_exit="shutdown"
-    >
+        on_exit="shutdown">
         <param from="$(var diff_params)"/>
+    </node>
+    <node pkg="turtle_control" exec="odometry" name="odometry" output="screen"
+        on_exit="shutdown">
+        <param from="$(var diff_params)"/>
+        <param name="wheel_left" value="wheel_left_joint"/>
+        <param name="wheel_right" value="wheel_right_joint"/>
     </node>
 
     <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
