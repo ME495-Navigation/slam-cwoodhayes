@@ -119,7 +119,7 @@ private:
     transform.transform.translation.z = 0.0;
 
     // set rotation, convert angle to quaternion restricted to 2d plane
-    const auto theta = gt_pose_.rotation(); 
+    const auto theta = gt_pose_.rotation();
     const auto half_theta = theta / 2.0;
     transform.transform.rotation.x = 0.0;
     transform.transform.rotation.y = 0.0;
