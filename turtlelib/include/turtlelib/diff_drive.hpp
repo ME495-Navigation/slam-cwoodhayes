@@ -6,11 +6,14 @@ namespace turtlelib
     class DiffDrive
     {
     public:
+        /// @brief Construct a new Diff Drive object
+        /// @param wheel_radius Radius of the wheels in meters
+        /// @param wheel_track Distance between the two wheels in meters
         DiffDrive(double wheel_radius, double wheel_track) : wheel_radius_(wheel_radius), wheel_track_(wheel_track) {};
 
         /// @brief Forward kinematics for a differential drive robot
-        /// @param new_phi_left New wheel angle for the left wheel, as given by an encoder
-        /// @param new_phi_right New wheel angle for the right wheel, as given by an encoder
+        /// @param new_phi_left New wheel angle for the left wheel, given in radians
+        /// @param new_phi_right New wheel angle for the right wheel, given in radians
         /// @return new pose of the robot in the space frame, as a Transform2D
         Transform2D forward_kinematics(double new_phi_left, double new_phi_right) const;
 
@@ -18,6 +21,11 @@ namespace turtlelib
         /// @param twist Desired twist of the robot in the space frame
         /// @return Left and right wheel velocities (phi_dot) required to achieve the desired twist
         std::pair<double, double> inverse_kinematics(const Twist2D& twist) const;
+
+        std::pair<double, double> get_wheel_angles() const
+        {
+            return {phi_left_, phi_right_};
+        }
 
     private:
         const double wheel_radius_;
