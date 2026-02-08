@@ -89,8 +89,8 @@ private:
   void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr cmd)
   {
     auto wheel_cmd = nuturtlebot_msgs::msg::WheelCommands{};
-    auto wheel_velocities = diff_drive_->inverse_kinematics({cmd->linear.x, cmd->linear.y,
-          cmd->angular.z});
+    auto body_twist = turtlelib::Twist2D{cmd->angular.z, cmd->linear.x, cmd->linear.y};
+    auto wheel_velocities = diff_drive_->inverse_kinematics(body_twist);
     wheel_cmd.left_velocity = wheel_velocities.first;
     wheel_cmd.right_velocity = wheel_velocities.second;
     wheel_cmd_pub_->publish(wheel_cmd);

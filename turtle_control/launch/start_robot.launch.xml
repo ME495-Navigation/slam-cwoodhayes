@@ -47,6 +47,9 @@
         <param name="wheel_left" value="wheel_left_joint"/>
         <param name="wheel_right" value="wheel_right_joint"/>
     </node>
+    <node pkg="turtle_control" exec="circle" name="circle" output="screen"
+        if="$(equals $(var cmd_src) circle)">
+    </node>
 
     <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
 

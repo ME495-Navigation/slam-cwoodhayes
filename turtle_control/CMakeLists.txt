@@ -58,9 +58,25 @@ target_link_libraries(odometry PUBLIC
   ${cpp_typesupport_target}
 )
 
+add_executable(circle src/circle.cpp)
+target_link_libraries(circle PUBLIC
+  ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${visualization_msgs_TARGETS}
+  ${nuturtlebot_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  rclcpp::rclcpp
+  tf2_ros::tf2_ros
+  turtlelib::turtlelib
+  ${cpp_typesupport_target}
+)
+
+
 # Install nodes
 install(TARGETS turtle_control_node DESTINATION lib/${PROJECT_NAME})
 install(TARGETS odometry DESTINATION lib/${PROJECT_NAME})
+install(TARGETS circle DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

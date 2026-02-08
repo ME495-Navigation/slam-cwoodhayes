@@ -49,7 +49,8 @@ namespace turtlelib
         // input checking
         if (Vb.y != 0.0)
         {
-            throw std::logic_error("DiffDrive IK does not support a twist with a y component");
+            auto errmsg = std::format("DiffDrive IK does not support a twist with a y component. Received Vb = {}", Vb);
+            throw std::logic_error(errmsg);
         }
 
         // equation 3
