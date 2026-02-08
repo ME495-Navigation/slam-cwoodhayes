@@ -29,6 +29,8 @@ namespace turtlelib
         /// \param scalar The scaling factor
         /// \return A reference to this twist after scaling
         Twist2D & operator*=(const double scalar);
+
+        Vector2D v() { return {x, y}; }
     };
 
     /// \brief scale a twist by a scalar
@@ -58,6 +60,9 @@ namespace turtlelib
     public:
         /// \brief Create an identity transformation
         Transform2D();
+
+        /// \brief copy constructor
+        Transform2D(const Transform2D &) = default;
 
         /// \brief create a transformation that is a pure translation
         /// \param trans - the vector by which to translate
