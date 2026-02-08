@@ -1,5 +1,6 @@
 #include "turtlelib/se2d.hpp"
 #include <utility>
+#include <vector>
 
 namespace turtlelib
 {
@@ -22,9 +23,14 @@ namespace turtlelib
         /// @return Left and right wheel velocities (rad/s) required to achieve the desired twist
         std::pair<double, double> inverse_kinematics(const Twist2D& twist) const;
 
-        std::pair<double, double> get_wheel_angles() const
+        auto get_wheel_angles() const
         {
-            return {phi_left_, phi_right_};
+            return std::vector{phi_left_, phi_right_};
+        }
+
+        auto get_wheel_velocities() const
+        {
+            return std::vector{phi_dot_left_, phi_dot_right_};
         }
 
         const Transform2D& get_pose() const
@@ -39,6 +45,10 @@ namespace turtlelib
         // wheel angles
         double phi_left_ = 0.0;
         double phi_right_ = 0.0;
+
+        // wheel velocities
+        double phi_dot_left_ = 0.0;
+        double phi_dot_right_ = 0.0;
 
         // robot pose in the space frame
         Transform2D T_sb_{};

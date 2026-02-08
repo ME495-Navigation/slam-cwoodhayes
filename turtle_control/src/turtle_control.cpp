@@ -11,6 +11,7 @@
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "rcl_interfaces/msg/parameter_descriptor.hpp"
+#include "turtlelib/diff_drive.hpp"
 
 
 /// \brief Node for controlling the turtle in turtlesim.
@@ -76,30 +77,41 @@ public:
 
     auto wheel_radius = get_parameter("wheel_radius").as_double();
     auto track_width = get_parameter("track_width").as_double();
-    auto motor_cmd_max = get_parameter("motor_cmd_max").as_int();
-    auto motor_cmd_per_rad_sec = get_parameter("motor_cmd_per_rad_sec").as_double();
-    auto encoder_ticks_per_rad = get_parameter("encoder_ticks_per_rad").as_double();
-    auto collision_radius = get_parameter("collision_radius").as_double();
+    motor_cmd_max_ = get_parameter("motor_cmd_max").as_int();
+    motor_cmd_per_rad_sec_ = get_parameter("motor_cmd_per_rad_sec").as_double();
+    encoder_ticks_per_rad_ = get_parameter("encoder_ticks_per_rad").as_double();
+    collision_radius_ = get_parameter("collision_radius").as_double();
+
+    // construct DiffDrive object with parameters
+    diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
 
     RCLCPP_INFO(get_logger(), "turtle_control node constructed.");
   }
 
 private:
-  void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr /*msg*/)
+  /// @brief Callback function for cmd_vel topic. Computes wheel commands and publishes them.
+  void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr cmd)
   {
     auto wheel_cmd = nuturtlebot_msgs::msg::WheelCommands{};
-    wheel_cmd.left_velocity = 0;
-    wheel_cmd.right_velocity = 0;
+    auto wheel_velocities = diff_drive_->inverse_kinematics(
+      {cmd->linear.x, cmd->linear.y, cmd->angular.z});
+    wheel_cmd.left_velocity = wheel_velocities.first;
+    wheel_cmd.right_velocity = wheel_velocities.second;
     wheel_cmd_pub_->publish(wheel_cmd);
   }
 
-  void sensor_data_callback(const nuturtlebot_msgs::msg::SensorData::SharedPtr /*msg*/)
+  /// @brief Callback function for sensor_data topic. Publishes joint states given turtle sensor data from tbot3
+  void sensor_data_callback(const nuturtlebot_msgs::msg::SensorData::SharedPtr data)
   {
+    diff_drive_->forward_kinematics(
+      data->left_encoder / encoder_ticks_per_rad_,
+      data->right_encoder / encoder_ticks_per_rad_);
+
     auto joint_states = sensor_msgs::msg::JointState{};
     joint_states.header.stamp = now();
     joint_states.name = {"left_wheel", "right_wheel"};
-    joint_states.position = {0.0, 0.0};
-    joint_states.velocity = {0.0, 0.0};
+    joint_states.position = diff_drive_->get_wheel_angles();
+    joint_states.velocity = diff_drive_->get_wheel_velocities();
     joint_states_pub_->publish(joint_states);
   }
 
@@ -107,6 +119,11 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_pub_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_sub_;
+  std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
+  int motor_cmd_max_{};
+  double motor_cmd_per_rad_sec_{};
+  double encoder_ticks_per_rad_{};
+  double collision_radius_{};
 };
 
 

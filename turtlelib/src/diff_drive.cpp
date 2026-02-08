@@ -36,6 +36,8 @@ namespace turtlelib
 
         // update the wheel angles and robot pose
         T_sb_ = T_sb_ * T_bbprime;
+        phi_dot_left_ = dphi_l;
+        phi_dot_right_ = dphi_r;
         phi_left_ = new_phi_left;
         phi_right_ = new_phi_right;
 
