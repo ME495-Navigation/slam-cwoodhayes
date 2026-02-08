@@ -32,3 +32,5 @@ Task C.6
 Task B.10
 Task B.11
 
+Task D.1
+Task D.2
