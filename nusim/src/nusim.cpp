@@ -120,11 +120,11 @@ private:
 
     // set rotation, convert angle to quaternion restricted to 2d plane
     const auto theta = gt_pose_.rotation();
-    const auto half_theta = theta / 2.0;
-    transform.transform.rotation.x = 0.0;
-    transform.transform.rotation.y = 0.0;
-    transform.transform.rotation.z = std::sin(half_theta);
-    transform.transform.rotation.w = std::cos(half_theta);
+    const auto quat = turtlelib::angle_to_2d_planar_quaternion(theta);
+    transform.transform.rotation.x = quat[0];
+    transform.transform.rotation.y = quat[1];
+    transform.transform.rotation.z = quat[2];
+    transform.transform.rotation.w = quat[3];
 
     tf_broadcaster_->sendTransform(transform);
   }

@@ -5,6 +5,7 @@
 
 #include <numbers>
 #include <cmath>
+#include <vector>
 
 namespace turtlelib
 {
@@ -53,6 +54,16 @@ namespace turtlelib
             rem += 2.0*pi;
         }
         return rem;
+    }
+
+    /// @brief Convert a planar angle to a quaternion (x, y, z, w) restricted to the xy plane.
+    /// @param theta Angle in radians representing rotation about the z axis
+    /// @return Quaternion as an array of 4 doubles (x, y, z, w)
+    constexpr std::vector<double> angle_to_2d_planar_quaternion(double theta)
+    {
+        using std::numbers::pi;
+        const auto half_theta = theta / 2.0;
+        return {0.0, 0.0, std::sin(half_theta), std::cos(half_theta)};
     }
 
 
