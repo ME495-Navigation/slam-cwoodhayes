@@ -1,5 +1,7 @@
 #include "turtlelib/diff_drive.hpp"
 
+#include <stdexcept>
+
 namespace turtlelib
 {
     DiffDrive::DiffDrive(double wheel_radius, double wheel_track)
@@ -48,15 +50,10 @@ namespace turtlelib
             throw std::logic_error("DiffDrive IK does not support a twist with a y component");
         }
 
-        // get the twists at the wheels
-        auto V_l = T_bl_.inv()(Vb);
-        auto V_r = T_br_.inv()(Vb);
+        // equation 3
+        const auto v_l = Vb.x - (Vb.omega * wheel_track_ / 2.0);
+        const auto v_r = Vb.x + (Vb.omega * wheel_track_ / 2.0);
 
-        // get the arc length for each wheel's trajectory
-        auto s_l = magnitude(V_l.v());
-        auto s_r = magnitude(V_r.v());
-
-        // divide by radius to get radians
-        return {s_l / wheel_radius_, s_r / wheel_radius_};
+        return {v_l / wheel_radius_, v_r / wheel_radius_};
     }
 }

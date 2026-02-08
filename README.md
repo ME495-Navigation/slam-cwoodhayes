@@ -52,6 +52,7 @@ Implements geometric primitives and operations upon them.
 - `geometry2d.hpp` - two-dimensional geometric primitives (Points, Vectors) and operations upon them
 - `se2d.hpp` - two-dimensional SE2 transformations + twists, that can operate on points + vectors
 - `svg.hpp` - visualization functions for the above using SVG files as output.
+- `diff_drive.hpp` - handles inverse and forward kinematics for an arbitrary diff-drive robot
 
 # nusim Description
 A custom turtlebot arena simulator based on rviz. 

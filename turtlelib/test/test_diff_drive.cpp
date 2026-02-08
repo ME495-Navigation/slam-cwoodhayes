@@ -46,8 +46,8 @@ TEST_CASE("DiffDrive pure rotation (forward/inverse)", "[Conor]")
 
     // 180 degree rotation in place should use the same math in reverse
     auto wheels = dd.inverse_kinematics(Twist2D{pi, 0.0, 0.0});
-    REQUIRE_THAT(wheels.first, WithinAbs(-2.5, 1e-6));
-    REQUIRE_THAT(wheels.second, WithinAbs(2.5, 1e-6));
+    REQUIRE_THAT(wheels.first, WithinAbs(-2.5 * pi, 1e-6));
+    REQUIRE_THAT(wheels.second, WithinAbs(2.5 * pi, 1e-6));
 }
 
 TEST_CASE("DiffDrive circular arc (forward/inverse)", "[Conor]")
