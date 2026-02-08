@@ -19,6 +19,7 @@ find_package(visualization_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 
 # Add nodes
 add_executable(turtle_control src/turtle_control.cpp)
@@ -33,8 +34,22 @@ target_link_libraries(turtle_control PUBLIC
   turtlelib::turtlelib
 )
 
+add_executable(odometry src/odometry.cpp)
+target_link_libraries(odometry PUBLIC
+  ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${visualization_msgs_TARGETS}
+  ${nuturtlebot_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  rclcpp::rclcpp
+  tf2_ros::tf2_ros
+  turtlelib::turtlelib
+)
+
 # Install nodes
 install(TARGETS turtle_control DESTINATION lib/${PROJECT_NAME})
+install(TARGETS odometry DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
