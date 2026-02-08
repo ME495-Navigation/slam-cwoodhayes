@@ -10,6 +10,7 @@
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
+#include "rcl_interfaces/msg/parameter_descriptor.hpp"
 
 
 /// \brief Node for controlling the turtle in turtlesim.
@@ -40,6 +41,45 @@ public:
     sensor_data_sub_ = create_subscription<nuturtlebot_msgs::msg::SensorData>(
       "sensor_data", qos,
       std::bind(&TurtleControl::sensor_data_callback, this, std::placeholders::_1));
+    
+    // fetch necessary robot parameters from diff_params.yaml
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Radius of the wheels";
+      declare_parameter("wheel_radius", 0.1, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Distance between the wheels";
+      declare_parameter("track_width", 0.5, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Maximum motor command";
+      declare_parameter("motor_cmd_max", 265, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Motor command per rad/sec";
+      declare_parameter("motor_cmd_per_rad_sec", 0.024, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Encoder ticks per rad";
+      declare_parameter("encoder_ticks_per_rad", 651.8986, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Collision radius";
+      declare_parameter("collision_radius", 0.11, desc);
+    }
+
+    auto wheel_radius = get_parameter("wheel_radius").as_double();
+    auto track_width = get_parameter("track_width").as_double();
+    auto motor_cmd_max = get_parameter("motor_cmd_max").as_int();
+    auto motor_cmd_per_rad_sec = get_parameter("motor_cmd_per_rad_sec").as_double();
+    auto encoder_ticks_per_rad = get_parameter("encoder_ticks_per_rad").as_double();
+    auto collision_radius = get_parameter("collision_radius").as_double();
 
     RCLCPP_INFO(get_logger(), "turtle_control node constructed.");
   }

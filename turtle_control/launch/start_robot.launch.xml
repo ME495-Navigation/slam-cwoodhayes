@@ -15,6 +15,7 @@
     <arg name="use_rviz" default="true" description="if true, view robot behavior in RViz"/>
 
     <let name="rviz_config" value="$(find-pkg-share turtle_control)/config/turtle_control.rviz"/>
+    <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
 
     <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
         on_exit="shutdown"
@@ -36,7 +37,10 @@
         <arg name="color" value="red"/>
     </include>
 
-    <node pkg="turtle_control" exec="turtle_control" name="turtle_control" output="screen">
+    <node pkg="turtle_control" exec="turtle_control" name="turtle_control" output="screen"
+        on_exit="shutdown"
+    >
+        <param from="$(var diff_params)"/>
     </node>
 
     <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
