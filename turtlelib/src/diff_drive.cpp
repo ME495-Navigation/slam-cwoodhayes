@@ -58,4 +58,13 @@ namespace turtlelib
 
         return {v_l / wheel_radius_, v_r / wheel_radius_};
     }
+
+    void DiffDrive::reset_to_configuration(const Transform2D& new_pose)
+    {
+        T_sb_ = new_pose;
+        phi_left_ = 0.0;
+        phi_right_ = 0.0;
+        phi_dot_left_ = 0.0;
+        phi_dot_right_ = 0.0;
+    }
 }

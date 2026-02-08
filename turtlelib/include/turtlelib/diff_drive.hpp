@@ -23,6 +23,10 @@ namespace turtlelib
         /// @return Left and right wheel velocities (rad/s) required to achieve the desired twist
         std::pair<double, double> inverse_kinematics(const Twist2D& twist) const;
 
+        /// @brief Reset the robot's pose to a new value, and velocities & wheel positions to 0.
+        /// @param new_pose The new pose to set for the robot, given as a Transform2D
+        void reset_to_configuration(const Transform2D& new_pose);
+
         auto get_wheel_angles() const
         {
             return std::vector{phi_left_, phi_right_};

@@ -86,8 +86,8 @@ public:
     wheel_left_ = get_parameter("wheel_left").as_string();
     wheel_right_ = get_parameter("wheel_right").as_string();
 
-    auto wheel_radius = get_parameter("wheel_radius").as_double();
-    auto track_width = get_parameter("track_width").as_double();
+    wheel_radius_ = get_parameter("wheel_radius").as_double();
+    track_width_ = get_parameter("track_width").as_double();
 
     if (wheel_left_.empty() || wheel_right_.empty())
     {
@@ -96,8 +96,7 @@ public:
     }
 
     // construct DiffDrive object with parameters
-    diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
-
+    diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius_, track_width_);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
     RCLCPP_INFO(get_logger(), "odometry node constructed.");
@@ -177,10 +176,12 @@ private:
                            std::shared_ptr<turtle_control::srv::SetPose::Response> response)
   {
     // set the initial pose of the robot in the diff_drive object
-    // TODO actually set pose. need to refactor diff_drive.
     auto infomsg = std::format("Received request to set initial pose to x: {}, y: {}, theta: {}",
-                    request->initial_pose.pose.pose.position.x, request->initial_pose.pose.pose.position.y, "TODO");
+                    request->x, request->y, request->theta);
     RCLCPP_INFO(get_logger(), infomsg.c_str());
+
+    turtlelib::Transform2D new_pose({request->x, request->y}, request->theta);
+    diff_drive_->reset_to_configuration(new_pose);
     response->success = true;
   }
 
@@ -193,6 +194,8 @@ private:
   std::string odom_id_;
   std::string wheel_left_;
   std::string wheel_right_;
+  double wheel_radius_;
+  double track_width_;
 };
 
 int main(int argc, char* argv[])

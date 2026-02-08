@@ -1,8 +1,9 @@
 # Set a new pose for the robot.
 
-# Estimated initial pose 
-# Currently not using covariance, but including for future use.
-geometry_msgs/PoseWithCovarianceStamped initial_pose
+# for simplicity, since this is a 2d world, we will use our own pose fields
+float64 x
+float64 y
+float64 theta
 ---
 
 # True if the pose was successfully set, false otherwise.
