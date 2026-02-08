@@ -115,7 +115,8 @@ private:
 
     // calculate odometry with FK using diff_drive.
     // returns transform odom -> body
-    auto T_odomb = diff_drive_->forward_kinematics(left_pos, right_pos);
+    auto T_ob = diff_drive_->forward_kinematics(left_pos, right_pos);
+    auto V_b = diff_drive_->get_body_twist();
 
     auto odom_msg = nav_msgs::msg::Odometry();
     // header specifies timestamp + parent frame (odom)
@@ -126,18 +127,22 @@ private:
     odom_msg.child_frame_id = body_id_;
 
     // fill in the pose.
-    odom_msg.pose.pose.position.x = T_odomb.translation().x;
-    odom_msg.pose.pose.position.y = T_odomb.translation().y;
+    odom_msg.pose.pose.position.x = T_ob.translation().x;
+    odom_msg.pose.pose.position.y = T_ob.translation().y;
     odom_msg.pose.pose.position.z = 0.0;
-    const auto quat = turtlelib::angle_to_2d_planar_quaternion(T_odomb.rotation());
+    const auto quat = turtlelib::angle_to_2d_planar_quaternion(T_ob.rotation());
     odom_msg.pose.pose.orientation.x = quat[0];
     odom_msg.pose.pose.orientation.y = quat[1];
     odom_msg.pose.pose.orientation.z = quat[2];
     odom_msg.pose.pose.orientation.w = quat[3];
 
     // fill in the twist in the body frame.
-    // odom_msg.twist.twist.angular.z = 
-    // TODO
+    odom_msg.twist.twist.angular.z = V_b.omega;
+    odom_msg.twist.twist.linear.x = V_b.x;
+    odom_msg.twist.twist.linear.y = V_b.y;
+    odom_msg.twist.twist.linear.z = 0.0;
+
+    // leave covariance as default (all 0s)
 
     // publish odometry msg
     odom_pub_->publish(odom_msg);
@@ -148,8 +153,8 @@ private:
     tf.header.frame_id = odom_id_;
     tf.child_frame_id = body_id_;
 
-    tf.transform.translation.x = T_odomb.translation().x;
-    tf.transform.translation.y = T_odomb.translation().y;
+    tf.transform.translation.x = T_ob.translation().x;
+    tf.transform.translation.y = T_ob.translation().y;
     tf.transform.translation.z = 0.0;
     tf.transform.rotation.x = quat[0];
     tf.transform.rotation.y = quat[1];

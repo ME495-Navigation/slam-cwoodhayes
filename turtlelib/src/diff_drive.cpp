@@ -29,10 +29,10 @@ namespace turtlelib
         auto s_b = (s_r + s_l) / 2.0;
 
         // because this is diff drive, the twist in the body frame has no y component
-        auto Vb = Twist2D{omega, s_b, 0.0};
+        Vb_ = Twist2D{omega, s_b, 0.0};
 
         // integrate the body twist to get the change in pose of the robot in the space frame
-        auto T_bbprime = integrate_twist(Vb);
+        auto T_bbprime = integrate_twist(Vb_);
 
         // update the wheel angles and robot pose
         T_sb_ = T_sb_ * T_bbprime;

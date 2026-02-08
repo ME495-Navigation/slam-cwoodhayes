@@ -38,6 +38,11 @@ namespace turtlelib
             return T_sb_;
         }
 
+        const Twist2D get_body_twist() const
+        {
+            return Vb_;
+        }
+
     private:
         const double wheel_radius_;
         const double wheel_track_;
@@ -52,6 +57,9 @@ namespace turtlelib
 
         // robot pose in the space frame
         Transform2D T_sb_{};
+
+        // robot twist from the most recent call of FK
+        Twist2D Vb_{};
 
         // bookkeeping variables
         Transform2D T_bl_;  // transform from body to left wheel
