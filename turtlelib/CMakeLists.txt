@@ -41,6 +41,7 @@ if(BUILD_TESTING)
       test/test_geometry2d.cpp
       test/test_se2d.cpp
       test/test_svg.cpp
+      test/test_diff_drive.cpp
     )
     target_link_libraries(tests Catch2::Catch2WithMain turtlelib)
 
@@ -55,6 +56,7 @@ add_library(turtlelib
   src/se2d.cpp
   src/svg.cpp
   src/svg_elements.cpp
+  src/diff_drive.cpp
 )
 target_include_directories(turtlelib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
