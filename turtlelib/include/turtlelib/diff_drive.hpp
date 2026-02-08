@@ -6,7 +6,7 @@ namespace turtlelib
     class DiffDrive
     {
     public:
-        DiffDrive(double wheel_radius, double wheel_track);
+        DiffDrive(double wheel_radius, double wheel_track) : wheel_radius_(wheel_radius), wheel_track_(wheel_track) {};
 
         /// @brief Forward kinematics for a differential drive robot
         /// @param new_phi_left New wheel angle for the left wheel, as given by an encoder
@@ -28,7 +28,7 @@ namespace turtlelib
         double phi_right_ = 0.0;
 
         // robot pose in the space frame
-        Transform2D T_sb;
+        Transform2D T_sb{};
     };
 
 }
