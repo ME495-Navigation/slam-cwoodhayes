@@ -35,15 +35,19 @@ TEST_CASE("DiffDrive pure rotation (forward/inverse)", "[Conor]")
 
     auto dd = DiffDrive{wheel_radius, wheel_track};
 
-    auto tf = dd.forward_kinematics(-2.0 * pi, 2.0 * pi);
+    // spin around 180 degrees
+    // this means 0.5/2 * pi = 0.25pi arc length for both wheels
+    // so the wheels have to spin 0.25pi / 0.1 = 2.5pi radians in opposite directions
+    auto tf = dd.forward_kinematics(-pi * 2.5, pi * 2.5);
 
-    REQUIRE_THAT(tf.rotation(), WithinAbs((wheel_radius / wheel_track) * (4.0 * pi), 1e-6));
     REQUIRE_THAT(tf.translation().x, WithinAbs(0.0, 1e-6));
     REQUIRE_THAT(tf.translation().y, WithinAbs(0.0, 1e-6));
+    REQUIRE_THAT(tf.rotation(), WithinAbs(pi, 1e-6));
 
-    auto wheels = dd.inverse_kinematics(Twist2D{0.4, 0.0, 0.0});
-    REQUIRE_THAT(wheels.first, WithinAbs(-1.0, 1e-6));
-    REQUIRE_THAT(wheels.second, WithinAbs(1.0, 1e-6));
+    // 180 degree rotation in place should use the same math in reverse
+    auto wheels = dd.inverse_kinematics(Twist2D{pi, 0.0, 0.0});
+    REQUIRE_THAT(wheels.first, WithinAbs(-2.5, 1e-6));
+    REQUIRE_THAT(wheels.second, WithinAbs(2.5, 1e-6));
 }
 
 TEST_CASE("DiffDrive circular arc (forward/inverse)", "[Conor]")
@@ -73,5 +77,5 @@ TEST_CASE("DiffDrive inverse kinematics rejects lateral motion", "[Conor]")
 {
     auto dd = DiffDrive{0.1, 0.5};
 
-    REQUIRE_THROWS_AS(dd.inverse_kinematics(Twist2D{0.0, 0.1, 0.01}), std::invalid_argument);
+    REQUIRE_THROWS_AS(dd.inverse_kinematics(Twist2D{0.0, 0.1, 0.01}), std::logic_error);
 }

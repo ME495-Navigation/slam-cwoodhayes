@@ -42,6 +42,12 @@ namespace turtlelib
 
     std::pair<double, double> DiffDrive::inverse_kinematics(const Twist2D& Vb) const
     {
+        // input checking
+        if (Vb.y != 0.0)
+        {
+            throw std::logic_error("DiffDrive IK does not support a twist with a y component");
+        }
+
         // get the twists at the wheels
         auto V_l = T_bl_.inv()(Vb);
         auto V_r = T_br_.inv()(Vb);
