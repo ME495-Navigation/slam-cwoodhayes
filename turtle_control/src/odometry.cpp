@@ -13,9 +13,11 @@
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include "turtle_control/srv/set_pose.hpp"
 
 #include <functional>
 #include <ranges>
+#include <format>
 
 /// \brief Node for controlling the turtle in turtlesim.
 ///
@@ -35,7 +37,11 @@ public:
     auto qos = rclcpp::QoS(10);
 
     joint_states_sub_ = create_subscription<sensor_msgs::msg::JointState>(
-      "joint_states", qos, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+        "joint_states", qos, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+
+    initial_pose_srv_ = create_service<turtle_control::srv::SetPose>(
+        "set_initial_pose",
+        std::bind(&Odometry::set_initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
 
     // fetch necessary robot parameters from diff_params.yaml
     /**
@@ -83,9 +89,10 @@ public:
     auto wheel_radius = get_parameter("wheel_radius").as_double();
     auto track_width = get_parameter("track_width").as_double();
 
-    if (wheel_left_.empty() || wheel_right_.empty()) {
-        RCLCPP_ERROR(get_logger(), "wheel_left and wheel_right parameters must be specified");
-        throw std::runtime_error("Missing required wheel parameters");
+    if (wheel_left_.empty() || wheel_right_.empty())
+    {
+      RCLCPP_ERROR(get_logger(), "wheel_left and wheel_right parameters must be specified");
+      throw std::runtime_error("Missing required wheel parameters");
     }
 
     // construct DiffDrive object with parameters
@@ -103,10 +110,12 @@ private:
     // grab new wheel states from the msg by their names
     auto left_it = std::ranges::find(msg->name, wheel_left_);
     auto right_it = std::ranges::find(msg->name, wheel_right_);
-    if (left_it == msg->name.end() || right_it == msg->name.end()) {
-        auto errmsg = std::format("Wheel joint names '{}' and '{}' not found in joint_states message", wheel_left_, wheel_right_);
-        RCLCPP_ERROR(get_logger(), errmsg.c_str());
-        return;
+    if (left_it == msg->name.end() || right_it == msg->name.end())
+    {
+      auto errmsg =
+          std::format("Wheel joint names '{}' and '{}' not found in joint_states message", wheel_left_, wheel_right_);
+      RCLCPP_ERROR(get_logger(), errmsg.c_str());
+      return;
     }
     auto left_idx = std::distance(msg->name.begin(), left_it);
     auto right_idx = std::distance(msg->name.begin(), right_it);
@@ -163,8 +172,21 @@ private:
     tf_broadcaster_->sendTransform(tf);
   }
 
+  /// @brief Callback function for set_initial_pose service. Sets the initial pose of the robot for odometry.
+  void set_initial_pose_cb(const std::shared_ptr<turtle_control::srv::SetPose::Request> request,
+                           std::shared_ptr<turtle_control::srv::SetPose::Response> response)
+  {
+    // set the initial pose of the robot in the diff_drive object
+    // TODO actually set pose. need to refactor diff_drive.
+    auto infomsg = std::format("Received request to set initial pose to x: {}, y: {}, theta: {}",
+                    request->initial_pose.pose.pose.position.x, request->initial_pose.pose.pose.position.y, "TODO");
+    RCLCPP_INFO(get_logger(), infomsg.c_str());
+    response->success = true;
+  }
+
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::Service<turtle_control::srv::SetPose>::SharedPtr initial_pose_srv_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
   std::string body_id_;
@@ -173,7 +195,7 @@ private:
   std::string wheel_right_;
 };
 
-int main(int argc, char * argv[])
+int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<Odometry>());

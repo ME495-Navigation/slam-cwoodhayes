@@ -20,10 +20,19 @@ find_package(tf2_ros REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/SetPose.srv"
+  DEPENDENCIES builtin_interfaces geometry_msgs
+)
+
+rosidl_get_typesupport_target(cpp_typesupport_target
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # Add nodes
-add_executable(turtle_control src/turtle_control.cpp)
-target_link_libraries(turtle_control PUBLIC
+add_executable(turtle_control_node src/turtle_control.cpp)
+target_link_libraries(turtle_control_node PUBLIC
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
   ${geometry_msgs_TARGETS}
@@ -32,6 +41,7 @@ target_link_libraries(turtle_control PUBLIC
   rclcpp::rclcpp
   tf2_ros::tf2_ros
   turtlelib::turtlelib
+  ${cpp_typesupport_target}
 )
 
 add_executable(odometry src/odometry.cpp)
@@ -45,10 +55,11 @@ target_link_libraries(odometry PUBLIC
   rclcpp::rclcpp
   tf2_ros::tf2_ros
   turtlelib::turtlelib
+  ${cpp_typesupport_target}
 )
 
 # Install nodes
-install(TARGETS turtle_control DESTINATION lib/${PROJECT_NAME})
+install(TARGETS turtle_control_node DESTINATION lib/${PROJECT_NAME})
 install(TARGETS odometry DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
@@ -69,5 +80,7 @@ install(DIRECTORY
   config
   DESTINATION share/${PROJECT_NAME}/
 )
+
+ament_export_dependencies(rosidl_default_runtime)
 
 ament_package()

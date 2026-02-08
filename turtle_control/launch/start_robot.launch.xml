@@ -37,7 +37,7 @@
         <arg name="color" value="red"/>
     </include>
 
-    <node pkg="turtle_control" exec="turtle_control" name="turtle_control" output="screen"
+    <node pkg="turtle_control" exec="turtle_control_node" name="turtle_control" output="screen"
         on_exit="shutdown">
         <param from="$(var diff_params)"/>
     </node>

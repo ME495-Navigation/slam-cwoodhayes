@@ -1,0 +1,9 @@
+# Set a new pose for the robot.
+
+# Estimated initial pose 
+# Currently not using covariance, but including for future use.
+geometry_msgs/PoseWithCovarianceStamped initial_pose
+---
+
+# True if the pose was successfully set, false otherwise.
+bool success
