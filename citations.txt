@@ -1,7 +1,7 @@
 # citations file per the these rules:
 # https://nu-msr.github.io/citation_rules.html
 
-[0] Worked With: Miguel Pegues
+[0] Worked With: Miguel Pegues, Theo Coulson
 [1] Claude Sonnet 4.5. Anthropic. Used on Jan 13, 2026. Transcript Available: https://claude.ai/share/fd2fb6ee-c227-4e51-becf-4fb995904e0a
 [2] Claude Sonnet 4.5. Anthropic. Used on Jan 19, 2026. Transcript Available: https://claude.ai/share/20383dd9-1bc6-48fa-a6a6-026b1c5e1a2b
 [3] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 01/19/2026. Commit prior is 08e5133b3fda716e2ccfa5aba2d3a6f96104ff0f. Commit after is cdf46c0187fe80b771a78940efbb4f25c1ba8c37

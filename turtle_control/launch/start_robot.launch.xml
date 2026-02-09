@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <!-- args & variables -->
     <arg name="cmd_src" default="circle" description="Source of cmd_vel commands">
         <choice value="circle"/>
         <choice value="teleop"/>
         <choice value="none"/>
     </arg>
-
     <arg name="robot" default="nusim" description="what robot to control (sim vs hardware etc)">
         <choice value="nusim"/>
         <choice value="localhost"/>
         <choice value="none"/>
     </arg>
-
     <arg name="use_rviz" default="true" description="if true, view robot behavior in RViz"/>
-
     <let name="rviz_config" value="$(find-pkg-share turtle_control)/config/turtle_control.rviz"/>
     <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
 
@@ -24,39 +22,59 @@
     <!-- rviz should always display the blue turtle -->
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml" >
         <arg name="use_rviz" value="false"/>
-        <arg name="use_jsp" value="true"/>
+        <!-- jointstate comes from turtle_control now -->
+        <arg name="use_jsp" value="false"/>
         <arg name="color" value="blue"/>
     </include>
 
     <!-- rviz should also display the red turtle, if robot == nusim -->
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml" 
-        if="$(equals $(var robot) sim)"
+        if="$(equals $(var robot) nusim)"
     >
         <arg name="use_rviz" value="false"/>
-        <arg name="use_jsp" value="true"/>
+        <arg name="use_jsp" value="false"/>
         <arg name="color" value="red"/>
     </include>
 
-    <node pkg="turtle_control" exec="turtle_control_node" name="turtle_control" output="screen"
-        on_exit="shutdown">
-        <param from="$(var diff_params)"/>
-    </node>
-    <node pkg="turtle_control" exec="odometry" name="odometry" output="screen"
-        on_exit="shutdown">
-        <param from="$(var diff_params)"/>
-        <param name="wheel_left" value="wheel_left_joint"/>
-        <param name="wheel_right" value="wheel_right_joint"/>
-    </node>
-    <node pkg="turtle_control" exec="circle" name="circle" output="screen"
-        if="$(equals $(var cmd_src) circle)" on_exit="shutdown">
-    </node>
+    <!-- robot-specific nodes -->
+    <group if="$(equals $(var robot) nusim)">
+        <node pkg="turtle_control" exec="turtle_control_node" name="turtle_control" output="screen"
+            on_exit="shutdown">
+            <param from="$(var diff_params)"/>
+        </node>
+        <node pkg="turtle_control" exec="odometry" name="odometry" output="screen"
+            on_exit="shutdown">
+            <param from="$(var diff_params)"/>
+            <param name="wheel_left" value="wheel_left_joint"/>
+            <param name="wheel_right" value="wheel_right_joint"/>
+        </node>
 
-    <node if="$(equals $(var cmd_src) teleop)"
-        pkg="teleop_twist_keyboard" exec="teleop_twist_keyboard"
+        <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
+    </group>
+
+    <group if="$(equals $(var robot) localhost)">
+        <node pkg="turtle_control" exec="turtle_control_node" name="turtle_control" output="screen"
+            on_exit="shutdown">
+            <param from="$(var diff_params)"/>
+        </node>
+        <node pkg="turtle_control" exec="odometry" name="odometry" output="screen"
+            on_exit="shutdown">
+            <param from="$(var diff_params)"/>
+            <param name="wheel_left" value="wheel_left_joint"/>
+            <param name="wheel_right" value="wheel_right_joint"/>
+        </node>
+    </group>
+
+    <!-- command source nodes -->
+    <group if="$(equals $(var cmd_src) circle)">
+        <node pkg="turtle_control" exec="circle" name="circle" output="screen"
+            on_exit="shutdown">
+        </node>
+    </group>
+    <group if="$(equals $(var cmd_src) teleop)">
+        <node pkg="teleop_twist_keyboard" exec="teleop_twist_keyboard"
         name="teleop_twist_keyboard" launch-prefix="xterm -e">
         <env name="TURTLEBOT3_MODEL" value="burger" />
-    </node>
-
-    <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
-
+        </node>
+    </group>
 </launch>
