@@ -12,7 +12,7 @@ This repo has been tested with the following system configuration:
 It likely works with other versions of the above, but this is untested.
 
 ## One-time setup
-In order to build & use this package, do the following:
+In order to build & use this package, first perform the following steps:
 ```bash
 # clone the repo into a clean ROS workspace
 SLAM_WS_NAME="slam-ws"   # use whatever workspace name you want
@@ -20,11 +20,12 @@ mkdir -p $SLAM_WS_NAME/src
 cd $SLAM_WS_NAME/src
 git clone git@github.com:ME495-Navigation/slam-cwoodhayes.git
 
-# clone other needed repos
-vcs import < slam-cwoodhayes/turtle.repos
-
-# run one-time setup for package installation
+# run one-time setup for dependency installation
 ./slam-cwoodhayes/setup.sh
+
+# build package from source
+cd ..
+colcon build
 ```
 
 # Package List

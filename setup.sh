@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+
+################### Begin_Citation[9] ###################
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,8 +20,12 @@ else
 	echo "Creating ${ROSDEP_LIST_FILE}"
 	sudo sh -c "echo 'yaml file://${ROSDEP_RULE}' > '${ROSDEP_LIST_FILE}'"
 fi
+################### End_Citation [9] ###################
 
 rosdep update
+
+echo "Cloning dependency repositories into: ${WORKSPACE_ROOT}/src"
+(cd "${WORKSPACE_ROOT}/src" && vcs import --skip-existing < ${ROOT_DIR}/turtle.repos)
 
 echo "Installing rosdep dependencies from: ${WORKSPACE_ROOT}"
 (cd "${WORKSPACE_ROOT}" && rosdep install --from-paths src --ignore-src --rosdistro kilted)
