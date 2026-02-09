@@ -31,7 +31,7 @@ endif()
 include(CTest)
 
 # CTest sets BUILD_TESTING to on. To disable tests add -DBUILD_TESTING=OFF when invoking cmake
-if(BUILD_TESTING)
+if(BUILD_TESTING AND NOT CMAKE_CROSSCOMPILING)
     # Find the Unit testing framework. In this example, Catch2
     find_package(Catch2 3 REQUIRED)
     include(Catch)
