@@ -51,7 +51,7 @@ public:
                 std::placeholders::_1, std::placeholders::_2));
 
     // start off circling with some arbitrary values
-    angular_velocity_ = 0.1;
+    angular_velocity_ = 0.3;
     circle_radius_ = 0.2;
     is_circling_ = true;
     
