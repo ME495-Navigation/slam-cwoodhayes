@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "geometry_msgs/msg/twist.hpp"
+#include "std_srvs/srv/empty.hpp"
 #include "turtle_control/srv/circle_control.hpp"
 
 /// \brief Node for moving the turtle in a circle by publishing to cmd_vel.
@@ -26,6 +27,16 @@ public:
     circle_control_srv_ = create_service<turtle_control::srv::CircleControl>(
       "circle_control",
       std::bind(&Circle::circle_control_callback, this,
+                std::placeholders::_1, std::placeholders::_2));
+
+    reverse_srv_ = create_service<std_srvs::srv::Empty>(
+      "reverse",
+      std::bind(&Circle::reverse_callback, this,
+                std::placeholders::_1, std::placeholders::_2));
+
+    stop_srv_ = create_service<std_srvs::srv::Empty>(
+      "stop",
+      std::bind(&Circle::stop_callback, this,
                 std::placeholders::_1, std::placeholders::_2));
     
     RCLCPP_INFO(get_logger(), "circle node constructed.");
@@ -56,9 +67,25 @@ private:
     response->success = true;
   }
 
+  void reverse_callback(
+    const std::shared_ptr<std_srvs::srv::Empty::Request>,
+    std::shared_ptr<std_srvs::srv::Empty::Response>)
+  {
+    is_forward_ = !is_forward_;
+  }
+
+  void stop_callback(
+    const std::shared_ptr<std_srvs::srv::Empty::Request>,
+    std::shared_ptr<std_srvs::srv::Empty::Response>)
+  {
+    is_circling_ = false;
+  }
+
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Service<turtle_control::srv::CircleControl>::SharedPtr circle_control_srv_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reverse_srv_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr stop_srv_;
 
   // angular velocity in rad/s
   double angular_velocity_ = 0.0;
