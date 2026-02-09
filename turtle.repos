@@ -6,4 +6,4 @@ repositories:
   slam-cwoodhayes:
     type: git
     url: git@github.com:ME495-Navigation/slam-cwoodhayes.git
-    version: e1
+    version: main
