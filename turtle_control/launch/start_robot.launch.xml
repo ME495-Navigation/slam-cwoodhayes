@@ -36,13 +36,14 @@
         </include>
     </group>
 
-    <!-- rviz should always display the blue turtle (our localization via odometry) -->
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml" >
         <arg name="use_rviz" value="false"/>
         <!-- jointstate comes from turtle_control now -->
         <arg name="use_jsp" value="false"/>
         <arg name="color" value="blue"/>
     </include>
+
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
 
     <!-- robot-specific nodes -->
     <group if="$(equals $(var robot) nusim)">
@@ -79,7 +80,6 @@
             <remap from="joint_states" to="blue/joint_states"/>
         </node>
 
-        <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
     </group>
 
     <group if="$(equals $(var robot) localhost)">
@@ -94,7 +94,11 @@
             <param name="wheel_right" value="wheel_right_joint"/>
         </node>
         <!-- this node only exists on the turtlebot itself. no need to depend on it; we won't use this arg on another machine -->
-        <node pkg="numsr_turtlebot" exec="numsr_turtlebot"/>
+        <node pkg="numsr_turtlebot" exec="numsr_turtlebot"></node>
+
+        <!-- send the base_footprint outputted by numsr_turtlebot to blue/base_footprint expected everywhere else -->
+        <node pkg="tf2_ros" exec="static_transform_publisher" name="tb_base_footprint_to_blue_base_footprint" args="0 0 0 0 0 0 base_footprint blue/base_footprint"/>
+
     </group>
 
     <!-- command source nodes -->
