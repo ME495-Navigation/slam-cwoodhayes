@@ -49,8 +49,8 @@ public:
                 std::placeholders::_1, std::placeholders::_2));
 
     // start off circling with some arbitrary values
-    angular_velocity_ = 1.0;
-    circle_radius_ = 2.0;
+    angular_velocity_ = 2.0;
+    circle_radius_ = 0.5;
     is_circling_ = true;
     
     RCLCPP_INFO(get_logger(), "circle node constructed.");

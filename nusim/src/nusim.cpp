@@ -23,6 +23,7 @@
 #include <format>
 #include <vector>
 #include <algorithm>
+#include <cstdint>
 
 using namespace std::chrono_literals;
 
@@ -163,6 +164,11 @@ public:
   }
 
 private:
+  static constexpr auto rad_to_ticks(double radians, double ticks_per_rad) -> std::int64_t
+  {
+    return static_cast<std::int64_t>(radians * ticks_per_rad);
+  }
+
   void timer_callback()
   {
     auto count_msg = std_msgs::msg::UInt64();
@@ -173,15 +179,13 @@ private:
     auto prev_wheels = diff_drive_->get_wheel_angles();
     auto new_wheel_angle_left = prev_wheels[0] + wheel_vel_left_ * dt;
     auto new_wheel_angle_right = prev_wheels[1] + wheel_vel_right_ * dt;
-    new_wheel_angle_left = turtlelib::normalize_angle(new_wheel_angle_left);
-    new_wheel_angle_right = turtlelib::normalize_angle(new_wheel_angle_right);
     // run FK to get new ground truth pose
     gt_pose_ = diff_drive_->forward_kinematics(new_wheel_angle_left, new_wheel_angle_right);
 
     // publish sensor data message with current wheel angles and ground truth pose
     auto sensor_msg = nuturtlebot_msgs::msg::SensorData();
-    sensor_msg.left_encoder = new_wheel_angle_left * encoder_ticks_per_rad_;
-    sensor_msg.right_encoder = new_wheel_angle_right * encoder_ticks_per_rad_;
+    sensor_msg.left_encoder = rad_to_ticks(new_wheel_angle_left, encoder_ticks_per_rad_);
+    sensor_msg.right_encoder = rad_to_ticks(new_wheel_angle_right, encoder_ticks_per_rad_);
     sensor_msg.stamp = get_clock()->now();
 
     // broadcast transform from nusim/world to red/base_footprint
