@@ -148,7 +148,6 @@ public:
     // create obstacles publisher
     obstacles_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles", qos);
-    RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
 
     wheel_cmd_sub_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
       "red/wheel_cmd", 10,
@@ -156,8 +155,7 @@ public:
 
     publish_arena();
     publish_cyl_obstacles();
-
-    
+    RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
   }
 
 private:
@@ -289,6 +287,7 @@ private:
     }
 
     walls_publisher_->publish(marker_array);
+    RCLCPP_INFO(get_logger(), "Published arena walls.");
   }
 
   /// @brief publish cylindrical obstacles as configured on startup.
@@ -326,9 +325,11 @@ private:
       marker.color.a = 1.0;
 
       marker_array.markers.push_back(marker);
+      RCLCPP_INFO(get_logger(), std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i], obs_r).c_str());
     }
 
     obstacles_publisher_->publish(marker_array);
+    RCLCPP_INFO(get_logger(), "Published arena obstacles.");
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
