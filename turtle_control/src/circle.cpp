@@ -14,6 +14,8 @@
 ///
 /// Services:
 /// - circle_control (turtle_control/srv/CircleControl)
+/// - reverse (std_srvs/srv/Empty)
+/// - stop (std_srvs/srv/Empty)
 class Circle : public rclcpp::Node
 {
 public:
@@ -47,6 +49,11 @@ public:
       "stop",
       std::bind(&Circle::stop_callback, this,
                 std::placeholders::_1, std::placeholders::_2));
+
+    // start off circling with some arbitrary values
+    angular_velocity_ = 2.0;
+    circle_radius_ = 0.5;
+    is_circling_ = true;
     
     RCLCPP_INFO(get_logger(), "circle node constructed.");
   }
@@ -57,8 +64,9 @@ private:
     auto msg = geometry_msgs::msg::Twist();
     // by kevination twist math:
     if (is_circling_) {
-      msg.linear.x = circle_radius_;
-      msg.angular.z = angular_velocity_ * (is_forward_ ? 1 : -1);
+      const auto direction = is_forward_ ? 1.0 : -1.0;
+      msg.linear.x = circle_radius_ * angular_velocity_ * direction;
+      msg.angular.z = angular_velocity_ * direction;
     }
     cmd_vel_pub_->publish(msg);
   }
@@ -72,6 +80,7 @@ private:
 
     angular_velocity_ = request->velocity;
     circle_radius_ = request->radius;
+    is_circling_ = true;
 
     response->success = true;
   }

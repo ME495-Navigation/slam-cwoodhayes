@@ -53,7 +53,9 @@
             <arg name="color" value="red"/>
         </include>
 
+        <let name="nusim_world_config" value="$(find-pkg-share nusim)/config/basic_world.yaml"/>
         <node pkg="nusim" exec="nusim">
+            <param from="$(var nusim_world_config)"/>
             <param from="$(var diff_params)"/>
             <remap from="joint_states" to="red/joint_states"/>
         </node>
@@ -70,8 +72,8 @@
         <node pkg="turtle_control" exec="odometry" name="odometry" output="screen"
             on_exit="shutdown">
             <param from="$(var diff_params)"/>
-            <param name="wheel_left" value="red/wheel_left_joint"/>
-            <param name="wheel_right" value="red/wheel_right_joint"/>
+            <param name="wheel_left" value="wheel_left_joint"/>
+            <param name="wheel_right" value="wheel_right_joint"/>
             <param name="body_id" value="blue/base_footprint"/>
             <param name="odom_id" value="odom"/>
             <remap from="joint_states" to="blue/joint_states"/>

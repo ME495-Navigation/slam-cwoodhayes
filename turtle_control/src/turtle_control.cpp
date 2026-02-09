@@ -4,6 +4,8 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include <functional>
+#include <algorithm>
+#include <cmath>
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
@@ -91,8 +93,17 @@ private:
     auto wheel_cmd = nuturtlebot_msgs::msg::WheelCommands{};
     auto body_twist = turtlelib::Twist2D{cmd->angular.z, cmd->linear.x, cmd->linear.y};
     auto wheel_velocities = diff_drive_->inverse_kinematics(body_twist);
-    wheel_cmd.left_velocity = wheel_velocities.first;
-    wheel_cmd.right_velocity = wheel_velocities.second;
+    const auto max_cmd = static_cast<double>(motor_cmd_max_);
+    auto left_cmd = wheel_velocities.first / motor_cmd_per_rad_sec_;
+    auto right_cmd = wheel_velocities.second / motor_cmd_per_rad_sec_;
+    const auto max_abs = std::max(std::fabs(left_cmd), std::fabs(right_cmd));
+    if (max_abs > max_cmd) {
+      const auto scale = max_cmd / max_abs;
+      left_cmd *= scale;
+      right_cmd *= scale;
+    }
+    wheel_cmd.left_velocity = static_cast<int>(std::lround(left_cmd));
+    wheel_cmd.right_velocity = static_cast<int>(std::lround(right_cmd));
     wheel_cmd_pub_->publish(wheel_cmd);
   }
 

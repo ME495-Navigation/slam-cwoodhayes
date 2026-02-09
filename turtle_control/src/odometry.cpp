@@ -16,18 +16,23 @@
 #include "turtle_control/srv/set_pose.hpp"
 
 #include <functional>
+#include <numeric>
 #include <ranges>
 #include <format>
 
-/// \brief Node for controlling the turtle in turtlesim.
+/// \brief Node for odometry estimation of the robot.
 ///
 /// Subscribes:
-/// - cmd_vel (geometry_msgs/msg/Twist)
-/// - sensor_data (nuturtlebot_msgs/msg/SensorData)
+/// - joint_states (sensor_msgs/msg/JointState): Current wheel joint positions
 ///
 /// Publishes:
-/// - wheel_cmd (nuturtlebot_msgs/msg/WheelCommands)
-/// - joint_states (sensor_msgs/msg/JointState)
+/// - odom (nav_msgs/msg/Odometry): Robot odometry pose and twist
+///
+/// Services:
+/// - set_initial_pose (turtle_control/srv/SetPose): Sets the initial pose for odometry
+///
+/// Broadcasts:
+/// - odom -> body_id transform via tf2 (ie odom -> blue base_footprint)
 class Odometry : public rclcpp::Node
 {
 public:
@@ -38,6 +43,8 @@ public:
 
     joint_states_sub_ = create_subscription<sensor_msgs::msg::JointState>(
         "joint_states", qos, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+
+    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos);
 
     initial_pose_srv_ = create_service<turtle_control::srv::SetPose>(
         "set_initial_pose",
@@ -111,8 +118,14 @@ private:
     auto right_it = std::ranges::find(msg->name, wheel_right_);
     if (left_it == msg->name.end() || right_it == msg->name.end())
     {
+      // put all the names in js message in the error for easier debugging
+      auto names_str = std::accumulate(
+          msg->name.begin(), msg->name.end(), std::string{},
+          [](const std::string& acc, const std::string& name) {
+            return acc.empty() ? name : acc + ", " + name;
+          });
       auto errmsg =
-          std::format("Wheel joint names '{}' and '{}' not found in joint_states message", wheel_left_, wheel_right_);
+          std::format("Wheel joint names '{}' and '{}' not found in joint_states message: {}", wheel_left_, wheel_right_, names_str);
       RCLCPP_ERROR(get_logger(), errmsg.c_str());
       return;
     }

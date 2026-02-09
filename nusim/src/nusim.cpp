@@ -5,8 +5,13 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "turtlelib/geometry2d.hpp"
 #include "turtlelib/se2d.hpp"
+#include "turtlelib/diff_drive.hpp"
+#include "turtlelib/angle.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "nuturtlebot_msgs/msg/wheel_commands.hpp"
+#include "nuturtlebot_msgs/msg/sensor_data.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
@@ -16,57 +21,129 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <format>
+#include <vector>
+#include <algorithm>
+#include <cstdint>
 
 using namespace std::chrono_literals;
 
-/// @brief Simulator node.
+/// @class NUSimulator
+/// @brief ROS2 node that simulates a differential drive robot (TurtleBot3) in a 2D environment.
+///
+/// This simulator maintains ground truth pose and wheel states, publishes sensor data and transforms,
+/// and responds to wheel command inputs.
+///
+/// @details Publishers:
+///   - `~/timestep` (std_msgs::msg::UInt64): Current simulation timestep counter
+///   - `~/real_walls` (visualization_msgs::msg::MarkerArray): Arena boundary walls for visualization
+///   - `~/real_obstacles` (visualization_msgs::msg::MarkerArray): Cylindrical obstacles for visualization
+///   - `red/sensor_data` (nuturtlebot_msgs::msg::SensorData): Simulated sensor output (ie encoder readings) for the robot
+///
+/// @details Subscribers:
+///   - `red/wheel_cmd` (nuturtlebot_msgs::msg::WheelCommands): Motor commands to the robot
+///
+/// @details Services:
+///   - `~/reset` (std_srvs::srv::Empty): Resets simulation timestep and robot pose to initial state
+///
+/// @details Broadcasts:
+///   - Transform from "nusim/world" to "red/base_footprint" with ground truth pose at each timestep
 class NUSimulator : public rclcpp::Node
 {
 public:
   /// @brief Node constructor
+
   NUSimulator()
   : Node("nusimulator"), count_(0), gt_pose_()
   {
-    auto rate_desc = rcl_interfaces::msg::ParameterDescriptor();
-    rate_desc.description = "Sim rate in Hz";
-    declare_parameter("rate", 100.0, rate_desc);
-    auto rate = get_parameter("rate").as_double();
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Sim rate in Hz";
+      declare_parameter("rate", 100.0, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Initial x position";
+      declare_parameter("x0", 0.0, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Initial y position";
+      declare_parameter("y0", 0.0, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Initial theta angle";
+      declare_parameter("theta0", 0.0, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "length of the arena in the world X direction";
+      declare_parameter("arena_x_length", 10.0, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "length of the arena in the world Y direction";
+      declare_parameter("arena_y_length", 10.0, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "X coordinates of obstacles";
+      declare_parameter("obstacles.x", std::vector<double>{}, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Y coordinates of obstacles";
+      declare_parameter("obstacles.y", std::vector<double>{}, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Radius of obstacles";
+      declare_parameter("obstacles.r", 0.0, desc);
+    }
 
-    // - start pose
-    auto x0_desc = rcl_interfaces::msg::ParameterDescriptor();
-    x0_desc.description = "Initial x position";
-    declare_parameter("x0", 0.0, x0_desc);
+    // fetch necessary robot parameters from diff_params.yaml
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Radius of the wheels";
+      declare_parameter("wheel_radius", 0.1, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Distance between the wheels";
+      declare_parameter("track_width", 0.5, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Maximum motor command";
+      declare_parameter("motor_cmd_max", 265, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Motor command per rad/sec";
+      declare_parameter("motor_cmd_per_rad_sec", 0.024, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Encoder ticks per rad";
+      declare_parameter("encoder_ticks_per_rad", 651.8986, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Turtlebot3 collision radius";
+      declare_parameter("collision_radius", 0.11, desc);
+    }
 
-    auto y0_desc = rcl_interfaces::msg::ParameterDescriptor();
-    y0_desc.description = "Initial y position";
-    declare_parameter("y0", 0.0, y0_desc);
+    auto wheel_radius = get_parameter("wheel_radius").as_double();
+    auto track_width = get_parameter("track_width").as_double();
+    motor_cmd_max_ = get_parameter("motor_cmd_max").as_int();
+    motor_cmd_per_rad_sec_ = get_parameter("motor_cmd_per_rad_sec").as_double();
+    encoder_ticks_per_rad_ = get_parameter("encoder_ticks_per_rad").as_double();
+    collision_radius_ = get_parameter("collision_radius").as_double();
+    diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
 
-    auto theta0_desc = rcl_interfaces::msg::ParameterDescriptor();
-    theta0_desc.description = "Initial theta angle";
-    declare_parameter("theta0", 0.0, theta0_desc);
     gt_pose_ = get_pose0();
-
-    // - arena walls
-    auto ax_desc = rcl_interfaces::msg::ParameterDescriptor();
-    ax_desc.description = "length of the arena in the world X direction";
-    declare_parameter("arena_x_length", 10.0, ax_desc);
-
-    auto ay_desc = rcl_interfaces::msg::ParameterDescriptor();
-    ay_desc.description = "length of the arena in the world Y direction";
-    declare_parameter("arena_y_length", 10.0, ay_desc);
-
-    // - cylindrical obstacles
-    auto obs_x_desc = rcl_interfaces::msg::ParameterDescriptor();
-    obs_x_desc.description = "X coordinates of obstacles";
-    declare_parameter("obstacles.x", std::vector<double>{}, obs_x_desc);
-
-    auto obs_y_desc = rcl_interfaces::msg::ParameterDescriptor();
-    obs_y_desc.description = "Y coordinates of obstacles";
-    declare_parameter("obstacles.y", std::vector<double>{}, obs_y_desc);
-    auto obs_r_desc = rcl_interfaces::msg::ParameterDescriptor();
-    obs_r_desc.description = "Radius of obstacles";
-    declare_parameter("obstacles.r", 0.0, obs_r_desc);
-
+    sim_rate_ = get_parameter("rate").as_double();
     // Validate that x and y have same length
     auto obs_x = get_parameter("obstacles.x").as_double_array();
     auto obs_y = get_parameter("obstacles.y").as_double_array();
@@ -75,9 +152,9 @@ public:
       throw std::runtime_error("obstacles.x and obstacles.y must have the same length");
     }
 
-    publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
+    count_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     timer_ = create_wall_timer(
-      std::chrono::duration<double>(1.0 / rate), std::bind(&NUSimulator::timer_callback, this));
+      std::chrono::duration<double>(1.0 / sim_rate_), std::bind(&NUSimulator::timer_callback, this));
 
     reset_service_ = create_service<std_srvs::srv::Empty>(
       "~/reset",
@@ -94,18 +171,50 @@ public:
     // create obstacles publisher
     obstacles_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles", qos);
-    RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
+
+    wheel_cmd_sub_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
+      "red/wheel_cmd", 10,
+      std::bind(&NUSimulator::wheel_cmd_callback, this, std::placeholders::_1));
+
+    // sensor data publisher
+    sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
+
+    joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
 
     publish_arena();
     publish_cyl_obstacles();
+    RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
   }
 
 private:
+  static constexpr auto rad_to_ticks(double radians, double ticks_per_rad) -> std::int64_t
+  {
+    return static_cast<std::int64_t>(radians * ticks_per_rad);
+  }
+
   void timer_callback()
   {
-    auto message = std_msgs::msg::UInt64();
-    message.data = count_++;
-    publisher_->publish(message);
+    auto count_msg = std_msgs::msg::UInt64();
+    count_msg.data = count_++;
+
+    // update wheels + robot pose
+    auto dt = 1.0 / sim_rate_;
+    auto prev_wheels = diff_drive_->get_wheel_angles();
+    auto new_wheel_angle_left = prev_wheels[0] + wheel_vel_left_ * dt;
+    auto new_wheel_angle_right = prev_wheels[1] + wheel_vel_right_ * dt;
+    // run FK to get new ground truth pose
+    gt_pose_ = diff_drive_->forward_kinematics(new_wheel_angle_left, new_wheel_angle_right);
+
+    // publish sensor data message with current wheel angles and ground truth pose
+    auto sensor_msg = nuturtlebot_msgs::msg::SensorData();
+    sensor_msg.left_encoder = rad_to_ticks(new_wheel_angle_left, encoder_ticks_per_rad_);
+    sensor_msg.right_encoder = rad_to_ticks(new_wheel_angle_right, encoder_ticks_per_rad_);
+    sensor_msg.stamp = get_clock()->now();
+
+    auto joint_states = sensor_msgs::msg::JointState{};
+    joint_states.header.stamp = get_clock()->now();
+    joint_states.name = {"wheel_left_joint", "wheel_right_joint"};
+    joint_states.position = {new_wheel_angle_left, new_wheel_angle_right};
 
     // broadcast transform from nusim/world to red/base_footprint
     auto transform = geometry_msgs::msg::TransformStamped();
@@ -126,7 +235,11 @@ private:
     transform.transform.rotation.z = quat[2];
     transform.transform.rotation.w = quat[3];
 
+    // send everything out
     tf_broadcaster_->sendTransform(transform);
+    count_publisher_->publish(count_msg);
+    sensor_data_publisher_->publish(sensor_msg);
+    joint_states_publisher_->publish(joint_states);
   }
 
   void reset_callback(
@@ -142,12 +255,22 @@ private:
     RCLCPP_INFO(get_logger(), msg.c_str());
   }
 
+  void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
+  {
+    /*
+     Each received wheel_cmd command sets the wheel velocities of the robot until the next wheel_cmd command is received.
+     The wheel_cmd messages are integer values between -265 and 265 and are proportional to the maximum rotational velocity of the motor (see Specifications and A.8).
+     */
+    wheel_vel_left_ = std::clamp(msg->left_velocity, -motor_cmd_max_, motor_cmd_max_) * motor_cmd_per_rad_sec_;
+    wheel_vel_right_ = std::clamp(msg->right_velocity, -motor_cmd_max_, motor_cmd_max_) * motor_cmd_per_rad_sec_;
+  }
+
   /// @brief get the initial pose of the robot from parameters
   /// @return tf for the initial pose (x0, y0, theta0)
   turtlelib::Transform2D get_pose0()
   {
-    double x = get_parameter("x0").as_double();
-    double y = get_parameter("y0").as_double();
+    const auto x = get_parameter("x0").as_double();
+    const auto y = get_parameter("y0").as_double();
     const auto theta = get_parameter("theta0").as_double();
     return {{x, y}, theta};
   }
@@ -208,6 +331,7 @@ private:
     }
 
     walls_publisher_->publish(marker_array);
+    RCLCPP_INFO(get_logger(), "Published arena walls.");
   }
 
   /// @brief publish cylindrical obstacles as configured on startup.
@@ -245,22 +369,37 @@ private:
       marker.color.a = 1.0;
 
       marker_array.markers.push_back(marker);
+      RCLCPP_INFO(get_logger(), std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i], obs_r).c_str());
     }
 
     obstacles_publisher_->publish(marker_array);
+    RCLCPP_INFO(get_logger(), "Published arena obstacles.");
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
+  rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr count_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
+  rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
+  rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
   /// @brief simulation timestep
   size_t count_;
+  double sim_rate_;
   /// @brief ground truth pose of the robot
   turtlelib::Transform2D gt_pose_;
+  double wheel_vel_left_ = 0.0;
+  double wheel_vel_right_ = 0.0;
+
+  // robot parameters
+  int motor_cmd_max_{};
+  double motor_cmd_per_rad_sec_{};
+  double encoder_ticks_per_rad_{};
+  double collision_radius_{};
+  std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
 };
 
 int main(int argc, char * argv[])
