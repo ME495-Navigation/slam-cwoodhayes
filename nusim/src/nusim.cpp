@@ -7,6 +7,7 @@
 #include "turtlelib/se2d.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
@@ -96,8 +97,14 @@ public:
       create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles", qos);
     RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
 
+    wheel_cmd_sub_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
+      "red/wheel_cmd", 10,
+      std::bind(&NUSimulator::wheel_cmd_callback, this, std::placeholders::_1));
+
     publish_arena();
     publish_cyl_obstacles();
+
+    
   }
 
 private:
@@ -140,6 +147,11 @@ private:
       "({}).",
       gt_pose_);
     RCLCPP_INFO(get_logger(), msg.c_str());
+  }
+
+  void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
+  {
+    last_wheel_cmd_ = *msg;
   }
 
   /// @brief get the initial pose of the robot from parameters
@@ -254,6 +266,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
+  rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
@@ -261,6 +274,8 @@ private:
   size_t count_;
   /// @brief ground truth pose of the robot
   turtlelib::Transform2D gt_pose_;
+  /// @brief latest wheel command
+  nuturtlebot_msgs::msg::WheelCommands last_wheel_cmd_{};
 };
 
 int main(int argc, char * argv[])
