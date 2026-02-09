@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-################### Begin_Citation[9] ###################
+################### Begin_Citation[10] ###################
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,7 +20,7 @@ else
 	echo "Creating ${ROSDEP_LIST_FILE}"
 	sudo sh -c "echo 'yaml file://${ROSDEP_RULE}' > '${ROSDEP_LIST_FILE}'"
 fi
-################### End_Citation [9] ###################
+################### End_Citation [10] ###################
 
 rosdep update
 

@@ -21,6 +21,7 @@ find_package(turtlelib REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(catch_ros2 REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetPose.srv"
@@ -80,6 +81,7 @@ install(TARGETS odometry DESTINATION lib/${PROJECT_NAME})
 install(TARGETS circle DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
+  include(CTest)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
@@ -89,6 +91,32 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  add_executable(turtle_control_test_node
+    integration_test/turtle_control_test.cpp
+  )
+
+  target_link_libraries(turtle_control_test_node PUBLIC
+    catch_ros2::catch_ros2_with_node_main
+    ${std_msgs_TARGETS}
+    ${std_srvs_TARGETS}
+    ${geometry_msgs_TARGETS}
+    ${visualization_msgs_TARGETS}
+    ${nuturtlebot_msgs_TARGETS}
+    ${nav_msgs_TARGETS}
+    rclcpp::rclcpp
+    tf2_ros::tf2_ros
+    turtlelib::turtlelib
+    catch_ros2::catch_ros2
+    ${cpp_typesupport_target}
+  )
+
+  install(TARGETS turtle_control_test_node DESTINATION lib/${PROJECT_NAME})
+
+  # makes sure int test runs when running colcon test
+  catch_ros2_add_integration_test(turtle_control_test 
+    LAUNCH_FILE turtle_control_test.launch.xml
+  )
 endif()
 
 # Install launch files.
