@@ -1,0 +1,12 @@
+
+# angular velocity, positive for counter-clockwise, negative for clockwise
+# radians per second
+float64 velocity
+
+# radius of the circle to be driven
+# meters
+float64 radius
+
+---
+
+bool success

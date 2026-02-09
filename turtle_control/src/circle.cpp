@@ -4,8 +4,15 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "geometry_msgs/msg/twist.hpp"
+#include "turtle_control/srv/circle_control.hpp"
 
-/// @brief Node for moving the turtle in a circle by publishing to cmd_vel.
+/// \brief Node for moving the turtle in a circle by publishing to cmd_vel.
+///
+/// Publishes:
+/// - cmd_vel (geometry_msgs/msg/Twist)
+///
+/// Services:
+/// - circle_control (turtle_control/srv/CircleControl)
 class Circle : public rclcpp::Node
 {
 public:
@@ -16,6 +23,11 @@ public:
     timer_ =
       create_wall_timer(std::chrono::milliseconds(100), std::bind(&Circle::timer_callback, this));
     
+    circle_control_srv_ = create_service<turtle_control::srv::CircleControl>(
+      "circle_control",
+      std::bind(&Circle::circle_control_callback, this,
+                std::placeholders::_1, std::placeholders::_2));
+    
     RCLCPP_INFO(get_logger(), "circle node constructed.");
   }
 
@@ -23,13 +35,37 @@ private:
   void timer_callback()
   {
     auto msg = geometry_msgs::msg::Twist();
-    msg.linear.x = 0.5;
-    msg.angular.z = 0.5;
+    // by kevination twist math:
+    if (is_circling_) {
+      msg.linear.x = circle_radius_;
+      msg.angular.z = angular_velocity_ * (is_forward_ ? 1 : -1);
+    }
     cmd_vel_pub_->publish(msg);
+  }
+
+  void circle_control_callback(
+    const std::shared_ptr<turtle_control::srv::CircleControl::Request> request,
+    std::shared_ptr<turtle_control::srv::CircleControl::Response> response)
+  {
+    auto info_msg = std::format("Received circle control request (radius: {}, velocity: {})", request->radius, request->velocity);
+    RCLCPP_INFO(get_logger(), info_msg.c_str());
+
+    angular_velocity_ = request->velocity;
+    circle_radius_ = request->radius;
+
+    response->success = true;
   }
 
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Service<turtle_control::srv::CircleControl>::SharedPtr circle_control_srv_;
+
+  // angular velocity in rad/s
+  double angular_velocity_ = 0.0;
+  double circle_radius_ = 1.0;
+  // forward is 1, backward is -1
+  bool is_forward_ = true;
+  bool is_circling_ = false;
 };
 
 int main(int argc, char * argv[])
