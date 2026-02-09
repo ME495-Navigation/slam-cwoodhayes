@@ -111,8 +111,14 @@ private:
     auto right_it = std::ranges::find(msg->name, wheel_right_);
     if (left_it == msg->name.end() || right_it == msg->name.end())
     {
+      // put all the names in js message in the error for easier debugging
+      auto names_str = std::accumulate(
+          msg->name.begin(), msg->name.end(), std::string{},
+          [](const std::string& acc, const std::string& name) {
+            return acc.empty() ? name : acc + ", " + name;
+          });
       auto errmsg =
-          std::format("Wheel joint names '{}' and '{}' not found in joint_states message", wheel_left_, wheel_right_);
+          std::format("Wheel joint names '{}' and '{}' not found in joint_states message: {}", wheel_left_, wheel_right_, names_str);
       RCLCPP_ERROR(get_logger(), errmsg.c_str());
       return;
     }

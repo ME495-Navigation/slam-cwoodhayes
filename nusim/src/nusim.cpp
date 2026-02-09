@@ -10,6 +10,7 @@
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
+#include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
@@ -153,6 +154,9 @@ public:
       "red/wheel_cmd", 10,
       std::bind(&NUSimulator::wheel_cmd_callback, this, std::placeholders::_1));
 
+    // sensor data publisher
+    sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
+
     publish_arena();
     publish_cyl_obstacles();
     RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
@@ -173,6 +177,12 @@ private:
     new_wheel_angle_right = turtlelib::normalize_angle(new_wheel_angle_right);
     // run FK to get new ground truth pose
     gt_pose_ = diff_drive_->forward_kinematics(new_wheel_angle_left, new_wheel_angle_right);
+
+    // publish sensor data message with current wheel angles and ground truth pose
+    auto sensor_msg = nuturtlebot_msgs::msg::SensorData();
+    sensor_msg.left_encoder = new_wheel_angle_left * encoder_ticks_per_rad_;
+    sensor_msg.right_encoder = new_wheel_angle_right * encoder_ticks_per_rad_;
+    sensor_msg.stamp = get_clock()->now();
 
     // broadcast transform from nusim/world to red/base_footprint
     auto transform = geometry_msgs::msg::TransformStamped();
@@ -196,6 +206,7 @@ private:
     // send everything out
     tf_broadcaster_->sendTransform(transform);
     publisher_->publish(count_msg);
+    sensor_data_publisher_->publish(sensor_msg);
   }
 
   void reset_callback(
@@ -336,6 +347,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
+  rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
