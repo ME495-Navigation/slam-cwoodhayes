@@ -56,6 +56,7 @@
         <let name="nusim_world_config" value="$(find-pkg-share nusim)/config/basic_world.yaml"/>
         <node pkg="nusim" exec="nusim">
             <param from="$(var nusim_world_config)"/>
+            <param from="$(var diff_params)"/>
             <remap from="joint_states" to="red/joint_states"/>
         </node>
 
