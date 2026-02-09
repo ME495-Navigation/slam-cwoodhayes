@@ -62,8 +62,9 @@ private:
     auto msg = geometry_msgs::msg::Twist();
     // by kevination twist math:
     if (is_circling_) {
-      msg.linear.x = circle_radius_;
-      msg.angular.z = angular_velocity_ * (is_forward_ ? 1 : -1);
+      const auto direction = is_forward_ ? 1.0 : -1.0;
+      msg.linear.x = circle_radius_ * angular_velocity_ * direction;
+      msg.angular.z = angular_velocity_ * direction;
     }
     cmd_vel_pub_->publish(msg);
   }
