@@ -8,7 +8,6 @@ Panels:
         - /Status1
         - /TF1
         - /TF1/Frames1
-        - /Ground Truth Pose (red)1/Status1
         - /MarkerArray - Obstacles1/Topic1
       Splitter Ratio: 0.5
     Tree Height: 811
@@ -62,6 +61,10 @@ Visualization Manager:
           Value: false
         blue/imu_link:
           Value: false
+        blue/wheel_left_link:
+          Value: false
+        blue/wheel_right_link:
+          Value: false
         nusim/world:
           Value: true
         odom:
@@ -75,6 +78,10 @@ Visualization Manager:
         red/caster_back_link:
           Value: false
         red/imu_link:
+          Value: false
+        red/wheel_left_link:
+          Value: false
+        red/wheel_right_link:
           Value: false
       Marker Scale: 1
       Name: TF
@@ -92,6 +99,10 @@ Visualization Manager:
                   {}
                 blue/imu_link:
                   {}
+                blue/wheel_left_link:
+                  {}
+                blue/wheel_right_link:
+                  {}
           red/base_footprint:
             red/base_link:
               red/base_scan:
@@ -99,6 +110,10 @@ Visualization Manager:
               red/caster_back_link:
                 {}
               red/imu_link:
+                {}
+              red/wheel_left_link:
+                {}
+              red/wheel_right_link:
                 {}
       Update Interval: 0
       Value: true
@@ -317,16 +332,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 5.96026086807251
+      Distance: 4.447364807128906
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.07576820999383926
-        Y: 0.40150734782218933
-        Z: -0.07386437803506851
+        X: 0.19234371185302734
+        Y: 0.20631738007068634
+        Z: -0.012442557141184807
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

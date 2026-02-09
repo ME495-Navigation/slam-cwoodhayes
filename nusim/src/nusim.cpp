@@ -11,6 +11,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
@@ -151,7 +152,7 @@ public:
       throw std::runtime_error("obstacles.x and obstacles.y must have the same length");
     }
 
-    publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
+    count_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     timer_ = create_wall_timer(
       std::chrono::duration<double>(1.0 / sim_rate_), std::bind(&NUSimulator::timer_callback, this));
 
@@ -177,6 +178,8 @@ public:
 
     // sensor data publisher
     sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
+
+    joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
 
     publish_arena();
     publish_cyl_obstacles();
@@ -208,6 +211,11 @@ private:
     sensor_msg.right_encoder = rad_to_ticks(new_wheel_angle_right, encoder_ticks_per_rad_);
     sensor_msg.stamp = get_clock()->now();
 
+    auto joint_states = sensor_msgs::msg::JointState{};
+    joint_states.header.stamp = get_clock()->now();
+    joint_states.name = {"wheel_left_joint", "wheel_right_joint"};
+    joint_states.position = {new_wheel_angle_left, new_wheel_angle_right};
+
     // broadcast transform from nusim/world to red/base_footprint
     auto transform = geometry_msgs::msg::TransformStamped();
     transform.header.stamp = get_clock()->now();
@@ -229,8 +237,9 @@ private:
 
     // send everything out
     tf_broadcaster_->sendTransform(transform);
-    publisher_->publish(count_msg);
+    count_publisher_->publish(count_msg);
     sensor_data_publisher_->publish(sensor_msg);
+    joint_states_publisher_->publish(joint_states);
   }
 
   void reset_callback(
@@ -368,10 +377,11 @@ private:
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
+  rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr count_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
