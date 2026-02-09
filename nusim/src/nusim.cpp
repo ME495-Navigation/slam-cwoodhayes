@@ -27,11 +27,31 @@
 
 using namespace std::chrono_literals;
 
-/// @brief Simulator node.
+/// @class NUSimulator
+/// @brief ROS2 node that simulates a differential drive robot (TurtleBot3) in a 2D environment.
+///
+/// This simulator maintains ground truth pose and wheel states, publishes sensor data and transforms,
+/// and responds to wheel command inputs.
+///
+/// @details Publishers:
+///   - `~/timestep` (std_msgs::msg::UInt64): Current simulation timestep counter
+///   - `~/real_walls` (visualization_msgs::msg::MarkerArray): Arena boundary walls for visualization
+///   - `~/real_obstacles` (visualization_msgs::msg::MarkerArray): Cylindrical obstacles for visualization
+///   - `red/sensor_data` (nuturtlebot_msgs::msg::SensorData): Simulated sensor output (ie encoder readings) for the robot
+///
+/// @details Subscribers:
+///   - `red/wheel_cmd` (nuturtlebot_msgs::msg::WheelCommands): Motor commands to the robot
+///
+/// @details Services:
+///   - `~/reset` (std_srvs::srv::Empty): Resets simulation timestep and robot pose to initial state
+///
+/// @details Broadcasts:
+///   - Transform from "nusim/world" to "red/base_footprint" with ground truth pose at each timestep
 class NUSimulator : public rclcpp::Node
 {
 public:
   /// @brief Node constructor
+
   NUSimulator()
   : Node("nusimulator"), count_(0), gt_pose_()
   {

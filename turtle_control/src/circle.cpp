@@ -14,6 +14,8 @@
 ///
 /// Services:
 /// - circle_control (turtle_control/srv/CircleControl)
+/// - reverse (std_srvs/srv/Empty)
+/// - stop (std_srvs/srv/Empty)
 class Circle : public rclcpp::Node
 {
 public:

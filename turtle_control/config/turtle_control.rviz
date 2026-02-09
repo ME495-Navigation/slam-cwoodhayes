@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /TF1
         - /TF1/Frames1
+        - /Ground Truth Pose (red)1/Status1
         - /MarkerArray - Obstacles1/Topic1
       Splitter Ratio: 0.5
     Tree Height: 811
@@ -194,7 +195,7 @@ Visualization Manager:
       Mass Properties:
         Inertia: false
         Mass: false
-      Name: Ground Truth Pose
+      Name: Ground Truth Pose (red)
       TF Prefix: red
       Update Interval: 0
       Value: true
@@ -253,7 +254,7 @@ Visualization Manager:
       Mass Properties:
         Inertia: false
         Mass: false
-      Name: Localized Pose
+      Name: Localized Pose (blue)
       TF Prefix: blue
       Update Interval: 0
       Value: true
@@ -316,16 +317,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 6.597211837768555
+      Distance: 5.96026086807251
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.4218124747276306
-        Y: 1.3250408172607422
-        Z: -0.05841723829507828
+        X: -0.07576820999383926
+        Y: 0.40150734782218933
+        Z: -0.07386437803506851
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

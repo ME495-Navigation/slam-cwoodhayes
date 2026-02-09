@@ -20,15 +20,19 @@
 #include <ranges>
 #include <format>
 
-/// \brief Node for controlling the turtle in turtlesim.
+/// \brief Node for odometry estimation of the robot.
 ///
 /// Subscribes:
-/// - cmd_vel (geometry_msgs/msg/Twist)
-/// - sensor_data (nuturtlebot_msgs/msg/SensorData)
+/// - joint_states (sensor_msgs/msg/JointState): Current wheel joint positions
 ///
 /// Publishes:
-/// - wheel_cmd (nuturtlebot_msgs/msg/WheelCommands)
-/// - joint_states (sensor_msgs/msg/JointState)
+/// - odom (nav_msgs/msg/Odometry): Robot odometry pose and twist
+///
+/// Services:
+/// - set_initial_pose (turtle_control/srv/SetPose): Sets the initial pose for odometry
+///
+/// Broadcasts:
+/// - odom -> body_id transform via tf2 (ie odom -> blue base_footprint)
 class Odometry : public rclcpp::Node
 {
 public:
