@@ -16,6 +16,7 @@
 #include "turtle_control/srv/set_pose.hpp"
 
 #include <functional>
+#include <numeric>
 #include <ranges>
 #include <format>
 
@@ -38,6 +39,8 @@ public:
 
     joint_states_sub_ = create_subscription<sensor_msgs::msg::JointState>(
         "joint_states", qos, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+
+    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos);
 
     initial_pose_srv_ = create_service<turtle_control::srv::SetPose>(
         "set_initial_pose",

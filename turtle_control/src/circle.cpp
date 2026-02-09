@@ -47,6 +47,11 @@ public:
       "stop",
       std::bind(&Circle::stop_callback, this,
                 std::placeholders::_1, std::placeholders::_2));
+
+    // start off circling with some arbitrary values
+    angular_velocity_ = 1.0;
+    circle_radius_ = 2.0;
+    is_circling_ = true;
     
     RCLCPP_INFO(get_logger(), "circle node constructed.");
   }
@@ -72,6 +77,7 @@ private:
 
     angular_velocity_ = request->velocity;
     circle_radius_ = request->radius;
+    is_circling_ = true;
 
     response->success = true;
   }
