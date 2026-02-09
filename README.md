@@ -2,13 +2,30 @@
 * Conor Hayes
 * Winter 2025
 
-# System Requirements
+# Setup
+## System Requirements
 This repo has been tested with the following system configuration:
 - ROS 2 Kilted Kaiju
 - g++-14 compiler
 - Ubuntu 24.04
 
 It likely works with other versions of the above, but this is untested.
+
+## One-time setup
+In order to build & use this package, do the following:
+```bash
+# clone the repo into a clean ROS workspace
+SLAM_WS_NAME="slam-ws"   # use whatever workspace name you want
+mkdir -p $SLAM_WS_NAME/src
+cd $SLAM_WS_NAME/src
+git clone git@github.com:ME495-Navigation/slam-cwoodhayes.git
+
+# clone other needed repos
+vcs import < slam-cwoodhayes/turtle.repos
+
+# run one-time setup for package installation
+./slam-cwoodhayes/setup.sh
+```
 
 # Package List
 This repository consists of several ROS packages:
