@@ -93,6 +93,8 @@
             <param name="wheel_left" value="wheel_left_joint"/>
             <param name="wheel_right" value="wheel_right_joint"/>
         </node>
+        <!-- this node only exists on the turtlebot itself. no need to depend on it; we won't use this arg on another machine -->
+        <node pkg="numsr_turtlebot" exec="numsr_turtlebot"/>
     </group>
 
     <!-- command source nodes -->
