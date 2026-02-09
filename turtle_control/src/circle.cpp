@@ -21,8 +21,17 @@ public:
   {
     auto qos = rclcpp::QoS(10);
     cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", qos);
-    timer_ =
-      create_wall_timer(std::chrono::milliseconds(100), std::bind(&Circle::timer_callback, this));
+
+    auto desc = rcl_interfaces::msg::ParameterDescriptor();
+    desc.description = "Frequency to publish cmd_vel messages at";
+    declare_parameter("frequency", 100.0, desc);
+    auto frequency = get_parameter("frequency").as_double();
+    if (frequency <= 0.0) {
+      RCLCPP_WARN(get_logger(), "frequency must be > 0.0, defaulting to 100Hz");
+      frequency = 100.0;
+    }
+    const auto period = std::chrono::duration<double>(1.0 / frequency);
+    timer_ = create_wall_timer(period, std::bind(&Circle::timer_callback, this));
     
     circle_control_srv_ = create_service<turtle_control::srv::CircleControl>(
       "circle_control",
