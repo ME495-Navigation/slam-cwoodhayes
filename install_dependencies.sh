@@ -10,6 +10,11 @@ WORKSPACE_ROOT="$(cd "${ROOT_DIR}/../.." && pwd)"
 
 echo "Registering local rosdep rule: ${ROSDEP_RULE}"
 if [[ -f "${ROSDEP_LIST_FILE}" ]]; then
+	# remove any stale local rosdep entries (e.g., from older paths)
+	if grep -Fq "yaml file:///home/conor/rosdep/local.yaml" "${ROSDEP_LIST_FILE}"; then
+		echo "Removing stale local rosdep entry from ${ROSDEP_LIST_FILE}"
+		sudo sh -c "grep -Fv 'yaml file:///home/conor/rosdep/local.yaml' '${ROSDEP_LIST_FILE}' > '${ROSDEP_LIST_FILE}.tmp' && mv '${ROSDEP_LIST_FILE}.tmp' '${ROSDEP_LIST_FILE}'"
+	fi
 	if grep -Fxq "yaml file://${ROSDEP_RULE}" "${ROSDEP_LIST_FILE}"; then
 		echo "Local rosdep rule already registered in ${ROSDEP_LIST_FILE}"
 	else
