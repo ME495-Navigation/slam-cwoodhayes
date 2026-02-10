@@ -76,5 +76,6 @@ namespace turtlelib
         phi_right_ = 0.0;
         phi_dot_left_ = 0.0;
         phi_dot_right_ = 0.0;
+        has_received_initial_wheel_angle_ = false;
     }
 }

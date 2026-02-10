@@ -51,6 +51,8 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        base_footprint:
+          Value: false
         blue/base_footprint:
           Value: true
         blue/base_link:
@@ -69,20 +71,6 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
-        red/base_footprint:
-          Value: true
-        red/base_link:
-          Value: false
-        red/base_scan:
-          Value: false
-        red/caster_back_link:
-          Value: false
-        red/imu_link:
-          Value: false
-        red/wheel_left_link:
-          Value: false
-        red/wheel_right_link:
-          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
@@ -91,30 +79,19 @@ Visualization Manager:
       Tree:
         nusim/world:
           odom:
-            blue/base_footprint:
-              blue/base_link:
-                blue/base_scan:
-                  {}
-                blue/caster_back_link:
-                  {}
-                blue/imu_link:
-                  {}
-                blue/wheel_left_link:
-                  {}
-                blue/wheel_right_link:
-                  {}
-          red/base_footprint:
-            red/base_link:
-              red/base_scan:
-                {}
-              red/caster_back_link:
-                {}
-              red/imu_link:
-                {}
-              red/wheel_left_link:
-                {}
-              red/wheel_right_link:
-                {}
+            base_footprint:
+              blue/base_footprint:
+                blue/base_link:
+                  blue/base_scan:
+                    {}
+                  blue/caster_back_link:
+                    {}
+                  blue/imu_link:
+                    {}
+                  blue/wheel_left_link:
+                    {}
+                  blue/wheel_right_link:
+                    {}
       Update Interval: 0
       Value: true
     - Angle Tolerance: 0.10000000149011612
@@ -174,39 +151,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_scan:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        caster_back_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        wheel_left_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_right_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Mass Properties:
         Inertia: false
         Mass: false
@@ -278,7 +222,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray - Walls
       Namespaces:
-        red: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Transient Local
@@ -290,7 +234,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray - Obstacles
       Namespaces:
-        red: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Transient Local
@@ -332,16 +276,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 4.447364807128906
+      Distance: 2.260542154312134
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.19234371185302734
-        Y: 0.20631738007068634
-        Z: -0.012442557141184807
+        X: 0.03401485085487366
+        Y: -0.11802822351455688
+        Z: -0.11071622371673584
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
