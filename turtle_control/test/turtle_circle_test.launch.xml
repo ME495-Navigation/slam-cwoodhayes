@@ -1,21 +1,18 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <launch>
     <catch2_launch_file description='Integration test for circle cmd_vel frequency'/>
-
-    <arg name="expected_frequency" default="10.0" description="Expected cmd_vel publish frequency (Hz)"/>
-    <arg name="sample_count" default="20" description="Number of cmd_vel samples to measure"/>
-    <arg name="timeout_seconds" default="5.0" description="Test timeout in seconds"/>
+    <let name="frequency" value="60.0"/>
 
     <node pkg="turtle_control" exec="circle" name="circle" output="screen">
-        <param name="frequency" value="$(var expected_frequency)"/>
+        <param name="frequency" value="$(var frequency)"/>
     </node>
 
     <catch2_integration_test_node
         pkg='turtle_control'
         exec='turtle_circle_test_node'
     >
-        <param name="expected_frequency" value="$(var expected_frequency)"/>
-        <param name="sample_count" value="$(var sample_count)"/>
-        <param name="timeout_seconds" value="$(var timeout_seconds)"/>
+        <param name="expected_frequency" value="$(var frequency)"/>
+        <param name="measurement_seconds" value="2.0"/>
+        <param name="timeout_seconds" value="5.0"/>
     </catch2_integration_test_node>
 </launch>
