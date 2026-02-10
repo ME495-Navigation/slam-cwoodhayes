@@ -154,7 +154,8 @@ public:
 
     count_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     timer_ = create_wall_timer(
-      std::chrono::duration<double>(1.0 / sim_rate_), std::bind(&NUSimulator::timer_callback, this));
+      std::chrono::duration<double>(1.0 / sim_rate_),
+      std::bind(&NUSimulator::timer_callback, this));
 
     reset_service_ = create_service<std_srvs::srv::Empty>(
       "~/reset",
@@ -177,9 +178,11 @@ public:
       std::bind(&NUSimulator::wheel_cmd_callback, this, std::placeholders::_1));
 
     // sensor data publisher
-    sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
+    sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data",
+      10);
 
-    joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
+    joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states",
+      10);
 
     publish_arena();
     publish_cyl_obstacles();
@@ -261,8 +264,10 @@ private:
      Each received wheel_cmd command sets the wheel velocities of the robot until the next wheel_cmd command is received.
      The wheel_cmd messages are integer values between -265 and 265 and are proportional to the maximum rotational velocity of the motor (see Specifications and A.8).
      */
-    wheel_vel_left_ = std::clamp(msg->left_velocity, -motor_cmd_max_, motor_cmd_max_) * motor_cmd_per_rad_sec_;
-    wheel_vel_right_ = std::clamp(msg->right_velocity, -motor_cmd_max_, motor_cmd_max_) * motor_cmd_per_rad_sec_;
+    wheel_vel_left_ = std::clamp(msg->left_velocity, -motor_cmd_max_,
+      motor_cmd_max_) * motor_cmd_per_rad_sec_;
+    wheel_vel_right_ = std::clamp(msg->right_velocity, -motor_cmd_max_,
+      motor_cmd_max_) * motor_cmd_per_rad_sec_;
   }
 
   /// @brief get the initial pose of the robot from parameters
@@ -369,7 +374,9 @@ private:
       marker.color.a = 1.0;
 
       marker_array.markers.push_back(marker);
-      RCLCPP_INFO(get_logger(), std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i], obs_r).c_str());
+      RCLCPP_INFO(get_logger(),
+        std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i],
+        obs_r).c_str());
     }
 
     obstacles_publisher_->publish(marker_array);
