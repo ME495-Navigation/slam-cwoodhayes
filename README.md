@@ -36,9 +36,8 @@ This repository consists of several ROS packages:
 - `nusim` - a custom turtlebot arena simulator based on RViz which supports our SLAM algorithm development
 
 # turtle_control Description
-Controls the turtlebot3 in simulation or hardware and provides odometry.
-Key nodes and interfaces:
-- `turtle_control` node: converts `cmd_vel` into wheel commands, publishes wheel joint states.
+Controls the turtlebot3 in simulation or hardware and provides odometry. Node summary:
+- `turtle_control` node: converts `cmd_vel` into wheel commands, publishes wheel joint states using IK/FK implementation in `turtlelib::DiffDrive`
 - `odometry` node: computes and publishes `nav_msgs/Odometry`, broadcasts TF, and provides `set_initial_pose` service.
 - `circle` node: publishes circular `cmd_vel` and offers `circle_control`, `reverse`, and `stop` services.
 
