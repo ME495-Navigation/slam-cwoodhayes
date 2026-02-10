@@ -81,7 +81,7 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
 
     // publish a cmd_vel with pure translation
     auto cmd = geometry_msgs::msg::Twist();
-    cmd.linear.x = 0.5; // 0.5 m/s forward
+    cmd.linear.x = 0.15; // 0.5 m/s forward
     cmd.angular.z = 0.0; // no rotation
     cmd_vel_pub->publish(cmd);
 
@@ -101,14 +101,14 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
 
     wheel angular velocity for pure translation:
     omega_wheel = linear_x / wheel_radius
-    = 0.5 / 0.033 = 15.15 rad/s
+    = 0.15 / 0.033 = 4.545 rad/s
 
     converting to motor commands with 0.024 motor_cmd per rad/s gives:
-    left_cmd = 15.15 / 0.024 = 631.25 -> 631 after rounding
-    right_cmd = 631
+    left_cmd = 4.545 / 0.024 = 189.375 -> 189 after rounding
+    right_cmd = 189
     */
-    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(631, 2));
-    CHECK_THAT(received_cmd->right_velocity, Catch::Matchers::WithinAbs(631, 2));
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(189, 2));
+    CHECK_THAT(received_cmd->right_velocity, Catch::Matchers::WithinAbs(189, 2));
   }
 
   // test that verifies that cmd_vel commands with pure rotation result in
@@ -140,11 +140,11 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
     = (1.0 * 0.16 / 2) / 0.033 = 2.424 rad/s
 
     converting to motor commands with 0.024 motor_cmd per rad/s gives:
-    left_cmd = 2.424 / 0.024 = 101.01 -> 101 after rounding
-    right_cmd = -101
+    cmd = 2.424 / 0.024 = 101.01 -> 101 after rounding
+    with left = -101 and right = 101.
     */
-    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(101, 2));
-    CHECK_THAT(received_cmd->right_velocity, Catch::Matchers::WithinAbs(-101, 2));
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(-101, 2));
+    CHECK_THAT(received_cmd->right_velocity, Catch::Matchers::WithinAbs(101, 2));
   }
 
   // test that verifies that encoder data on sensors is converted to joint_states properly
