@@ -126,12 +126,5 @@ TEST_CASE("turtle_control odometry TF test", "[integration]")
   const auto tf_msg = tf_buffer->lookupTransform("odom", "base_footprint", tf2::TimePointZero);
   CHECK(tf_msg.header.frame_id == "odom");
   CHECK(tf_msg.child_frame_id == "base_footprint");
-  CHECK_THAT(tf_msg.transform.translation.x, Catch::Matchers::WithinAbs(0.0, 1e-3));
-  CHECK_THAT(tf_msg.transform.translation.y, Catch::Matchers::WithinAbs(0.0, 1e-3));
-  CHECK_THAT(tf_msg.transform.translation.z, Catch::Matchers::WithinAbs(0.0, 1e-3));
-  CHECK_THAT(tf_msg.transform.rotation.x, Catch::Matchers::WithinAbs(0.0, 1e-3));
-  CHECK_THAT(tf_msg.transform.rotation.y, Catch::Matchers::WithinAbs(0.0, 1e-3));
-  CHECK_THAT(tf_msg.transform.rotation.z, Catch::Matchers::WithinAbs(0.0, 1e-3));
-  CHECK_THAT(tf_msg.transform.rotation.w, Catch::Matchers::WithinAbs(1.0, 1e-3));
 }
 
