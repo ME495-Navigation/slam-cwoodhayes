@@ -7,6 +7,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/angle.hpp"
+#include "turtlelib/geometry2d.hpp"
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
@@ -106,6 +107,9 @@ public:
     diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius_, track_width_);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
+    // publish an initial transform at the origin so that we have a valid tf as soon as possible
+    publish_pose_tf(turtlelib::Transform2D(), turtlelib::angle_to_2d_planar_quaternion(0.0));
+
     RCLCPP_INFO(get_logger(), "odometry node constructed.");
   }
 
@@ -165,10 +169,12 @@ private:
 
     // leave covariance as default (all 0s)
 
-    // publish odometry msg
+    // publish odometry msg and tf
     odom_pub_->publish(odom_msg);
+    publish_pose_tf(T_ob, quat);
+  }
 
-    // now, publish the TF equivalent.
+  void publish_pose_tf(const turtlelib::Transform2D & T_ob, const std::vector<double> & quat) {
     auto tf = geometry_msgs::msg::TransformStamped();
     tf.header.stamp = get_clock()->now();
     tf.header.frame_id = odom_id_;
