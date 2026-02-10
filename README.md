@@ -43,23 +43,22 @@ Controls the turtlebot3 in simulation or hardware and provides odometry. Node su
 
 The `start_robot.launch.xml` launch file runs these nodes for motion in `nusim` or hardware, with configurable source of `cmd_vel` (a simple circular path, teleop, or none)
 
-https://github.com/user-attachments/assets/3a986ff9-4054-4111-99ed-3ed89913fc15
+https://github.com/user-attachments/assets/bab2ae6e-a6a7-44c5-8ed0-ffb4ad08dbb6
 
 > Above: Running `ros2 launch turtle_control start_robot.launch.xml robot:=localhost use_rviz:=false` on the turtlebot3, together with the rviz output on PC from `ros2 launch src/slam-cwoodhayes/turtle_control/launch/start_robot.launch.xml cmd_src:=none robot:=none use_rviz:=true`. The turtlebot reverses direction in response to manual calls of the `/reverse` service.
 
 In the video above, according to `/odom` the turtlebot stops at:
 ```
-pose:
   pose:
     position:
-      x: 0.1126871521836682
-      y: 0.38268280957091494
+      x: 0.1207919554875541
+      y: 0.03904022617800196
       z: 0.0
     orientation:
       x: 0.0
       y: 0.0
-      z: 0.9618117012333811
-      w: 0.2737119861652925
+      z: 0.2537207775181715
+      w: 0.9672775026100703
 ```
 
 ## Launch File Details
