@@ -38,7 +38,8 @@ class Odometry : public rclcpp::Node
 {
 public:
   /// @brief constructor
-  Odometry() : Node("odometry")
+  Odometry()
+  : Node("odometry")
   {
     auto qos = rclcpp::QoS(10);
 
@@ -48,8 +49,9 @@ public:
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos);
 
     initial_pose_srv_ = create_service<turtle_control::srv::SetPose>(
-        "set_initial_pose",
-        std::bind(&Odometry::set_initial_pose_cb, this, std::placeholders::_1, std::placeholders::_2));
+      "set_initial_pose",
+      std::bind(&Odometry::set_initial_pose_cb, this, std::placeholders::_1,
+      std::placeholders::_2));
 
     // fetch necessary robot parameters from diff_params.yaml
     /**
@@ -97,8 +99,7 @@ public:
     wheel_radius_ = get_parameter("wheel_radius").as_double();
     track_width_ = get_parameter("track_width").as_double();
 
-    if (wheel_left_.empty() || wheel_right_.empty())
-    {
+    if (wheel_left_.empty() || wheel_right_.empty()) {
       RCLCPP_ERROR(get_logger(), "wheel_left and wheel_right parameters must be specified");
       throw std::runtime_error("Missing required wheel parameters");
     }
@@ -120,16 +121,16 @@ private:
     // grab new wheel states from the msg by their names
     auto left_it = std::ranges::find(msg->name, wheel_left_);
     auto right_it = std::ranges::find(msg->name, wheel_right_);
-    if (left_it == msg->name.end() || right_it == msg->name.end())
-    {
+    if (left_it == msg->name.end() || right_it == msg->name.end()) {
       // put all the names in js message in the error for easier debugging
       auto names_str = std::accumulate(
           msg->name.begin(), msg->name.end(), std::string{},
-          [](const std::string& acc, const std::string& name) {
-            return acc.empty() ? name : acc + ", " + name;
-          });
+        [](const std::string & acc, const std::string & name) {
+          return acc.empty() ? name : acc + ", " + name;
+        });
       auto errmsg =
-          std::format("Wheel joint names '{}' and '{}' not found in joint_states message: {}", wheel_left_, wheel_right_, names_str);
+        std::format("Wheel joint names '{}' and '{}' not found in joint_states message: {}",
+        wheel_left_, wheel_right_, names_str);
       RCLCPP_ERROR(get_logger(), errmsg.c_str());
       return;
     }
@@ -174,7 +175,8 @@ private:
     publish_pose_tf(T_ob, quat);
   }
 
-  void publish_pose_tf(const turtlelib::Transform2D & T_ob, const std::vector<double> & quat) {
+  void publish_pose_tf(const turtlelib::Transform2D & T_ob, const std::vector<double> & quat)
+  {
     auto tf = geometry_msgs::msg::TransformStamped();
     tf.header.stamp = get_clock()->now();
     tf.header.frame_id = odom_id_;
@@ -191,8 +193,9 @@ private:
   }
 
   /// @brief Callback function for set_initial_pose service. Sets the initial pose of the robot for odometry.
-  void set_initial_pose_cb(const std::shared_ptr<turtle_control::srv::SetPose::Request> request,
-                           std::shared_ptr<turtle_control::srv::SetPose::Response> response)
+  void set_initial_pose_cb(
+    const std::shared_ptr<turtle_control::srv::SetPose::Request> request,
+    std::shared_ptr<turtle_control::srv::SetPose::Response> response)
   {
     // set the initial pose of the robot in the diff_drive object
     auto infomsg = std::format("Received request to set initial pose to x: {}, y: {}, theta: {}",
@@ -217,7 +220,7 @@ private:
   double track_width_;
 };
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<Odometry>());

@@ -34,47 +34,50 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
   // create a publisher for cmd_vel to command the turtle_control node,
   // which will then publish wheel commands that we can listen for to verify the node is working
   auto cmd_vel_pub = node->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
-  
+
   // and a subscriber to listen for wheel commands published by turtle_control
   auto wheel_cmd_recv_queue = std::make_shared<std::queue<nuturtlebot_msgs::msg::WheelCommands::SharedPtr>>();
   auto wheel_cmd_sub = node->create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
     "wheel_cmd", 10,
     [wheel_cmd_recv_queue](const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
-      RCLCPP_INFO(rclcpp::get_logger("integration_test_node"), "Received wheel command: left=%d, right=%d",
-                  msg->left_velocity, msg->right_velocity);
+      RCLCPP_INFO(rclcpp::get_logger("integration_test_node"),
+        "Received wheel command: left=%d, right=%d",
+        msg->left_velocity, msg->right_velocity);
       wheel_cmd_recv_queue->push(msg);
     });
 
   // HELPER FUNCTIONS
   auto wait_for_subs_and_pubs = [&]() {
-    auto timeout = std::chrono::duration<double>(TEST_DURATION);
-    auto wait_start = std::chrono::steady_clock::now();
-    auto wait_rate = rclcpp::WallRate(50ms);
+      auto timeout = std::chrono::duration<double>(TEST_DURATION);
+      auto wait_start = std::chrono::steady_clock::now();
+      auto wait_rate = rclcpp::WallRate(50ms);
 
-    while (cmd_vel_pub->get_subscription_count() == 0 || wheel_cmd_sub->get_publisher_count() == 0) {
-      if (std::chrono::steady_clock::now() - wait_start > timeout) {
-        FAIL("Timed out waiting for pub/sub matching on cmd_vel or wheel_cmd");
+      while (cmd_vel_pub->get_subscription_count() == 0 ||
+        wheel_cmd_sub->get_publisher_count() == 0)
+      {
+        if (std::chrono::steady_clock::now() - wait_start > timeout) {
+          FAIL("Timed out waiting for pub/sub matching on cmd_vel or wheel_cmd");
+        }
+        rclcpp::spin_some(node);
+        wait_rate.sleep();
       }
-      rclcpp::spin_some(node);
-      wait_rate.sleep();
-    }
-  };
+    };
 
   auto wait_for_wheel_cmd = [&]() {
-    auto timeout = std::chrono::duration<double>(TEST_DURATION);
-    auto wait_start = std::chrono::steady_clock::now();
-    auto wait_rate = rclcpp::WallRate(50ms);
+      auto timeout = std::chrono::duration<double>(TEST_DURATION);
+      auto wait_start = std::chrono::steady_clock::now();
+      auto wait_rate = rclcpp::WallRate(50ms);
 
-    while (wheel_cmd_recv_queue->empty()) {
-      if (std::chrono::steady_clock::now() - wait_start > timeout) {
-        FAIL("Timed out waiting for wheel_cmd message");
+      while (wheel_cmd_recv_queue->empty()) {
+        if (std::chrono::steady_clock::now() - wait_start > timeout) {
+          FAIL("Timed out waiting for wheel_cmd message");
+        }
+        rclcpp::spin_some(node);
+        wait_rate.sleep();
       }
-      rclcpp::spin_some(node);
-      wait_rate.sleep();
-    }
-  };
+    };
 
-  // test that verifies that cmd_vel commands with pure translation result in 
+  // test that verifies that cmd_vel commands with pure translation result in
   // the appropriate wheel_cmd being published.
   SECTION("pure translation cmd_vel -> wheel commands") {
     wait_for_subs_and_pubs();
@@ -90,7 +93,8 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
     CHECK(wheel_cmd_recv_queue->size() == 1);
     // check that wheel commands are approx equal (due to straight line)
     auto received_cmd = wheel_cmd_recv_queue->front();
-    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(received_cmd->right_velocity, 0.001));
+    CHECK_THAT(received_cmd->left_velocity,
+      Catch::Matchers::WithinAbs(received_cmd->right_velocity, 0.001));
 
     /*
     check actual values given the parameters in diff_params.yaml and the kinematics of the robot
@@ -126,7 +130,8 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
     CHECK(wheel_cmd_recv_queue->size() == 1);
     // check that wheel commands are approx equal and opposite (due to rotation in place)
     auto received_cmd = wheel_cmd_recv_queue->front();
-    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(-received_cmd->right_velocity, 1.0)); 
+    CHECK_THAT(received_cmd->left_velocity,
+      Catch::Matchers::WithinAbs(-received_cmd->right_velocity, 1.0));
 
     /*
     check actual values given the parameters in diff_params.yaml and the kinematics of the robot
@@ -158,7 +163,8 @@ TEST_CASE("turtle_control test - sensor_data to joint_states", "[integration]") 
   const auto test_duration =
     node->get_parameter("test_duration").get_parameter_value().get<double>();
 
-  auto sensor_data_pub = node->create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
+  auto sensor_data_pub = node->create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data",
+    10);
   auto joint_state_recv_queue = std::make_shared<std::queue<sensor_msgs::msg::JointState::SharedPtr>>();
   auto joint_state_sub = node->create_subscription<sensor_msgs::msg::JointState>(
     "joint_states", 10,
@@ -170,33 +176,34 @@ TEST_CASE("turtle_control test - sensor_data to joint_states", "[integration]") 
     });
 
   auto wait_for_subs_and_pubs = [&]() {
-    const auto timeout = std::chrono::duration<double>(test_duration);
-    auto wait_start = std::chrono::steady_clock::now();
-    auto wait_rate = rclcpp::WallRate(50ms);
+      const auto timeout = std::chrono::duration<double>(test_duration);
+      auto wait_start = std::chrono::steady_clock::now();
+      auto wait_rate = rclcpp::WallRate(50ms);
 
-    while (sensor_data_pub->get_subscription_count() == 0 ||
-           joint_state_sub->get_publisher_count() == 0) {
-      if (std::chrono::steady_clock::now() - wait_start > timeout) {
-        FAIL("Timed out waiting for pub/sub matching on sensor_data or joint_states");
+      while (sensor_data_pub->get_subscription_count() == 0 ||
+        joint_state_sub->get_publisher_count() == 0)
+      {
+        if (std::chrono::steady_clock::now() - wait_start > timeout) {
+          FAIL("Timed out waiting for pub/sub matching on sensor_data or joint_states");
+        }
+        rclcpp::spin_some(node);
+        wait_rate.sleep();
       }
-      rclcpp::spin_some(node);
-      wait_rate.sleep();
-    }
-  };
+    };
 
   auto wait_for_joint_state = [&]() {
-    const auto timeout = std::chrono::duration<double>(test_duration);
-    auto wait_start = std::chrono::steady_clock::now();
-    auto wait_rate = rclcpp::WallRate(50ms);
+      const auto timeout = std::chrono::duration<double>(test_duration);
+      auto wait_start = std::chrono::steady_clock::now();
+      auto wait_rate = rclcpp::WallRate(50ms);
 
-    while (joint_state_recv_queue->empty()) {
-      if (std::chrono::steady_clock::now() - wait_start > timeout) {
-        FAIL("Timed out waiting for joint_states message");
+      while (joint_state_recv_queue->empty()) {
+        if (std::chrono::steady_clock::now() - wait_start > timeout) {
+          FAIL("Timed out waiting for joint_states message");
+        }
+        rclcpp::spin_some(node);
+        wait_rate.sleep();
       }
-      rclcpp::spin_some(node);
-      wait_rate.sleep();
-    }
-  };
+    };
 
   SECTION("sensor_data -> joint_states") {
     wait_for_subs_and_pubs();

@@ -1,5 +1,5 @@
 /// @file
-/// 
+///
 /// \brief contains ros_catch2 test for circle cmd_vel frequency
 
 #include "catch_ros2/catch_ros2.hpp"

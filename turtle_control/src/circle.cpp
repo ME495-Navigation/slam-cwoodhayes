@@ -1,4 +1,3 @@
-
 /// \file circle.cpp
 /// \brief contains a simple node that moves the turtle in a circle using cmd_vel.
 #include "rclcpp/rclcpp.hpp"
@@ -19,7 +18,8 @@
 class Circle : public rclcpp::Node
 {
 public:
-  Circle() : Node("circle")
+  Circle()
+  : Node("circle")
   {
     auto qos = rclcpp::QoS(10);
     cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", qos);
@@ -34,7 +34,7 @@ public:
     }
     const auto period = std::chrono::duration<double>(1.0 / frequency);
     timer_ = create_wall_timer(period, std::bind(&Circle::timer_callback, this));
-    
+
     circle_control_srv_ = create_service<turtle_control::srv::CircleControl>(
       "circle_control",
       std::bind(&Circle::circle_control_callback, this,
@@ -54,7 +54,7 @@ public:
     angular_velocity_ = 0.3;
     circle_radius_ = 0.2;
     is_circling_ = true;
-    
+
     RCLCPP_INFO(get_logger(), "circle node constructed.");
   }
 
@@ -75,7 +75,8 @@ private:
     const std::shared_ptr<turtle_control::srv::CircleControl::Request> request,
     std::shared_ptr<turtle_control::srv::CircleControl::Response> response)
   {
-    auto info_msg = std::format("Received circle control request (radius: {}, velocity: {})", request->radius, request->velocity);
+    auto info_msg = std::format("Received circle control request (radius: {}, velocity: {})",
+      request->radius, request->velocity);
     RCLCPP_INFO(get_logger(), info_msg.c_str());
 
     angular_velocity_ = request->velocity;

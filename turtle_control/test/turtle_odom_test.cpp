@@ -1,5 +1,5 @@
 /// @file
-/// 
+///
 /// \brief contains ros_catch2 test for odometry API
 
 #include "catch_ros2/catch_ros2.hpp"
@@ -53,7 +53,8 @@ TEST_CASE("turtle_control odometry API test", "[integration]")
   auto wait_rate = rclcpp::WallRate(50ms);
 
   while (sensor_data_pub->get_subscription_count() == 0 ||
-         odom_sub->get_publisher_count() == 0) {
+    odom_sub->get_publisher_count() == 0)
+  {
     if (std::chrono::steady_clock::now() - wait_start > timeout) {
       FAIL("Timed out waiting for pub/sub matching on sensor_data or odom");
     }
@@ -127,4 +128,3 @@ TEST_CASE("turtle_control odometry TF test", "[integration]")
   CHECK(tf_msg.header.frame_id == "odom");
   CHECK(tf_msg.child_frame_id == "base_footprint");
 }
-

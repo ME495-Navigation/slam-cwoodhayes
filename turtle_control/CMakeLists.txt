@@ -154,7 +154,7 @@ if(BUILD_TESTING)
   install(TARGETS turtle_circle_test_node DESTINATION lib/${PROJECT_NAME})
 
   # makes sure int test runs when running colcon test
-  catch_ros2_add_integration_test(turtle_control_test 
+  catch_ros2_add_integration_test(turtle_control_test
     LAUNCH_FILE turtle_control_test.launch.xml
   )
 
