@@ -90,7 +90,7 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
     CHECK(wheel_cmd_recv_queue->size() == 1);
     // check that wheel commands are approx equal (due to straight line)
     auto received_cmd = wheel_cmd_recv_queue->front();
-    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(received_cmd->right_velocity, 3));
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(received_cmd->right_velocity, 0.001));
   }
 
   // test that verifies that cmd_vel commands with pure rotation result in
@@ -108,7 +108,25 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
     CHECK(wheel_cmd_recv_queue->size() == 1);
     // check that wheel commands are approx equal and opposite (due to rotation in place)
     auto received_cmd = wheel_cmd_recv_queue->front();
-    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(-received_cmd->right_velocity, 3)); 
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(-received_cmd->right_velocity, 0.001)); 
+
+    /*
+    check actual values given the parameters in diff_params.yaml and the kinematics of the robot
+    with:
+    - 0.033m wheel radius
+    - 0.16m track width
+    - 1 rad/s rotation
+
+    wheel angular velocity for pure rotation:
+    omega_wheel = (angular_z * track_width / 2) / wheel_radius
+    = (1.0 * 0.16 / 2) / 0.033 = 2.424 rad/s
+
+    converting to motor commands with 0.024 motor_cmd per rad/s gives:
+    left_cmd = 2.424 / 0.024 = 101.01 -> 101 after rounding
+    right_cmd = -101
+    */
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(101.0, 1.0));
+    CHECK_THAT(received_cmd->right_velocity, Catch::Matchers::WithinAbs(-101.0, 1.0));
   }
 
   // test that verifies that encoder data on sensors is converted to joint_states properly
