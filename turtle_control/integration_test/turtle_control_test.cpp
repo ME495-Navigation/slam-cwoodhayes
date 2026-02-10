@@ -4,6 +4,8 @@
 #include "catch_ros2/catch_ros2.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include <queue>
+
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
@@ -34,11 +36,13 @@ TEST_CASE("example_integration_test", "[integration]") {
   auto cmd_vel_pub = node->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
   
   // and a subscriber to listen for wheel commands published by turtle_control
+  auto wheel_cmd_recv_queue = std::make_shared<std::queue<nuturtlebot_msgs::msg::WheelCommands::SharedPtr>>();
   auto wheel_cmd_sub = node->create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
     "wheel_cmd", 10,
-    [](const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
+    [wheel_cmd_recv_queue](const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
       RCLCPP_INFO(rclcpp::get_logger("integration_test_node"), "Received wheel command: left=%d, right=%d",
                   msg->left_velocity, msg->right_velocity);
+      wheel_cmd_recv_queue->push(msg);
     });
 
   // Keep test running only for the length of the "test_duration" parameter
@@ -47,6 +51,19 @@ TEST_CASE("example_integration_test", "[integration]") {
   // test that verifies that cmd_vel commands with pure translation result in 
   // the appropriate wheel_cmd being published.
   SECTION("pure translation cmd_vel -> wheel commands") {
+    const auto timeout = std::chrono::duration<double>(TEST_DURATION);
+    auto wait_start = std::chrono::steady_clock::now();
+    auto wait_rate = rclcpp::WallRate(50ms);
+
+    while (cmd_vel_pub->get_subscription_count() == 0 || wheel_cmd_sub->get_publisher_count() == 0) {
+      if (std::chrono::steady_clock::now() - wait_start > timeout) {
+        FAIL("Timed out waiting for pub/sub matching on cmd_vel or wheel_cmd");
+      }
+      rclcpp::spin_some(node);
+      wait_rate.sleep();
+    }
+
+    RCLCPP_INFO(node->get_logger(), "Starting pure translation test. Publishing cmd_vel with linear.x=0.5 and angular.z=0.0");
     // publish a cmd_vel with pure translation
     auto cmd = geometry_msgs::msg::Twist();
     cmd.linear.x = 0.5; // 0.5 m/s forward
@@ -54,10 +71,17 @@ TEST_CASE("example_integration_test", "[integration]") {
     cmd_vel_pub->publish(cmd);
 
     // tick so that the turtle_control node processes the cmd_vel and publishes a wheel_cmd
-    rclcpp::spin_some(node);
+    wait_start = std::chrono::steady_clock::now();
+    while (wheel_cmd_recv_queue->empty()) {
+      if (std::chrono::steady_clock::now() - wait_start > timeout) {
+        FAIL("Timed out waiting for wheel_cmd message");
+      }
+      rclcpp::spin_some(node);
+      wait_rate.sleep();
+    }
 
     // TODO get wheel commands and check that the wheels are moving at the same rate.
-    CHECK(false); // replace with actual check
+    CHECK(wheel_cmd_recv_queue->size() > 0); // replace with actual check
   }
 }
 // ####################### End_Citation[11] ##################### --- IGNORE ---
