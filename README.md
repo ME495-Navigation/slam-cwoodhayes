@@ -30,9 +30,23 @@ colcon build
 
 # Package List
 This repository consists of several ROS packages:
+- `turtle_control` - Control functionality for the turtlebot3. Supports odometry + control of the robot in simulation and in hardware.
 - `nuturtle_description` - contains models, configs, and visualization files for the `turtlebot3` burger, adapted from the official [turtlebot3_description](https://index.ros.org/p/turtlebot3_description/) package.
 - `turtlelib` - a C++ library that implements a variety of geometric helper functions & visualization support using SVG's.
 - `nusim` - a custom turtlebot arena simulator based on RViz which supports our SLAM algorithm development
+
+# turtle_control Description
+Controls the turtlebot3 in simulation or hardware and provides odometry.
+Key nodes and interfaces:
+- `turtle_control` node: converts `cmd_vel` into wheel commands, publishes wheel joint states.
+- `odometry` node: computes and publishes `nav_msgs/Odometry`, broadcasts TF, and provides `set_initial_pose` service.
+- `circle` node: publishes circular `cmd_vel` and offers `circle_control`, `reverse`, and `stop` services.
+
+The `start_robot.launch.xml` launch file runs these nodes for motion in `nusim` or hardware, with configurable source of `cmd_vel` (a simple circular path, teleop, or none)
+
+https://github.com/user-attachments/assets/3a986ff9-4054-4111-99ed-3ed89913fc15
+
+> Above: Running `ros2 launch turtle_control start_robot.launch.xml robot:=localhost use_rviz:=false` on the turtlebot3, together with the rviz output on PC from `ros2 launch src/slam-cwoodhayes/turtle_control/launch/start_robot.launch.xml cmd_src:=none robot:=none use_rviz:=true`
 
 # Nuturtle Description
 URDF files for Nuturtle 
