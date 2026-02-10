@@ -25,6 +25,5 @@
         pkg='turtle_control'
         exec='turtle_odom_test_node'
     >
-        <param name='test_duration' value='$(var test_duration)'/>
     </catch2_integration_test_node>
 </launch>
