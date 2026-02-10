@@ -17,6 +17,8 @@ TEST_CASE("DiffDrive forward motion (forward/inverse)", "[Conor]")
 
     auto dd = DiffDrive{wheel_radius, wheel_track};
 
+    // initialize wheel angle
+    dd.forward_kinematics(0.0, 0.0);
     auto tf = dd.forward_kinematics(2.0 * pi, 2.0 * pi);
 
     REQUIRE_THAT(tf.rotation(), WithinAbs(0.0, 1e-6));
@@ -38,6 +40,7 @@ TEST_CASE("DiffDrive pure rotation (forward/inverse)", "[Conor]")
     // spin around 180 degrees
     // this means 0.5/2 * pi = 0.25pi arc length for both wheels
     // so the wheels have to spin 0.25pi / 0.1 = 2.5pi radians in opposite directions
+    dd.forward_kinematics(0.0, 0.0);
     auto tf = dd.forward_kinematics(-pi * 2.5, pi * 2.5);
 
     REQUIRE_THAT(tf.translation().x, WithinAbs(0.0, 1e-6));
@@ -57,6 +60,7 @@ TEST_CASE("DiffDrive circular arc (forward/inverse)", "[Conor]")
 
     auto dd = DiffDrive{wheel_radius, wheel_track};
 
+    dd.forward_kinematics(0.0, 0.0);
     auto tf = dd.forward_kinematics(1.0, 2.0);
 
     const auto omega = (wheel_radius / wheel_track) * (2.0 - 1.0);
