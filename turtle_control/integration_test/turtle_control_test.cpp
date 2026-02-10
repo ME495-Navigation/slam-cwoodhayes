@@ -63,7 +63,6 @@ TEST_CASE("example_integration_test", "[integration]") {
       wait_rate.sleep();
     }
 
-    RCLCPP_INFO(node->get_logger(), "Starting pure translation test. Publishing cmd_vel with linear.x=0.5 and angular.z=0.0");
     // publish a cmd_vel with pure translation
     auto cmd = geometry_msgs::msg::Twist();
     cmd.linear.x = 0.5; // 0.5 m/s forward
@@ -80,8 +79,10 @@ TEST_CASE("example_integration_test", "[integration]") {
       wait_rate.sleep();
     }
 
-    // TODO get wheel commands and check that the wheels are moving at the same rate.
-    CHECK(wheel_cmd_recv_queue->size() > 0); // replace with actual check
+    CHECK(wheel_cmd_recv_queue->size() == 1);
+    // check that wheel commands are approx equal (due to straight line)
+    auto received_cmd = wheel_cmd_recv_queue->front();
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(received_cmd->right_velocity, 3));
   }
 }
 // ####################### End_Citation[11] ##################### --- IGNORE ---
