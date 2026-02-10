@@ -93,11 +93,11 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   add_executable(turtle_control_test_node
-    integration_test/turtle_control_test.cpp
+    test/turtle_control_test.cpp
   )
 
   add_executable(turtle_odom_test_node
-    integration_test/turtle_odom_test.cpp
+    test/turtle_odom_test.cpp
   )
 
   target_link_libraries(turtle_control_test_node PUBLIC
@@ -140,6 +140,12 @@ if(BUILD_TESTING)
 
   catch_ros2_add_integration_test(turtle_odom_test
     LAUNCH_FILE turtle_odom_test.launch.xml
+  )
+
+  # Install test launch files.
+  install(DIRECTORY
+    test
+    DESTINATION share/${PROJECT_NAME}/
   )
 endif()
 
