@@ -109,7 +109,7 @@ public:
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
     // publish an initial transform at the origin so that we have a valid tf as soon as possible
-    publish_pose_tf(turtlelib::Transform2D(), turtlelib::angle_to_2d_planar_quaternion(0.0));
+    publish_pose_tf(turtlelib::Transform2D());
 
     RCLCPP_INFO(get_logger(), "odometry node constructed.");
   }
@@ -172,11 +172,12 @@ private:
 
     // publish odometry msg and tf
     odom_pub_->publish(odom_msg);
-    publish_pose_tf(T_ob, quat);
+    publish_pose_tf(T_ob);
   }
 
-  void publish_pose_tf(const turtlelib::Transform2D & T_ob, const std::vector<double> & quat)
+  void publish_pose_tf(const turtlelib::Transform2D & T_ob)
   {
+    const auto quat = turtlelib::angle_to_2d_planar_quaternion(T_ob.rotation());
     auto tf = geometry_msgs::msg::TransformStamped();
     tf.header.stamp = get_clock()->now();
     tf.header.frame_id = odom_id_;
@@ -204,6 +205,7 @@ private:
 
     turtlelib::Transform2D new_pose({request->x, request->y}, request->theta);
     diff_drive_->reset_to_configuration(new_pose);
+    publish_pose_tf(new_pose);
     response->success = true;
   }
 

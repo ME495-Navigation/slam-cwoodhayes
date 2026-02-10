@@ -50,10 +50,10 @@ public:
       std::bind(&Circle::stop_callback, this,
                 std::placeholders::_1, std::placeholders::_2));
 
-    // start off circling with some arbitrary values
-    angular_velocity_ = 0.3;
-    circle_radius_ = 0.2;
-    is_circling_ = true;
+    // start off not circling
+    angular_velocity_ = 0.0;
+    circle_radius_ = 0.0;
+    is_circling_ = false;
 
     RCLCPP_INFO(get_logger(), "circle node constructed.");
   }
