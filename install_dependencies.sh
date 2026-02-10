@@ -3,7 +3,7 @@
 ################### Begin_Citation[10] ###################
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]-$0}")" && pwd)"
 ROSDEP_RULE="${ROOT_DIR}/rosdep/local.yaml"
 ROSDEP_LIST_FILE="/etc/ros/rosdep/sources.list.d/99-local-rosdep.list"
 WORKSPACE_ROOT="$(cd "${ROOT_DIR}/../.." && pwd)"
