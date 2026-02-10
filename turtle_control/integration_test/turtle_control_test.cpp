@@ -45,13 +45,9 @@ TEST_CASE("example_integration_test", "[integration]") {
       wheel_cmd_recv_queue->push(msg);
     });
 
-  // Keep test running only for the length of the "test_duration" parameter
-  // (in seconds)
-
-  // test that verifies that cmd_vel commands with pure translation result in 
-  // the appropriate wheel_cmd being published.
-  SECTION("pure translation cmd_vel -> wheel commands") {
-    const auto timeout = std::chrono::duration<double>(TEST_DURATION);
+  // HELPER FUNCTIONS
+  auto wait_for_subs_and_pubs = [&]() {
+    auto timeout = std::chrono::duration<double>(TEST_DURATION);
     auto wait_start = std::chrono::steady_clock::now();
     auto wait_rate = rclcpp::WallRate(50ms);
 
@@ -62,15 +58,13 @@ TEST_CASE("example_integration_test", "[integration]") {
       rclcpp::spin_some(node);
       wait_rate.sleep();
     }
+  };
 
-    // publish a cmd_vel with pure translation
-    auto cmd = geometry_msgs::msg::Twist();
-    cmd.linear.x = 0.5; // 0.5 m/s forward
-    cmd.angular.z = 0.0; // no rotation
-    cmd_vel_pub->publish(cmd);
+  auto wait_for_wheel_cmd = [&]() {
+    auto timeout = std::chrono::duration<double>(TEST_DURATION);
+    auto wait_start = std::chrono::steady_clock::now();
+    auto wait_rate = rclcpp::WallRate(50ms);
 
-    // tick so that the turtle_control node processes the cmd_vel and publishes a wheel_cmd
-    wait_start = std::chrono::steady_clock::now();
     while (wheel_cmd_recv_queue->empty()) {
       if (std::chrono::steady_clock::now() - wait_start > timeout) {
         FAIL("Timed out waiting for wheel_cmd message");
@@ -78,11 +72,43 @@ TEST_CASE("example_integration_test", "[integration]") {
       rclcpp::spin_some(node);
       wait_rate.sleep();
     }
+  };
+
+  // test that verifies that cmd_vel commands with pure translation result in 
+  // the appropriate wheel_cmd being published.
+  SECTION("pure translation cmd_vel -> wheel commands") {
+    wait_for_subs_and_pubs();
+
+    // publish a cmd_vel with pure translation
+    auto cmd = geometry_msgs::msg::Twist();
+    cmd.linear.x = 0.5; // 0.5 m/s forward
+    cmd.angular.z = 0.0; // no rotation
+    cmd_vel_pub->publish(cmd);
+
+    wait_for_wheel_cmd();
 
     CHECK(wheel_cmd_recv_queue->size() == 1);
     // check that wheel commands are approx equal (due to straight line)
     auto received_cmd = wheel_cmd_recv_queue->front();
     CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(received_cmd->right_velocity, 3));
+  }
+
+  // test that verifies that cmd_vel commands with pure rotation result in
+  // the appropriate wheel_cmd being published.
+  SECTION("pure rotation cmd_vel -> wheel commands") {
+    wait_for_subs_and_pubs();
+    // publish a cmd_vel with pure rotation
+    auto cmd = geometry_msgs::msg::Twist();
+    cmd.linear.x = 0.0; // no forward motion
+    cmd.angular.z = 1.0; // 1 rad/s counterclockwise
+    cmd_vel_pub->publish(cmd);
+
+    wait_for_wheel_cmd();
+
+    CHECK(wheel_cmd_recv_queue->size() == 1);
+    // check that wheel commands are approx equal and opposite (due to rotation in place)
+    auto received_cmd = wheel_cmd_recv_queue->front();
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(-received_cmd->right_velocity, 3)); 
   }
 }
 // ####################### End_Citation[11] ##################### --- IGNORE ---
