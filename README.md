@@ -21,7 +21,7 @@ cd $SLAM_WS_NAME/src
 git clone git@github.com:ME495-Navigation/slam-cwoodhayes.git
 
 # run one-time setup for dependency installation
-./slam-cwoodhayes/setup.sh
+./slam-cwoodhayes/install_dependencies.sh
 
 # build package from source
 cd ..
