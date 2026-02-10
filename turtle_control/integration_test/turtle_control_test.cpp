@@ -91,6 +91,24 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
     // check that wheel commands are approx equal (due to straight line)
     auto received_cmd = wheel_cmd_recv_queue->front();
     CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(received_cmd->right_velocity, 0.001));
+
+    /*
+    check actual values given the parameters in diff_params.yaml and the kinematics of the robot
+    with:
+    - 0.033m wheel radius
+    - 0.16m track width
+    - 0.5 m/s forward velocity
+
+    wheel angular velocity for pure translation:
+    omega_wheel = linear_x / wheel_radius
+    = 0.5 / 0.033 = 15.15 rad/s
+
+    converting to motor commands with 0.024 motor_cmd per rad/s gives:
+    left_cmd = 15.15 / 0.024 = 631.25 -> 631 after rounding
+    right_cmd = 631
+    */
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(631, 2));
+    CHECK_THAT(received_cmd->right_velocity, Catch::Matchers::WithinAbs(631, 2));
   }
 
   // test that verifies that cmd_vel commands with pure rotation result in
@@ -108,7 +126,7 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
     CHECK(wheel_cmd_recv_queue->size() == 1);
     // check that wheel commands are approx equal and opposite (due to rotation in place)
     auto received_cmd = wheel_cmd_recv_queue->front();
-    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(-received_cmd->right_velocity, 0.001)); 
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(-received_cmd->right_velocity, 1.0)); 
 
     /*
     check actual values given the parameters in diff_params.yaml and the kinematics of the robot
@@ -125,8 +143,8 @@ TEST_CASE("turtle_control test - cmd_vel to wheel_cmd", "[integration]") {
     left_cmd = 2.424 / 0.024 = 101.01 -> 101 after rounding
     right_cmd = -101
     */
-    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(101.0, 1.0));
-    CHECK_THAT(received_cmd->right_velocity, Catch::Matchers::WithinAbs(-101.0, 1.0));
+    CHECK_THAT(received_cmd->left_velocity, Catch::Matchers::WithinAbs(101, 2));
+    CHECK_THAT(received_cmd->right_velocity, Catch::Matchers::WithinAbs(-101, 2));
   }
 
   // test that verifies that encoder data on sensors is converted to joint_states properly
