@@ -46,7 +46,28 @@ The `start_robot.launch.xml` launch file runs these nodes for motion in `nusim` 
 
 https://github.com/user-attachments/assets/3a986ff9-4054-4111-99ed-3ed89913fc15
 
-> Above: Running `ros2 launch turtle_control start_robot.launch.xml robot:=localhost use_rviz:=false` on the turtlebot3, together with the rviz output on PC from `ros2 launch src/slam-cwoodhayes/turtle_control/launch/start_robot.launch.xml cmd_src:=none robot:=none use_rviz:=true`
+> Above: Running `ros2 launch turtle_control start_robot.launch.xml robot:=localhost use_rviz:=false` on the turtlebot3, together with the rviz output on PC from `ros2 launch src/slam-cwoodhayes/turtle_control/launch/start_robot.launch.xml cmd_src:=none robot:=none use_rviz:=true`. The turtlebot reverses direction in response to manual calls of the `/reverse` service.
+
+## Launch File Details
+* `ros2 launch turtle_control start_robot.launch.xml --show-arguments`
+
+```
+Arguments (pass arguments as '<name>:=<value>'):
+
+    'cmd_src':
+        Source of cmd_vel commands. Valid choices are: ['circle', 'teleop', 'none']
+        (default: 'circle')
+
+    'robot':
+        what robot to control (sim vs hardware etc). Valid choices are: ['nusim', 'localhost', 'none']
+        (default: 'nusim')
+
+    'use_rviz':
+        if true, view robot behavior in RViz
+        (default: 'true')
+```
+Note that the above command will display 
+additional arguments from included launchfiles (not shown above) due to a known bug in the launch framework.
 
 # Nuturtle Description
 URDF files for Nuturtle 
@@ -84,7 +105,7 @@ Implements geometric primitives and operations upon them.
 - `geometry2d.hpp` - two-dimensional geometric primitives (Points, Vectors) and operations upon them
 - `se2d.hpp` - two-dimensional SE2 transformations + twists, that can operate on points + vectors
 - `svg.hpp` - visualization functions for the above using SVG files as output.
-- `diff_drive.hpp` - handles inverse and forward kinematics for an arbitrary diff-drive robot
+- `diff_drive.hpp` - handles inverse and forward kinematics for an arbitrary diff-drive robot. For derivations of the math used, see [doc/Kinematics.pdf](doc/Kinematics.pdf)
 
 # nusim Description
 A custom turtlebot arena simulator based on rviz. 
