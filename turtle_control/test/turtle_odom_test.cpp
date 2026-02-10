@@ -1,6 +1,6 @@
 /// @file
 /// 
-/// \brief contains ros_catch2 test scaffold for odometry API
+/// \brief contains ros_catch2 test for odometry API
 
 #include "catch_ros2/catch_ros2.hpp"
 #include "rclcpp/rclcpp.hpp"

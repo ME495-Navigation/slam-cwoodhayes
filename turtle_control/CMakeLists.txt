@@ -100,6 +100,10 @@ if(BUILD_TESTING)
     test/turtle_odom_test.cpp
   )
 
+  add_executable(turtle_circle_test_node
+    test/turtle_circle_test.cpp
+  )
+
   target_link_libraries(turtle_control_test_node PUBLIC
     catch_ros2::catch_ros2_with_node_main
     ${std_msgs_TARGETS}
@@ -130,8 +134,24 @@ if(BUILD_TESTING)
     ${cpp_typesupport_target}
   )
 
+  target_link_libraries(turtle_circle_test_node PUBLIC
+    catch_ros2::catch_ros2_with_node_main
+    ${std_msgs_TARGETS}
+    ${std_srvs_TARGETS}
+    ${geometry_msgs_TARGETS}
+    ${visualization_msgs_TARGETS}
+    ${nuturtlebot_msgs_TARGETS}
+    ${nav_msgs_TARGETS}
+    rclcpp::rclcpp
+    tf2_ros::tf2_ros
+    turtlelib::turtlelib
+    catch_ros2::catch_ros2
+    ${cpp_typesupport_target}
+  )
+
   install(TARGETS turtle_control_test_node DESTINATION lib/${PROJECT_NAME})
   install(TARGETS turtle_odom_test_node DESTINATION lib/${PROJECT_NAME})
+  install(TARGETS turtle_circle_test_node DESTINATION lib/${PROJECT_NAME})
 
   # makes sure int test runs when running colcon test
   catch_ros2_add_integration_test(turtle_control_test 
@@ -140,6 +160,10 @@ if(BUILD_TESTING)
 
   catch_ros2_add_integration_test(turtle_odom_test
     LAUNCH_FILE turtle_odom_test.launch.xml
+  )
+
+  catch_ros2_add_integration_test(turtle_circle_test
+    LAUNCH_FILE turtle_circle_test.launch.xml
   )
 
   # Install test launch files.
