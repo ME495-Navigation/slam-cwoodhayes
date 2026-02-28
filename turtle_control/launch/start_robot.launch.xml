@@ -99,6 +99,10 @@
         <!-- send the base_footprint outputted by numsr_turtlebot to blue/base_footprint expected everywhere else -->
         <node pkg="tf2_ros" exec="static_transform_publisher" name="tb_base_footprint_to_blue_base_footprint" args="0 0 0 0 0 0 base_footprint blue/base_footprint"/>
 
+        <!-- lidar -->
+        <include file="$(find-pkg-share hls_lfcd_lds_driver)/launch/hlds_laser.launch.py">
+            <arg name="port" value="/dev/ttyUSB0"/>
+        </include>
     </group>
 
     <!-- command source nodes -->
