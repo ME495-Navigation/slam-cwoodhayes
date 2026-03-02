@@ -9,6 +9,8 @@
 #include "turtlelib/angle.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "nav_msgs/msg/path.hpp"
+#include "sensor_msgs/msg/laser_scan.hpp"
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
@@ -27,6 +29,12 @@
 #include <cstdint>
 
 using namespace std::chrono_literals;
+
+struct Obstacles {
+  std::vector<double> x;
+  std::vector<double> y;
+  double r;
+};
 
 /// @class NUSimulator
 /// @brief ROS2 node that simulates a differential drive robot (TurtleBot3) in a 2D environment.
@@ -147,6 +155,7 @@ public:
     // Validate that x and y have same length
     auto obs_x = get_parameter("obstacles.x").as_double_array();
     auto obs_y = get_parameter("obstacles.y").as_double_array();
+    auto obs_r = get_parameter("obstacles.r").as_double();
     if (obs_x.size() != obs_y.size()) {
       RCLCPP_ERROR(get_logger(), "obstacles.x and obstacles.y must have the same length");
       throw std::runtime_error("obstacles.x and obstacles.y must have the same length");
@@ -172,6 +181,8 @@ public:
     // create obstacles publisher
     obstacles_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles", qos);
+    measured_obstacles_publisher_ =
+      create_publisher<visualization_msgs::msg::MarkerArray>("~/measured_obstacles", rclcpp::QoS(10));
 
     wheel_cmd_sub_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
       "red/wheel_cmd", 10,
@@ -181,11 +192,18 @@ public:
     sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data",
       10);
 
-    joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states",
-      10);
+    joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
+
+    path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
+    gt_path_ = nav_msgs::msg::Path();
+    gt_path_.header.frame_id = "nusim/world";
+
+    // laser scan publisher
+    laser_scan_publisher_ = create_publisher<sensor_msgs::msg::LaserScan>("red/scan", 10);
 
     publish_arena();
-    publish_cyl_obstacles();
+    gt_obs_ = {obs_x, obs_y, obs_r};
+    publish_cyl_obstacles(obs_x, obs_y, obs_r, true);
     RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
   }
 
@@ -243,6 +261,24 @@ private:
     count_publisher_->publish(count_msg);
     sensor_data_publisher_->publish(sensor_msg);
     joint_states_publisher_->publish(joint_states);
+    publish_laser_scan();
+
+    // publish a path for the ground truth robot position
+    auto pose_stamped = geometry_msgs::msg::PoseStamped();
+    pose_stamped.header.stamp = get_clock()->now();
+    pose_stamped.header.frame_id = "nusim/world";
+    pose_stamped.pose.position.x = gt_pose_.translation().x;
+    pose_stamped.pose.position.y = gt_pose_.translation().y;
+    pose_stamped.pose.position.z = 0.0;
+    pose_stamped.pose.orientation.x = quat[0];
+    pose_stamped.pose.orientation.y = quat[1];
+    pose_stamped.pose.orientation.z = quat[2];
+    pose_stamped.pose.orientation.w = quat[3];
+
+    gt_path_.header.stamp = get_clock()->now();
+    gt_path_.poses.push_back(pose_stamped);
+    path_publisher_->publish(gt_path_);
+    publish_measured_obstacles();
   }
 
   void reset_callback(
@@ -251,6 +287,7 @@ private:
   {
     count_ = 0;
     gt_pose_ = get_pose0();
+    gt_path_.poses.clear();
     const auto msg = std::format(
       "Simulation reset: timestep set to 0, robot reset to initial pose "
       "({}).",
@@ -340,12 +377,9 @@ private:
   }
 
   /// @brief publish cylindrical obstacles as configured on startup.
-  void publish_cyl_obstacles()
+  void publish_cyl_obstacles(const std::vector<double>& obs_x, const std::vector<double>& obs_y, const double obs_r, bool is_groundtruth)
   {
-    auto obs_x = get_parameter("obstacles.x").as_double_array();
-    auto obs_y = get_parameter("obstacles.y").as_double_array();
-    double obs_r = get_parameter("obstacles.r").as_double();
-    const double cyl_height = 0.25;
+    const auto cyl_height = 0.25;
 
     auto marker_array = visualization_msgs::msg::MarkerArray();
 
@@ -353,7 +387,6 @@ private:
       auto marker = visualization_msgs::msg::Marker();
       marker.header.frame_id = "nusim/world";
       marker.header.stamp = get_clock()->now();
-      marker.ns = "red";
       marker.id = i;
       marker.type = visualization_msgs::msg::Marker::CYLINDER;
       marker.action = visualization_msgs::msg::Marker::ADD;
@@ -367,37 +400,89 @@ private:
       marker.scale.y = 2.0 * obs_r;  // diameter
       marker.scale.z = cyl_height;
 
-      // red color
-      marker.color.r = 1.0;
-      marker.color.g = 0.0;
-      marker.color.b = 0.0;
-      marker.color.a = 1.0;
+      if (is_groundtruth) {
+        marker.ns = "red";
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
+      }
+      else {
+        marker.ns = "yellow";
+        marker.color.r = 1.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
+      }
 
       marker_array.markers.push_back(marker);
-      RCLCPP_INFO(get_logger(),
-        std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i],
-        obs_r).c_str());
+      if (is_groundtruth) {
+        RCLCPP_INFO(get_logger(), std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i], obs_r).c_str());
+      }
     }
 
-    obstacles_publisher_->publish(marker_array);
-    RCLCPP_INFO(get_logger(), "Published arena obstacles.");
+    if (is_groundtruth) {
+      RCLCPP_INFO(get_logger(), "Published arena obstacles.");
+      obstacles_publisher_->publish(marker_array);
+    }
+    else {
+      // no log cuz we publish these a lot
+      measured_obstacles_publisher_->publish(marker_array);
+    }
+  }
+  
+  /// @brief Publish a MarkerArray (in yellow) displaying the relative measurements of the markers
+  void publish_measured_obstacles() {
+    // These will not necessarily align with the red markers due to noise.
+    // If the measured marker cannot be seen by the robot, it should not be displayed
+
+    // TODO actually implement noise + LOS etc
+    // for now just publish ground truth
+    publish_cyl_obstacles(gt_obs_.x, gt_obs_.y, gt_obs_.r, false);
+  }
+
+  /// @brief Publish a sensor_messages/LaserScan displaying the simulated laser scan data (in red)
+  void publish_laser_scan() {
+    // TODO actually simulate laser scan data. for now just publish dummy
+    auto scan_msg = sensor_msgs::msg::LaserScan();
+    scan_msg.header.stamp = get_clock()->now();
+    // todo is this the right frame?
+    scan_msg.header.frame_id = "red/base_link";
+    scan_msg.angle_min = -M_PI / 2.0;
+    scan_msg.angle_max = M_PI / 2.0;
+    scan_msg.angle_increment = M_PI / 180.0;
+    scan_msg.range_min = 0.02;
+    scan_msg.range_max = 4.0;
+    scan_msg.time_increment = 0.0;
+    // dummy data with some test points visible
+    int num_readings = static_cast<int>((scan_msg.angle_max - scan_msg.angle_min) / scan_msg.angle_increment) + 1;
+    scan_msg.ranges.resize(num_readings, 1.0);
+    scan_msg.intensities.resize(num_readings, 1.0);
+    
+    laser_scan_publisher_->publish(scan_msg);
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr count_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr measured_obstacles_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  Obstacles gt_obs_;
 
   /// @brief simulation timestep
   size_t count_;
   double sim_rate_;
   /// @brief ground truth pose of the robot
   turtlelib::Transform2D gt_pose_;
+  /// @brief ground truth path of the robot
+  nav_msgs::msg::Path gt_path_;
   double wheel_vel_left_ = 0.0;
   double wheel_vel_right_ = 0.0;
 

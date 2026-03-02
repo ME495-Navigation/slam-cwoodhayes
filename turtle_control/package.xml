@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>turtle_control</name>
-  <version>0.0.0</version>
+  <version>1.0.0</version>
   <description>Enables control of the Turtlebot3 via cmd_vel Twist messages</description>
   <maintainer email="cwoodhayes@gmail.com">conorbot</maintainer>
   <license>MIT</license>
@@ -22,6 +22,7 @@
   <depend>nuturtlebot_msgs</depend>
   <depend>teleop_twist_keyboard</depend>
   <depend>turtlelib</depend>
+  <depend>hls_lfcd_lds_driver</depend>
   <test_depend>catch_ros2</test_depend>
 
   <build_depend>rosidl_default_generators</build_depend>
