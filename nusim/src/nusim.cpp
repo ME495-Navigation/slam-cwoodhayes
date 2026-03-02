@@ -7,6 +7,7 @@
 #include "turtlelib/se2d.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/angle.hpp"
+#include "noise_models.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
@@ -152,6 +153,16 @@ public:
       desc.description = "Maximum number of poses in the ground truth path";
       declare_parameter("max_path_size", 1000, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Gaussian noise variance to add to wheel velocity commands";
+      declare_parameter("input_noise", 0.0, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Wheel slip fraction -- bounds of uniform distribution to add slip noise proportional to wheel velocity";
+      declare_parameter("slip_fraction", 0.0, desc);
+    }
 
     auto wheel_radius = get_parameter("wheel_radius").as_double();
     auto track_width = get_parameter("track_width").as_double();
@@ -160,7 +171,10 @@ public:
     encoder_ticks_per_rad_ = get_parameter("encoder_ticks_per_rad").as_double();
     collision_radius_ = get_parameter("collision_radius").as_double();
     max_path_size_ = get_parameter("max_path_size").as_int();
-    diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
+    auto diff_drive = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
+    auto input_noise = get_parameter("input_noise").as_double();
+    auto slip_fraction = get_parameter("slip_fraction").as_double();
+    noisy_diff_drive_ = std::make_unique<NoisyDiffDrive>(wheel_radius, track_width, input_noise, slip_fraction);
 
     gt_pose_ = get_pose0();
     sim_rate_ = get_parameter("rate").as_double();
@@ -238,11 +252,10 @@ private:
 
     // update wheels + robot pose
     auto dt = 1.0 / sim_rate_;
-    auto prev_wheels = diff_drive_->get_wheel_angles();
-    auto new_wheel_angle_left = prev_wheels[0] + wheel_vel_left_ * dt;
-    auto new_wheel_angle_right = prev_wheels[1] + wheel_vel_right_ * dt;
-    // run FK to get new ground truth pose
-    gt_pose_ = diff_drive_->forward_kinematics(new_wheel_angle_left, new_wheel_angle_right);
+    auto new_angles = noisy_diff_drive_->noisy_fk(wheel_vel_left_, wheel_vel_right_, dt);
+    auto new_wheel_angle_left = new_angles.first;
+    auto new_wheel_angle_right = new_angles.second;
+    gt_pose_ = noisy_diff_drive_->robot.get_pose();
 
     // publish sensor data message with current wheel angles and ground truth pose
     auto sensor_msg = nuturtlebot_msgs::msg::SensorData();
@@ -520,7 +533,7 @@ private:
   double motor_cmd_per_rad_sec_{};
   double encoder_ticks_per_rad_{};
   double collision_radius_{};
-  std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
+  std::unique_ptr<NoisyDiffDrive> noisy_diff_drive_;
 };
 
 int main(int argc, char * argv[])

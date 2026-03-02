@@ -2,6 +2,9 @@
 #include <utility>
 #include <vector>
 
+#ifndef DIFF_DRIVE_HPP
+#define DIFF_DRIVE_HPP
+
 namespace turtlelib
 {
     class DiffDrive
@@ -75,3 +78,4 @@ namespace turtlelib
     };
 
 }
+#endif // DIFF_DRIVE_HPP

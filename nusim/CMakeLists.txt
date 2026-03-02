@@ -36,6 +36,10 @@ target_link_libraries(nusim PUBLIC
   tf2_ros::tf2_ros
   turtlelib::turtlelib
 )
+target_include_directories(nusim PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
 
 
 # Install nodes
