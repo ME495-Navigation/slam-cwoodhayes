@@ -449,12 +449,12 @@ private:
     scan_msg.angle_increment = M_PI / 180.0;
     scan_msg.range_min = 0.02;
     scan_msg.range_max = 4.0;
-    scan_msg.time_increment = 0.0;  // required for RViz to display points
-    // dummy data at all max range
+    scan_msg.time_increment = 0.0;
+    // dummy data with some test points visible
     int num_readings = static_cast<int>((scan_msg.angle_max - scan_msg.angle_min) / scan_msg.angle_increment) + 1;
-    scan_msg.ranges.resize(num_readings, scan_msg.range_max);
-    scan_msg.intensities.resize(num_readings, 1.0);  // add intensities for better visualization
-
+    scan_msg.ranges.resize(num_readings, 1.0);
+    scan_msg.intensities.resize(num_readings, 1.0);
+    
     laser_scan_publisher_->publish(scan_msg);
   }
 
