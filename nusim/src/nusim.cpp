@@ -10,6 +10,7 @@
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "sensor_msgs/msg/laser_scan.hpp"
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
@@ -195,6 +196,9 @@ public:
     gt_path_ = nav_msgs::msg::Path();
     gt_path_.header.frame_id = "nusim/world";
 
+    // laser scan publisher
+    laser_scan_publisher_ = create_publisher<sensor_msgs::msg::LaserScan>("red/scan", 10);
+
     publish_arena();
     gt_obs_ = {obs_x, obs_y, obs_r};
     publish_cyl_obstacles(obs_x, obs_y, obs_r, true);
@@ -255,6 +259,7 @@ private:
     count_publisher_->publish(count_msg);
     sensor_data_publisher_->publish(sensor_msg);
     joint_states_publisher_->publish(joint_states);
+    publish_laser_scan();
 
     // publish a path for the ground truth robot position
     auto pose_stamped = geometry_msgs::msg::PoseStamped();
@@ -432,6 +437,27 @@ private:
     publish_cyl_obstacles(gt_obs_.x, gt_obs_.y, gt_obs_.r, false);
   }
 
+  /// @brief Publish a sensor_messages/LaserScan displaying the simulated laser scan data (in red)
+  void publish_laser_scan() {
+    // TODO actually simulate laser scan data. for now just publish dummy
+    auto scan_msg = sensor_msgs::msg::LaserScan();
+    scan_msg.header.stamp = get_clock()->now();
+    // todo is this the right frame?
+    scan_msg.header.frame_id = "red/base_link";
+    scan_msg.angle_min = -M_PI / 2.0;
+    scan_msg.angle_max = M_PI / 2.0;
+    scan_msg.angle_increment = M_PI / 180.0;
+    scan_msg.range_min = 0.02;
+    scan_msg.range_max = 4.0;
+    scan_msg.time_increment = 0.0;  // required for RViz to display points
+    // dummy data at all max range
+    int num_readings = static_cast<int>((scan_msg.angle_max - scan_msg.angle_min) / scan_msg.angle_increment) + 1;
+    scan_msg.ranges.resize(num_readings, scan_msg.range_max);
+    scan_msg.intensities.resize(num_readings, 1.0);  // add intensities for better visualization
+
+    laser_scan_publisher_->publish(scan_msg);
+  }
+
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr count_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
@@ -439,6 +465,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr measured_obstacles_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
