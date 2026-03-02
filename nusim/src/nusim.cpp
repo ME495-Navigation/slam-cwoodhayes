@@ -29,6 +29,12 @@
 
 using namespace std::chrono_literals;
 
+struct Obstacles {
+  std::vector<double> x;
+  std::vector<double> y;
+  double r;
+};
+
 /// @class NUSimulator
 /// @brief ROS2 node that simulates a differential drive robot (TurtleBot3) in a 2D environment.
 ///
@@ -148,6 +154,7 @@ public:
     // Validate that x and y have same length
     auto obs_x = get_parameter("obstacles.x").as_double_array();
     auto obs_y = get_parameter("obstacles.y").as_double_array();
+    auto obs_r = get_parameter("obstacles.r").as_double();
     if (obs_x.size() != obs_y.size()) {
       RCLCPP_ERROR(get_logger(), "obstacles.x and obstacles.y must have the same length");
       throw std::runtime_error("obstacles.x and obstacles.y must have the same length");
@@ -172,6 +179,8 @@ public:
     // create obstacles publisher
     obstacles_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles", qos);
+    measured_obstacles_publisher_ =
+      create_publisher<visualization_msgs::msg::MarkerArray>("~/measured_obstacles", rclcpp::QoS(10));
 
     wheel_cmd_sub_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
       "red/wheel_cmd", 10,
@@ -187,7 +196,8 @@ public:
     gt_path_.header.frame_id = "nusim/world";
 
     publish_arena();
-    publish_cyl_obstacles();
+    gt_obs_ = {obs_x, obs_y, obs_r};
+    publish_cyl_obstacles(obs_x, obs_y, obs_r, true);
     RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
   }
 
@@ -261,6 +271,7 @@ private:
     gt_path_.header.stamp = get_clock()->now();
     gt_path_.poses.push_back(pose_stamped);
     path_publisher_->publish(gt_path_);
+    publish_measured_obstacles();
   }
 
   void reset_callback(
@@ -357,12 +368,9 @@ private:
   }
 
   /// @brief publish cylindrical obstacles as configured on startup.
-  void publish_cyl_obstacles()
+  void publish_cyl_obstacles(const std::vector<double>& obs_x, const std::vector<double>& obs_y, const double obs_r, bool is_groundtruth)
   {
-    auto obs_x = get_parameter("obstacles.x").as_double_array();
-    auto obs_y = get_parameter("obstacles.y").as_double_array();
-    double obs_r = get_parameter("obstacles.r").as_double();
-    const double cyl_height = 0.25;
+    const auto cyl_height = 0.25;
 
     auto marker_array = visualization_msgs::msg::MarkerArray();
 
@@ -370,7 +378,6 @@ private:
       auto marker = visualization_msgs::msg::Marker();
       marker.header.frame_id = "nusim/world";
       marker.header.stamp = get_clock()->now();
-      marker.ns = "red";
       marker.id = i;
       marker.type = visualization_msgs::msg::Marker::CYLINDER;
       marker.action = visualization_msgs::msg::Marker::ADD;
@@ -384,30 +391,59 @@ private:
       marker.scale.y = 2.0 * obs_r;  // diameter
       marker.scale.z = cyl_height;
 
-      // red color
-      marker.color.r = 1.0;
-      marker.color.g = 0.0;
-      marker.color.b = 0.0;
-      marker.color.a = 1.0;
+      if (is_groundtruth) {
+        marker.ns = "red";
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
+      }
+      else {
+        marker.ns = "yellow";
+        marker.color.r = 1.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
+      }
 
       marker_array.markers.push_back(marker);
-      RCLCPP_INFO(get_logger(), std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i], obs_r).c_str());
+      if (is_groundtruth) {
+        RCLCPP_INFO(get_logger(), std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i], obs_r).c_str());
+      }
     }
 
-    obstacles_publisher_->publish(marker_array);
-    RCLCPP_INFO(get_logger(), "Published arena obstacles.");
+    if (is_groundtruth) {
+      RCLCPP_INFO(get_logger(), "Published arena obstacles.");
+      obstacles_publisher_->publish(marker_array);
+    }
+    else {
+      // no log cuz we publish these a lot
+      measured_obstacles_publisher_->publish(marker_array);
+    }
+  }
+  
+  /// @brief Publish a MarkerArray (in yellow) displaying the relative measurements of the markers
+  void publish_measured_obstacles() {
+    // These will not necessarily align with the red markers due to noise.
+    // If the measured marker cannot be seen by the robot, it should not be displayed
+
+    // TODO actually implement noise + LOS etc
+    // for now just publish ground truth
+    publish_cyl_obstacles(gt_obs_.x, gt_obs_.y, gt_obs_.r, false);
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr count_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr measured_obstacles_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  Obstacles gt_obs_;
 
   /// @brief simulation timestep
   size_t count_;
