@@ -284,7 +284,7 @@ Visualization Manager:
         Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /nusimulator/real_walls
+        Value: /real_walls
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
@@ -296,7 +296,7 @@ Visualization Manager:
         Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /nusimulator/real_obstacles
+        Value: /real_obstacles
       Value: true
   Enabled: true
   Global Options:

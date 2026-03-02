@@ -141,6 +141,11 @@ public:
       desc.description = "Turtlebot3 collision radius";
       declare_parameter("collision_radius", 0.11, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "If true, draw the landmarks and do nothing else (for when connected to the actual robot)";
+      declare_parameter("draw_only", false, desc);
+    }
 
     auto wheel_radius = get_parameter("wheel_radius").as_double();
     auto track_width = get_parameter("track_width").as_double();
@@ -161,43 +166,53 @@ public:
       throw std::runtime_error("obstacles.x and obstacles.y must have the same length");
     }
 
-    count_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
-    timer_ = create_wall_timer(
-      std::chrono::duration<double>(1.0 / sim_rate_), std::bind(&NUSimulator::timer_callback, this));
+    draw_only_ = get_parameter("draw_only").as_bool();
+    if (draw_only_) {
+      RCLCPP_INFO(get_logger(), "Draw only mode enabled: nusimulator will only publish the arena walls and obstacles; and will not simulate robot movement or publish sensor data.");
+    }
+    else {
+      RCLCPP_INFO(get_logger(), "Simulation mode enabled: nusimulator will simulate robot movement and publish sensor data.");
+      timer_ = create_wall_timer(
+        std::chrono::duration<double>(1.0 / sim_rate_), std::bind(&NUSimulator::timer_callback, this));
+      count_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
+      reset_service_ = create_service<std_srvs::srv::Empty>(
+        "~/reset",
+        std::bind(&NUSimulator::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
+      wheel_cmd_sub_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
+        "red/wheel_cmd", 10,
+        std::bind(&NUSimulator::wheel_cmd_callback, this, std::placeholders::_1));
 
-    reset_service_ = create_service<std_srvs::srv::Empty>(
-      "~/reset",
-      std::bind(&NUSimulator::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
+      // sensor data publisher
+      sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
+
+      joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
+
+      path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
+      gt_path_ = nav_msgs::msg::Path();
+      gt_path_.header.frame_id = "nusim/world";
+
+      // laser scan publisher
+      laser_scan_publisher_ = create_publisher<sensor_msgs::msg::LaserScan>("red/scan", 10);
+      
+      // obstacle measurements publisher
+      measured_obstacles_publisher_ =
+        create_publisher<visualization_msgs::msg::MarkerArray>("/measured_obstacles", rclcpp::QoS(10));
+    }
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+
+    // publishers for landmarks
+    // publish these with root namespace cuz we change the name of this node sometimes and we want landmarks to always be at the same topic
 
     // create arena walls publisher
     rclcpp::QoS qos(10);
     qos.transient_local();
     walls_publisher_ =
-      create_publisher<visualization_msgs::msg::MarkerArray>("~/real_walls", qos);
+      create_publisher<visualization_msgs::msg::MarkerArray>("/real_walls", qos);
 
     // create obstacles publisher
     obstacles_publisher_ =
-      create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles", qos);
-    measured_obstacles_publisher_ =
-      create_publisher<visualization_msgs::msg::MarkerArray>("~/measured_obstacles", rclcpp::QoS(10));
-
-    wheel_cmd_sub_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
-      "red/wheel_cmd", 10,
-      std::bind(&NUSimulator::wheel_cmd_callback, this, std::placeholders::_1));
-
-    // sensor data publisher
-    sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
-
-    joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
-
-    path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
-    gt_path_ = nav_msgs::msg::Path();
-    gt_path_.header.frame_id = "nusim/world";
-
-    // laser scan publisher
-    laser_scan_publisher_ = create_publisher<sensor_msgs::msg::LaserScan>("red/scan", 10);
+      create_publisher<visualization_msgs::msg::MarkerArray>("/real_obstacles", qos);
 
     publish_arena();
     gt_obs_ = {obs_x, obs_y, obs_r};
@@ -471,6 +486,8 @@ private:
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   Obstacles gt_obs_;
+
+  bool draw_only_ = false;
 
   /// @brief simulation timestep
   size_t count_;
