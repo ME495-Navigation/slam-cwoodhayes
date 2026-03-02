@@ -21,6 +21,7 @@
 #include <numeric>
 #include <ranges>
 #include <format>
+#include <queue>
 
 /// \brief Node for odometry estimation of the robot.
 ///
@@ -94,6 +95,11 @@ public:
       desc.description = "Distance between the wheels";
       declare_parameter("track_width", 0.5, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Maximum number of poses in the odometry path";
+      declare_parameter("max_path_size", 1000, desc);
+    }
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
     wheel_left_ = get_parameter("wheel_left").as_string();
@@ -101,6 +107,7 @@ public:
 
     wheel_radius_ = get_parameter("wheel_radius").as_double();
     track_width_ = get_parameter("track_width").as_double();
+    max_path_size_ = get_parameter("max_path_size").as_int();
 
     if (wheel_left_.empty() || wheel_right_.empty()) {
       RCLCPP_ERROR(get_logger(), "wheel_left and wheel_right parameters must be specified");
@@ -110,9 +117,6 @@ public:
     // construct DiffDrive object with parameters
     diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius_, track_width_);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
-
-    // initialize path message
-    odom_path_.header.frame_id = odom_id_;
 
     // publish an initial transform at the origin so that we have a valid tf as soon as possible
     publish_pose_tf(turtlelib::Transform2D());
@@ -180,15 +184,23 @@ private:
     odom_pub_->publish(odom_msg);
     publish_pose_tf(T_ob);
 
-    // publish path
+    // publish path with max 500 poses
     auto pose_stamped = geometry_msgs::msg::PoseStamped();
     pose_stamped.header.stamp = msg->header.stamp;
     pose_stamped.header.frame_id = odom_id_;
     pose_stamped.pose = odom_msg.pose.pose;
 
-    odom_path_.header.stamp = msg->header.stamp;
-    odom_path_.poses.push_back(pose_stamped);
-    path_pub_->publish(odom_path_);
+    path_buffer_.push_back(pose_stamped);
+    if (path_buffer_.size() > max_path_size_) {
+      path_buffer_.pop_front();
+    }
+
+    auto path_msg = nav_msgs::msg::Path();
+    path_msg.header.stamp = msg->header.stamp;
+    path_msg.header.frame_id = odom_id_;
+    path_msg.poses = std::vector<geometry_msgs::msg::PoseStamped>(
+        path_buffer_.begin(), path_buffer_.end());
+    path_pub_->publish(path_msg);
   }
 
   void publish_pose_tf(const turtlelib::Transform2D & T_ob)
@@ -222,7 +234,7 @@ private:
     turtlelib::Transform2D new_pose({request->x, request->y}, request->theta);
     diff_drive_->reset_to_configuration(new_pose);
     publish_pose_tf(new_pose);
-    odom_path_.poses.clear();  // clear path when pose is reset
+    path_buffer_.clear();
     response->success = true;
   }
 
@@ -232,7 +244,8 @@ private:
   rclcpp::Service<turtle_control::srv::SetPose>::SharedPtr initial_pose_srv_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
-  nav_msgs::msg::Path odom_path_;
+  std::deque<geometry_msgs::msg::PoseStamped> path_buffer_;
+  size_t max_path_size_;
   std::string body_id_;
   std::string odom_id_;
   std::string wheel_left_;
