@@ -34,6 +34,7 @@
 ///
 /// Broadcasts:
 /// - odom -> body_id transform via tf2 (ie odom -> blue base_footprint)
+/// This comment should include descriptions of the parameters that the node takes
 class Odometry : public rclcpp::Node
 {
 public:

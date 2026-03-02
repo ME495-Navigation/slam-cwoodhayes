@@ -29,6 +29,10 @@ namespace turtlelib
 
         auto get_wheel_angles() const
         {
+            // probably better stylistically to list the return type explicitly rather than auto
+            // then just return {phi_left_, phi_right_}.
+            // reason being is this would work if you inlined or moved the implementation to the cpp file
+            // not a big deal though
             return std::vector{phi_left_, phi_right_};
         }
 
@@ -37,6 +41,10 @@ namespace turtlelib
             return std::vector{phi_dot_left_, phi_dot_right_};
         }
 
+        // Returning a reference to an internal handle is not great: it breaks encapsulation
+        // and also creates a situation where if this object goes out of scope the reference
+        // a user has is no longer valid. The pattern is appropriate in some edge-cases
+        // but here it would be much better to just return a copy of the transform
         const Transform2D& get_pose() const
         {
             return T_sb_;
