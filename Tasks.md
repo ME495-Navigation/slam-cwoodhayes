@@ -39,3 +39,6 @@ Task E.1
 Task E.2
 
 Task C.8
+
+# HOMEWORK 3
+Task F.6
