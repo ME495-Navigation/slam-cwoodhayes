@@ -447,7 +447,7 @@ private:
     auto scan_msg = sensor_msgs::msg::LaserScan();
     scan_msg.header.stamp = get_clock()->now();
     // todo is this the right frame?
-    scan_msg.header.frame_id = "red/base_link";
+    scan_msg.header.frame_id = "red/base_scan";
     scan_msg.angle_min = -M_PI / 2.0;
     scan_msg.angle_max = M_PI / 2.0;
     scan_msg.angle_increment = M_PI / 180.0;
