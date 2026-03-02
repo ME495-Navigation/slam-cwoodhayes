@@ -21,7 +21,7 @@ cd $SLAM_WS_NAME/src
 git clone git@github.com:ME495-Navigation/slam-cwoodhayes.git
 
 # run one-time setup for dependency installation
-./slam-cwoodhayes/setup.sh
+./slam-cwoodhayes/install_dependencies.sh
 
 # build package from source
 cd ..
@@ -30,9 +30,57 @@ colcon build
 
 # Package List
 This repository consists of several ROS packages:
+- `turtle_control` - Control functionality for the turtlebot3. Supports odometry + control of the robot in simulation and in hardware.
 - `nuturtle_description` - contains models, configs, and visualization files for the `turtlebot3` burger, adapted from the official [turtlebot3_description](https://index.ros.org/p/turtlebot3_description/) package.
 - `turtlelib` - a C++ library that implements a variety of geometric helper functions & visualization support using SVG's.
 - `nusim` - a custom turtlebot arena simulator based on RViz which supports our SLAM algorithm development
+
+# turtle_control Description
+Controls the turtlebot3 in simulation or hardware and provides odometry. Node summary:
+- `turtle_control` node: converts `cmd_vel` into wheel commands, publishes wheel joint states using IK/FK implementation in `turtlelib::DiffDrive`
+- `odometry` node: computes and publishes `nav_msgs/Odometry`, broadcasts TF, and provides `set_initial_pose` service.
+- `circle` node: publishes circular `cmd_vel` and offers `circle_control`, `reverse`, and `stop` services.
+
+The `start_robot.launch.xml` launch file runs these nodes for motion in `nusim` or hardware, with configurable source of `cmd_vel` (a simple circular path, teleop, or none)
+
+https://github.com/user-attachments/assets/bab2ae6e-a6a7-44c5-8ed0-ffb4ad08dbb6
+
+> Above: Running `ros2 launch turtle_control start_robot.launch.xml robot:=localhost use_rviz:=false` on the turtlebot3, together with the rviz output on PC from `ros2 launch src/slam-cwoodhayes/turtle_control/launch/start_robot.launch.xml cmd_src:=none robot:=none use_rviz:=true`. The turtlebot reverses direction in response to manual calls of the `/reverse` service.
+
+In the video above, according to `/odom` the turtlebot stops at:
+```
+  pose:
+    position:
+      x: 0.1207919554875541
+      y: 0.03904022617800196
+      z: 0.0
+    orientation:
+      x: 0.0
+      y: 0.0
+      z: 0.2537207775181715
+      w: 0.9672775026100703
+```
+
+## Launch File Details
+* `ros2 launch turtle_control start_robot.launch.xml --show-arguments`
+
+```
+Arguments (pass arguments as '<name>:=<value>'):
+
+    'cmd_src':
+        Source of cmd_vel commands. Valid choices are: ['circle', 'teleop', 'none']
+        (default: 'circle')
+
+    'robot':
+        what robot to control (sim vs hardware etc). Valid choices are: ['nusim', 'localhost', 'none']
+        (default: 'nusim')
+
+    'use_rviz':
+        if true, view robot behavior in RViz
+        (default: 'true')
+```
+Note that the above command will display 
+additional arguments from included launchfiles (not shown above) due to a known bug in the launch framework.
 
 # Nuturtle Description
 URDF files for Nuturtle 
@@ -70,7 +118,7 @@ Implements geometric primitives and operations upon them.
 - `geometry2d.hpp` - two-dimensional geometric primitives (Points, Vectors) and operations upon them
 - `se2d.hpp` - two-dimensional SE2 transformations + twists, that can operate on points + vectors
 - `svg.hpp` - visualization functions for the above using SVG files as output.
-- `diff_drive.hpp` - handles inverse and forward kinematics for an arbitrary diff-drive robot
+- `diff_drive.hpp` - handles inverse and forward kinematics for an arbitrary diff-drive robot. For derivations of the math used, see [doc/Kinematics.pdf](doc/Kinematics.pdf)
 
 # nusim Description
 A custom turtlebot arena simulator based on rviz. 

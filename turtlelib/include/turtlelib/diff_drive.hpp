@@ -55,6 +55,10 @@ namespace turtlelib
         double phi_left_ = 0.0;
         double phi_right_ = 0.0;
 
+        // we need to allow the first call to fk to initialize
+        // the first wheel angle
+        bool has_received_initial_wheel_angle_ = false;
+
         // wheel velocities
         double phi_dot_left_ = 0.0;
         double phi_dot_right_ = 0.0;

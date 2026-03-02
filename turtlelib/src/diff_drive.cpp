@@ -15,8 +15,17 @@ namespace turtlelib
     const Transform2D& DiffDrive::forward_kinematics(double new_phi_left, double new_phi_right)
     {
         // get the change in wheel angles (wheel velocity)
-        auto dphi_l = new_phi_left - phi_left_;
-        auto dphi_r = new_phi_right - phi_right_;
+        // but assume we didn't move for the first tick received
+        // during object lifetime, because we will initialize to random encoder values
+        auto dphi_l = 0.0;
+        auto dphi_r = 0.0;
+        if (has_received_initial_wheel_angle_) {
+            dphi_l = new_phi_left - phi_left_;
+            dphi_r = new_phi_right - phi_right_;
+        }
+        else {
+            has_received_initial_wheel_angle_ = true;
+        }
 
         // get the arc length for each wheel's trajectory
         auto s_l = dphi_l * wheel_radius_;
@@ -67,5 +76,6 @@ namespace turtlelib
         phi_right_ = 0.0;
         phi_dot_left_ = 0.0;
         phi_dot_right_ = 0.0;
+        has_received_initial_wheel_angle_ = false;
     }
 }

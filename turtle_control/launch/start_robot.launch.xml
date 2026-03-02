@@ -37,17 +37,16 @@
         </include>
     </group>
 
-    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml" >
-        <arg name="use_rviz" value="false"/>
-        <!-- jointstate comes from turtle_control now -->
-        <arg name="use_jsp" value="false"/>
-        <arg name="color" value="blue"/>
-    </include>
-
     <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
 
     <!-- robot-specific nodes -->
     <group if="$(equals $(var robot) nusim)">
+        <!-- Localized robot -->
+        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml" >
+            <arg name="use_rviz" value="false"/>
+            <arg name="use_jsp" value="false"/>
+            <arg name="color" value="blue"/>
+        </include>
         <!-- Actual ground-truth robot (red) -->
         <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml" >
             <arg name="use_rviz" value="false"/>
@@ -87,12 +86,16 @@
         <node pkg="turtle_control" exec="turtle_control_node" name="turtle_control" output="screen"
             on_exit="shutdown">
             <param from="$(var diff_params)"/>
+            <remap from="joint_states" to="blue/joint_states"/>
         </node>
         <node pkg="turtle_control" exec="odometry" name="odometry" output="screen"
             on_exit="shutdown">
             <param from="$(var diff_params)"/>
             <param name="wheel_left" value="wheel_left_joint"/>
             <param name="wheel_right" value="wheel_right_joint"/>
+            <param name="body_id" value="base_footprint"/>
+            <param name="odom_id" value="odom"/>
+            <remap from="joint_states" to="blue/joint_states"/>
         </node>
         <!-- this node only exists on the turtlebot itself. no need to depend on it; we won't use this arg on another machine -->
         <node pkg="numsr_turtlebot" exec="numsr_turtlebot"></node>

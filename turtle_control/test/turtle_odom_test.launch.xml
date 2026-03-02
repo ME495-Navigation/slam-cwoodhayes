@@ -1,0 +1,29 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<launch>
+    <catch2_launch_file description='An example Catch2 integration test launch file'/>
+
+    <arg 
+        name='test_duration'
+        default='2.0'
+        description='Max length of test in seconds.'
+    />
+    <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+
+    <node pkg="turtle_control" exec="turtle_control_node" name="turtle_control" output="screen"
+        on_exit="shutdown">
+        <param from="$(var diff_params)"/>
+    </node>
+
+    <node pkg="turtle_control" exec="odometry" name="odometry" output="screen"
+        on_exit="shutdown">
+        <param from="$(var diff_params)"/>
+        <param name="wheel_left" value="wheel_left_joint"/>
+        <param name="wheel_right" value="wheel_right_joint"/>
+    </node>
+
+    <catch2_integration_test_node
+        pkg='turtle_control'
+        exec='turtle_odom_test_node'
+    >
+    </catch2_integration_test_node>
+</launch>

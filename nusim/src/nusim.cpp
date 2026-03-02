@@ -27,6 +27,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdint>
+#include <queue>
 
 using namespace std::chrono_literals;
 
@@ -146,6 +147,11 @@ public:
       desc.description = "If true, draw the landmarks and do nothing else (for when connected to the actual robot)";
       declare_parameter("draw_only", false, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Maximum number of poses in the ground truth path";
+      declare_parameter("max_path_size", 1000, desc);
+    }
 
     auto wheel_radius = get_parameter("wheel_radius").as_double();
     auto track_width = get_parameter("track_width").as_double();
@@ -153,6 +159,7 @@ public:
     motor_cmd_per_rad_sec_ = get_parameter("motor_cmd_per_rad_sec").as_double();
     encoder_ticks_per_rad_ = get_parameter("encoder_ticks_per_rad").as_double();
     collision_radius_ = get_parameter("collision_radius").as_double();
+    max_path_size_ = get_parameter("max_path_size").as_int();
     diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
 
     gt_pose_ = get_pose0();
@@ -188,8 +195,6 @@ public:
       joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
 
       path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
-      gt_path_ = nav_msgs::msg::Path();
-      gt_path_.header.frame_id = "nusim/world";
 
       // laser scan publisher
       laser_scan_publisher_ = create_publisher<sensor_msgs::msg::LaserScan>("red/scan", 10);
@@ -276,7 +281,7 @@ private:
     joint_states_publisher_->publish(joint_states);
     publish_laser_scan();
 
-    // publish a path for the ground truth robot position
+    // publish a path for the ground truth robot position with max 500 poses
     auto pose_stamped = geometry_msgs::msg::PoseStamped();
     pose_stamped.header.stamp = get_clock()->now();
     pose_stamped.header.frame_id = "nusim/world";
@@ -288,9 +293,17 @@ private:
     pose_stamped.pose.orientation.z = quat[2];
     pose_stamped.pose.orientation.w = quat[3];
 
-    gt_path_.header.stamp = get_clock()->now();
-    gt_path_.poses.push_back(pose_stamped);
-    path_publisher_->publish(gt_path_);
+    gt_path_buffer_.push_back(pose_stamped);
+    if (gt_path_buffer_.size() > max_path_size_) {
+      gt_path_buffer_.pop_front();
+    }
+
+    auto path_msg = nav_msgs::msg::Path();
+    path_msg.header.stamp = get_clock()->now();
+    path_msg.header.frame_id = "nusim/world";
+    path_msg.poses = std::vector<geometry_msgs::msg::PoseStamped>(
+        gt_path_buffer_.begin(), gt_path_buffer_.end());
+    path_publisher_->publish(path_msg);
     publish_measured_obstacles();
   }
 
@@ -300,7 +313,7 @@ private:
   {
     count_ = 0;
     gt_pose_ = get_pose0();
-    gt_path_.poses.clear();
+    gt_path_buffer_.clear();
     const auto msg = std::format(
       "Simulation reset: timestep set to 0, robot reset to initial pose "
       "({}).",
@@ -314,8 +327,10 @@ private:
      Each received wheel_cmd command sets the wheel velocities of the robot until the next wheel_cmd command is received.
      The wheel_cmd messages are integer values between -265 and 265 and are proportional to the maximum rotational velocity of the motor (see Specifications and A.8).
      */
-    wheel_vel_left_ = std::clamp(msg->left_velocity, -motor_cmd_max_, motor_cmd_max_) * motor_cmd_per_rad_sec_;
-    wheel_vel_right_ = std::clamp(msg->right_velocity, -motor_cmd_max_, motor_cmd_max_) * motor_cmd_per_rad_sec_;
+    wheel_vel_left_ = std::clamp(msg->left_velocity, -motor_cmd_max_,
+      motor_cmd_max_) * motor_cmd_per_rad_sec_;
+    wheel_vel_right_ = std::clamp(msg->right_velocity, -motor_cmd_max_,
+      motor_cmd_max_) * motor_cmd_per_rad_sec_;
   }
 
   /// @brief get the initial pose of the robot from parameters
@@ -458,7 +473,7 @@ private:
     auto scan_msg = sensor_msgs::msg::LaserScan();
     scan_msg.header.stamp = get_clock()->now();
     // todo is this the right frame?
-    scan_msg.header.frame_id = "red/base_link";
+    scan_msg.header.frame_id = "red/base_scan";
     scan_msg.angle_min = -M_PI / 2.0;
     scan_msg.angle_max = M_PI / 2.0;
     scan_msg.angle_increment = M_PI / 180.0;
@@ -494,8 +509,9 @@ private:
   double sim_rate_;
   /// @brief ground truth pose of the robot
   turtlelib::Transform2D gt_pose_;
-  /// @brief ground truth path of the robot
-  nav_msgs::msg::Path gt_path_;
+  /// @brief ground truth path of the robot (deque with configurable max size)
+  std::deque<geometry_msgs::msg::PoseStamped> gt_path_buffer_;
+  size_t max_path_size_;
   double wheel_vel_left_ = 0.0;
   double wheel_vel_right_ = 0.0;
 
