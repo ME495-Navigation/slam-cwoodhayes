@@ -2,6 +2,7 @@
 /// \brief contains odometry node.
 
 #include "nav_msgs/msg/odometry.hpp"
+#include "nav_msgs/msg/path.hpp"
 
 #include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -28,6 +29,7 @@
 ///
 /// Publishes:
 /// - odom (nav_msgs/msg/Odometry): Robot odometry pose and twist
+/// - blue/path (nav_msgs/msg/Path): Robot path based on odometry measurements
 ///
 /// Services:
 /// - set_initial_pose (turtle_control/srv/SetPose): Sets the initial pose for odometry
@@ -47,6 +49,7 @@ public:
         "joint_states", qos, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
 
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos);
+    path_pub_ = create_publisher<nav_msgs::msg::Path>("blue/path", qos);
 
     initial_pose_srv_ = create_service<turtle_control::srv::SetPose>(
       "set_initial_pose",
@@ -107,6 +110,9 @@ public:
     // construct DiffDrive object with parameters
     diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius_, track_width_);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+
+    // initialize path message
+    odom_path_.header.frame_id = odom_id_;
 
     // publish an initial transform at the origin so that we have a valid tf as soon as possible
     publish_pose_tf(turtlelib::Transform2D());
@@ -173,6 +179,16 @@ private:
     // publish odometry msg and tf
     odom_pub_->publish(odom_msg);
     publish_pose_tf(T_ob);
+
+    // publish path
+    auto pose_stamped = geometry_msgs::msg::PoseStamped();
+    pose_stamped.header.stamp = msg->header.stamp;
+    pose_stamped.header.frame_id = odom_id_;
+    pose_stamped.pose = odom_msg.pose.pose;
+
+    odom_path_.header.stamp = msg->header.stamp;
+    odom_path_.poses.push_back(pose_stamped);
+    path_pub_->publish(odom_path_);
   }
 
   void publish_pose_tf(const turtlelib::Transform2D & T_ob)
@@ -206,14 +222,17 @@ private:
     turtlelib::Transform2D new_pose({request->x, request->y}, request->theta);
     diff_drive_->reset_to_configuration(new_pose);
     publish_pose_tf(new_pose);
+    odom_path_.poses.clear();  // clear path when pose is reset
     response->success = true;
   }
 
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   rclcpp::Service<turtle_control::srv::SetPose>::SharedPtr initial_pose_srv_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
+  nav_msgs::msg::Path odom_path_;
   std::string body_id_;
   std::string odom_id_;
   std::string wheel_left_;
