@@ -9,6 +9,7 @@
 #include "turtlelib/angle.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "nav_msgs/msg/path.hpp"
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
@@ -181,6 +182,10 @@ public:
 
     joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
 
+    path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
+    gt_path_ = nav_msgs::msg::Path();
+    gt_path_.header.frame_id = "nusim/world";
+
     publish_arena();
     publish_cyl_obstacles();
     RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
@@ -240,6 +245,22 @@ private:
     count_publisher_->publish(count_msg);
     sensor_data_publisher_->publish(sensor_msg);
     joint_states_publisher_->publish(joint_states);
+
+    // publish a path for the ground truth robot position
+    auto pose_stamped = geometry_msgs::msg::PoseStamped();
+    pose_stamped.header.stamp = get_clock()->now();
+    pose_stamped.header.frame_id = "nusim/world";
+    pose_stamped.pose.position.x = gt_pose_.translation().x;
+    pose_stamped.pose.position.y = gt_pose_.translation().y;
+    pose_stamped.pose.position.z = 0.0;
+    pose_stamped.pose.orientation.x = quat[0];
+    pose_stamped.pose.orientation.y = quat[1];
+    pose_stamped.pose.orientation.z = quat[2];
+    pose_stamped.pose.orientation.w = quat[3];
+
+    gt_path_.header.stamp = get_clock()->now();
+    gt_path_.poses.push_back(pose_stamped);
+    path_publisher_->publish(gt_path_);
   }
 
   void reset_callback(
@@ -248,6 +269,7 @@ private:
   {
     count_ = 0;
     gt_pose_ = get_pose0();
+    gt_path_.poses.clear();
     const auto msg = std::format(
       "Simulation reset: timestep set to 0, robot reset to initial pose "
       "({}).",
@@ -382,6 +404,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -391,6 +414,8 @@ private:
   double sim_rate_;
   /// @brief ground truth pose of the robot
   turtlelib::Transform2D gt_pose_;
+  /// @brief ground truth path of the robot
+  nav_msgs::msg::Path gt_path_;
   double wheel_vel_left_ = 0.0;
   double wheel_vel_right_ = 0.0;
 
