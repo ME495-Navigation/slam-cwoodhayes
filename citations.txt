@@ -13,5 +13,6 @@
 [9] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 02/07/2026. Commit prior is ad059ede9e1071d1deab530cbd9f99ac48490b81. Commit after is eb400e54dacd6ffaca3fca77cd40a6175ef17c55
 [10] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 02/09/2026. Commit prior is 1e09448d4834d597951bc0c273fea2dcae0a12c6. Commit after is a823539e4530143c0ce34aa14bb9b52e976db050
 [11] https://github.com/ngmor/catch_ros2/blob/main/examples/integration_test/integration_test_node.cpp Accessed on 09/02/2026
-[10] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 02/09/2026. Commit prior is eb257622d6eb0a3a173c17571fd2e98ff5326866. Commit after is 9fe33434093065c66a0ba032a3666efbc33ebd61
-[11] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 03/01/2026. Commit prior is 1e46abecb0a09578057229417a330a9d58b9f06a. Commit after is 49de7f3d92323be0b62c75169d1b9ef4b5ae2556
+[12] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 02/09/2026. Commit prior is eb257622d6eb0a3a173c17571fd2e98ff5326866. Commit after is 9fe33434093065c66a0ba032a3666efbc33ebd61
+[13] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 03/01/2026. Commit prior is 1e46abecb0a09578057229417a330a9d58b9f06a. Commit after is 49de7f3d92323be0b62c75169d1b9ef4b5ae2556
+[14] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 03/01/2026. Commit prior is 42e7f56b528666530aec201dd33c50b075be9827. Commit after is bb252c0c207ad9560170cf1b6df6af488cb161f4
