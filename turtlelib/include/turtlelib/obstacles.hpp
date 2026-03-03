@@ -4,6 +4,8 @@
 #ifndef OBSTACLES_HPP
 #define OBSTACLES_HPP
 #include <vector>
+#include "turtlelib/se2d.hpp"
+#include "turtlelib/geometry2d.hpp"
 
 class Obstacles {
 public:
@@ -33,8 +35,7 @@ public:
         // Move the robot's center along this line so that the collision circles are tangent
         did_collide_ = true;
         turtlelib::Vector2D new_pos = obs_pos - (r + collision_radius) * turtlelib::normalize(r_vec);
-        pose.translation() = new_pos;
-        return pose;
+        return turtlelib::Transform2D{new_pos, pose.rotation()};
       }
     }
     did_collide_ = false;

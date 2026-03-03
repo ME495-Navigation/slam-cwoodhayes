@@ -7,8 +7,8 @@
 #include "turtlelib/se2d.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/angle.hpp"
-#include "noise_models.hpp"
-#include "obstacles.hpp"
+#include "turtlelib/noise_models.hpp"
+#include "turtlelib/obstacles.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
