@@ -50,6 +50,8 @@ Task F.3
 # HOMEWORK 3
 Task C.9
 Task C.10
+Task C.11
+Task C.12
 
 Task F.6
 

@@ -45,11 +45,11 @@ namespace turtlelib
       if (discriminant >= 0.0) {
         double sqrt_disc = std::sqrt(discriminant);
         
-        // Two solutions: t = (-b ± √Δ) / 2
+        // two solutions for +-
         double t1 = (-b - sqrt_disc) / 2.0;
         double t2 = (-b + sqrt_disc) / 2.0;
         
-        // We want the smallest positive t (first intersection along the ray)
+        // we want the smallest positive t (first intersection along the ray)
         double t = -1.0;
         if (t1 > 0.0) {
           t = t1;
@@ -62,10 +62,10 @@ namespace turtlelib
           closest_dist = t;
         }
       }
+      ///////////////////////////////// End_Citation[15] ///////////////////////////////
     }
     
     return std::max(min_range_, closest_dist);
-    ///////////////////////////////// End_Citation[15] ///////////////////////////////
   }
 
   std::vector<double> Lidar::simulate_scan(const Transform2D& pose, const Obstacles& obstacles)
