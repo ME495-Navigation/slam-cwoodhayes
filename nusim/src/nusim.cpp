@@ -587,8 +587,8 @@ private:
     auto scan_msg = sensor_msgs::msg::LaserScan();
     scan_msg.header.stamp = get_clock()->now();
     scan_msg.header.frame_id = "red/base_scan";
-    scan_msg.angle_min = lidar_->get_angle_min();
-    scan_msg.angle_max = lidar_->get_angle_max();
+    scan_msg.angle_min = 0;
+    scan_msg.angle_max = 2.0 * M_PI;
     scan_msg.angle_increment = lidar_->get_angle_increment();
     scan_msg.range_min = lidar_->get_min_range();
     scan_msg.range_max = lidar_->get_max_range();

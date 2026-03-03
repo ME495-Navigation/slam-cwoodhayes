@@ -9,3 +9,10 @@
     # 12-bit encoder, so 2^12 for a full revolution. 2^12/(2pi) = 
     encoder_ticks_per_rad: 651.8986
     collision_radius: 0.11
+
+    # lidar params
+    lidar_range_min: 0.02
+    lidar_range_max: 3.5
+    lidar_angle_increment: 0.01745 # 1 degree in radians
+    lidar_resolution: 0.01
+    lidar_noise_variance: 0.0
