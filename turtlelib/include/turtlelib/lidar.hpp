@@ -29,6 +29,27 @@ namespace turtlelib
     /// @param obstacles The obstacles in the environment
     /// @return A vector of range measurements corresponding to each angle increment, with added Gaussian noise
     std::vector<double> simulate_scan(const Transform2D& pose, const Obstacles& obstacles);
+
+    /// @brief Get the minimum range of the LiDAR
+    /// @return Minimum range in meters
+    double get_min_range() const { return min_range_; }
+
+    /// @brief Get the maximum range of the LiDAR
+    /// @return Maximum range in meters
+    double get_max_range() const { return max_range_; }
+
+    /// @brief Get the angular resolution of the LiDAR
+    /// @return Angular increment in radians
+    double get_angle_increment() const { return angle_increment_; }
+
+    /// @brief Get the starting angle of the LiDAR sweep
+    /// @return Minimum angle in radians (-π for 360° sweep)
+    constexpr double get_angle_min() const { return -M_PI; }
+
+    /// @brief Get the ending angle of the LiDAR sweep
+    /// @return Maximum angle in radians (π for 360° sweep)
+    constexpr double get_angle_max() const { return M_PI; }
+
   private:
     double min_range_;
     double max_range_;

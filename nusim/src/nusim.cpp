@@ -581,22 +581,25 @@ private:
   
   /// @brief Publish a sensor_messages/LaserScan displaying the simulated laser scan data (in red)
   void publish_lidar() {
-    // TODO actually simulate laser scan data. for now just publish dummy
+    // Simulate a laserscan
+    auto ranges = lidar_->simulate_scan(gt_pose_, *gt_obs_);
+
     auto scan_msg = sensor_msgs::msg::LaserScan();
     scan_msg.header.stamp = get_clock()->now();
-    // todo is this the right frame?
     scan_msg.header.frame_id = "red/base_scan";
-    scan_msg.angle_min = -M_PI / 2.0;
-    scan_msg.angle_max = M_PI / 2.0;
-    scan_msg.angle_increment = M_PI / 180.0;
-    scan_msg.range_min = 0.02;
-    scan_msg.range_max = 4.0;
+    scan_msg.angle_min = lidar_->get_angle_min();
+    scan_msg.angle_max = lidar_->get_angle_max();
+    scan_msg.angle_increment = lidar_->get_angle_increment();
+    scan_msg.range_min = lidar_->get_min_range();
+    scan_msg.range_max = lidar_->get_max_range();
     scan_msg.time_increment = 0.0;
-    // dummy data with some test points visible
-    int num_readings = static_cast<int>((scan_msg.angle_max - scan_msg.angle_min) / scan_msg.angle_increment) + 1;
-    scan_msg.ranges.resize(num_readings, 1.0);
-    scan_msg.intensities.resize(num_readings, 1.0);
     
+    // Convert double ranges to float for LaserScan message
+    scan_msg.ranges.reserve(ranges.size());
+    for (const auto range : ranges) {
+      scan_msg.ranges.push_back(static_cast<float>(range));
+    }
+
     laser_scan_publisher_->publish(scan_msg);
   }
 
