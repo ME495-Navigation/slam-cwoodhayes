@@ -273,6 +273,15 @@ private:
     auto [encoder_wheel_angle_left, encoder_wheel_angle_right] = noisy_diff_drive_->get_encoder_wheel_angles();
     gt_pose_ = noisy_diff_drive_->get_gt_pose();
 
+    // check for collisions
+    auto new_gt_pose_ = gt_obs_->collide(gt_pose_, collision_radius_);
+    noisy_diff_drive_->set_gt_pose(new_gt_pose_);
+    if (gt_obs_->did_collide()) {
+      auto msg = std::format("Collision ({}) Pose: {:D.3f} -> {:D.3f}.", count_msg.data, gt_pose_, new_gt_pose_);
+      RCLCPP_WARN(get_logger(), msg.c_str());
+    }
+    gt_pose_ = new_gt_pose_;
+
     // publish encoder sensor data (noise only, no slip - what encoders actually read)
     // turtle_control will convert this to blue/joint_states for clean odometry
     auto sensor_msg = nuturtlebot_msgs::msg::SensorData();
