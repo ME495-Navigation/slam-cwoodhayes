@@ -274,11 +274,9 @@ private:
     // update wheels + robot pose
     auto dt = 1.0 / sim_rate_;
     noisy_diff_drive_->noisy_fk(wheel_vel_left_, wheel_vel_right_, dt);
-    auto noisy_wheel_angle_left = noisy_diff_drive_->noisy_robot.get_wheel_angles()[0];
-    auto noisy_wheel_angle_right = noisy_diff_drive_->noisy_robot.get_wheel_angles()[1];
-    auto encoder_wheel_angle_left = noisy_diff_drive_->encoder_robot.get_wheel_angles()[0];
-    auto encoder_wheel_angle_right = noisy_diff_drive_->encoder_robot.get_wheel_angles()[1];
-    gt_pose_ = noisy_diff_drive_->noisy_robot.get_pose();
+    auto [noisy_wheel_angle_left, noisy_wheel_angle_right] = noisy_diff_drive_->get_gt_wheel_angles();
+    auto [encoder_wheel_angle_left, encoder_wheel_angle_right] = noisy_diff_drive_->get_encoder_wheel_angles();
+    gt_pose_ = noisy_diff_drive_->get_gt_pose();
 
     // publish encoder sensor data (noise only, no slip - what encoders actually read)
     // turtle_control will convert this to blue/joint_states for clean odometry

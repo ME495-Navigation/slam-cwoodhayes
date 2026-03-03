@@ -65,6 +65,25 @@ public:
       noisy_prev_wheels[1] + slip_vel_right * dt);
   }
 
+  /// @brief get the current wheel angles of the real robot (actual motion with noise + slip)
+  std::tuple<double, double> get_gt_wheel_angles() const
+  {
+    return {noisy_robot.get_wheel_angles()[0], noisy_robot.get_wheel_angles()[1]};
+  }
+
+  /// @brief get the current wheel angles according to the encoders
+  std::tuple<double, double> get_encoder_wheel_angles() const
+  {
+    return {encoder_robot.get_wheel_angles()[0], encoder_robot.get_wheel_angles()[1]};
+  }
+
+  /// @brief get the current pose of the robot.
+  turtlelib::Transform2D get_gt_pose() const
+  {
+    return noisy_robot.get_pose();
+  }
+
+private:
   // no noise, no slip (just for debugging)
   turtlelib::DiffDrive clean_robot;
   // noise only (what encoders read)
@@ -75,6 +94,7 @@ public:
   double input_noise_stddev_;
   double slip_fraction_;
   std::mt19937 rand_gen_;
+
 };
 
 #endif // NOISE_MODELS_HPP
