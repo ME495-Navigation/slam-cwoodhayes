@@ -156,12 +156,12 @@ public:
     {
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
       desc.description = "Gaussian noise variance to add to wheel velocity commands";
-      declare_parameter("input_noise", 0.0, desc);
+      declare_parameter("input_noise", 0.02, desc);
     }
     {
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
       desc.description = "Wheel slip fraction -- bounds of uniform distribution to add slip noise proportional to wheel velocity";
-      declare_parameter("slip_fraction", 0.0, desc);
+      declare_parameter("slip_fraction", 0.1, desc);
     }
 
     auto wheel_radius = get_parameter("wheel_radius").as_double();
@@ -171,7 +171,6 @@ public:
     encoder_ticks_per_rad_ = get_parameter("encoder_ticks_per_rad").as_double();
     collision_radius_ = get_parameter("collision_radius").as_double();
     max_path_size_ = get_parameter("max_path_size").as_int();
-    auto diff_drive = std::make_unique<turtlelib::DiffDrive>(wheel_radius, track_width);
     auto input_noise = get_parameter("input_noise").as_double();
     auto slip_fraction = get_parameter("slip_fraction").as_double();
     noisy_diff_drive_ = std::make_unique<NoisyDiffDrive>(wheel_radius, track_width, input_noise, slip_fraction);
@@ -252,10 +251,10 @@ private:
 
     // update wheels + robot pose
     auto dt = 1.0 / sim_rate_;
-    auto new_angles = noisy_diff_drive_->noisy_fk(wheel_vel_left_, wheel_vel_right_, dt);
-    auto new_wheel_angle_left = new_angles.first;
-    auto new_wheel_angle_right = new_angles.second;
-    gt_pose_ = noisy_diff_drive_->robot.get_pose();
+    noisy_diff_drive_->noisy_fk(wheel_vel_left_, wheel_vel_right_, dt);
+    auto new_wheel_angle_left = noisy_diff_drive_->noisy_robot.get_wheel_angles()[0];
+    auto new_wheel_angle_right = noisy_diff_drive_->noisy_robot.get_wheel_angles()[1];
+    gt_pose_ = noisy_diff_drive_->noisy_robot.get_pose();
 
     // publish sensor data message with current wheel angles and ground truth pose
     auto sensor_msg = nuturtlebot_msgs::msg::SensorData();
@@ -327,6 +326,11 @@ private:
     count_ = 0;
     gt_pose_ = get_pose0();
     gt_path_buffer_.clear();
+    noisy_diff_drive_ = std::make_unique<NoisyDiffDrive>(
+      get_parameter("wheel_radius").as_double(),
+      get_parameter("track_width").as_double(),
+      get_parameter("input_noise").as_double(),
+      get_parameter("slip_fraction").as_double());
     const auto msg = std::format(
       "Simulation reset: timestep set to 0, robot reset to initial pose "
       "({}).",
