@@ -202,9 +202,11 @@ public:
         "red/wheel_cmd", 10,
         std::bind(&NUSimulator::wheel_cmd_callback, this, std::placeholders::_1));
 
-      // sensor data publisher
+      // sensor data publisher - publishes CLEAN encoder data (ideal, no noise)
+      // turtle_control reads this and publishes to blue/joint_states for odometry
       sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
 
+      // joint states for red robot (ground truth with noise)
       joint_states_publisher_ = create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
 
       path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
@@ -252,20 +254,24 @@ private:
     // update wheels + robot pose
     auto dt = 1.0 / sim_rate_;
     noisy_diff_drive_->noisy_fk(wheel_vel_left_, wheel_vel_right_, dt);
-    auto new_wheel_angle_left = noisy_diff_drive_->noisy_robot.get_wheel_angles()[0];
-    auto new_wheel_angle_right = noisy_diff_drive_->noisy_robot.get_wheel_angles()[1];
+    auto noisy_wheel_angle_left = noisy_diff_drive_->noisy_robot.get_wheel_angles()[0];
+    auto noisy_wheel_angle_right = noisy_diff_drive_->noisy_robot.get_wheel_angles()[1];
+    auto encoder_wheel_angle_left = noisy_diff_drive_->encoder_robot.get_wheel_angles()[0];
+    auto encoder_wheel_angle_right = noisy_diff_drive_->encoder_robot.get_wheel_angles()[1];
     gt_pose_ = noisy_diff_drive_->noisy_robot.get_pose();
 
-    // publish sensor data message with current wheel angles and ground truth pose
+    // publish encoder sensor data (noise only, no slip - what encoders actually read)
+    // turtle_control will convert this to blue/joint_states for clean odometry
     auto sensor_msg = nuturtlebot_msgs::msg::SensorData();
-    sensor_msg.left_encoder = rad_to_ticks(new_wheel_angle_left, encoder_ticks_per_rad_);
-    sensor_msg.right_encoder = rad_to_ticks(new_wheel_angle_right, encoder_ticks_per_rad_);
+    sensor_msg.left_encoder = rad_to_ticks(encoder_wheel_angle_left, encoder_ticks_per_rad_);
+    sensor_msg.right_encoder = rad_to_ticks(encoder_wheel_angle_right, encoder_ticks_per_rad_);
     sensor_msg.stamp = get_clock()->now();
 
+    // publish NOISY joint states for red robot (actual ground truth motion with noise + slip)
     auto joint_states = sensor_msgs::msg::JointState{};
     joint_states.header.stamp = get_clock()->now();
     joint_states.name = {"wheel_left_joint", "wheel_right_joint"};
-    joint_states.position = {new_wheel_angle_left, new_wheel_angle_right};
+    joint_states.position = {noisy_wheel_angle_left, noisy_wheel_angle_right};
 
     // broadcast transform from nusim/world to red/base_footprint
     auto transform = geometry_msgs::msg::TransformStamped();
@@ -289,8 +295,8 @@ private:
     // send everything out
     tf_broadcaster_->sendTransform(transform);
     count_publisher_->publish(count_msg);
-    sensor_data_publisher_->publish(sensor_msg);
-    joint_states_publisher_->publish(joint_states);
+    sensor_data_publisher_->publish(sensor_msg);  // clean data -> turtle_control -> blue/joint_states -> odometry
+    joint_states_publisher_->publish(joint_states);  // noisy data for red robot visualization
     publish_laser_scan();
 
     // publish a path for the ground truth robot position with max 500 poses
