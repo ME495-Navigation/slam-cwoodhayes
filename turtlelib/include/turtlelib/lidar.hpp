@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <random>
+#include <cmath>
 #include "turtlelib/se2d.hpp"
 #include "turtlelib/obstacles.hpp"
 
@@ -51,6 +52,13 @@ namespace turtlelib
     constexpr double get_angle_max() const { return M_PI; }
 
   private:
+    /// @brief Find the first point along a ray from the robot's pose that intersects an obstacle
+    /// @param pose The robot's pose in the world frame
+    /// @param angle The angle of the ray relative to the robot's heading
+    /// @param obstacles The obstacles in the environment
+    /// @return The distance to the intersection, or max_range if no intersection
+    double ray_trace(const Transform2D& pose, double angle, const Obstacles& obstacles) const;
+
     double min_range_;
     double max_range_;
     double angle_increment_;
