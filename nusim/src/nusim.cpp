@@ -227,10 +227,6 @@ public:
       // laser scan publisher
       laser_scan_publisher_ = create_publisher<sensor_msgs::msg::LaserScan>("red/scan", 10);
       
-      // obstacle measurements publisher
-      measured_obstacles_publisher_ =
-        create_publisher<visualization_msgs::msg::MarkerArray>("/measured_obstacles", rclcpp::QoS(10));
-      
       // fake sensor publisher at 5Hz
       fake_sensor_publisher_ =
         create_publisher<visualization_msgs::msg::MarkerArray>("/fake_sensor", rclcpp::QoS(10));
@@ -256,7 +252,7 @@ public:
 
     publish_arena();
     gt_obs_ = {obs_x, obs_y, obs_r};
-    publish_cyl_obstacles(obs_x, obs_y, obs_r, true);
+    publish_cyl_obstacles(obs_x, obs_y, obs_r);
     
     // Initialize random number generator for sensor noise
     rand_gen_ = std::mt19937(std::random_device{}());
@@ -346,7 +342,6 @@ private:
     path_msg.poses = std::vector<geometry_msgs::msg::PoseStamped>(
         gt_path_buffer_.begin(), gt_path_buffer_.end());
     path_publisher_->publish(path_msg);
-    publish_measured_obstacles();
   }
 
   void reset_callback(
@@ -450,7 +445,7 @@ private:
   }
 
   /// @brief publish cylindrical obstacles as configured on startup.
-  void publish_cyl_obstacles(const std::vector<double>& obs_x, const std::vector<double>& obs_y, const double obs_r, bool is_groundtruth)
+  void publish_cyl_obstacles(const std::vector<double>& obs_x, const std::vector<double>& obs_y, const double obs_r)
   {
     const auto cyl_height = 0.25;
 
@@ -473,35 +468,18 @@ private:
       marker.scale.y = 2.0 * obs_r;  // diameter
       marker.scale.z = cyl_height;
 
-      if (is_groundtruth) {
-        marker.ns = "red";
-        marker.color.r = 1.0;
-        marker.color.g = 0.0;
-        marker.color.b = 0.0;
-        marker.color.a = 1.0;
-      }
-      else {
-        marker.ns = "yellow";
-        marker.color.r = 1.0;
-        marker.color.g = 1.0;
-        marker.color.b = 0.0;
-        marker.color.a = 1.0;
-      }
+      marker.ns = "red";
+      marker.color.r = 1.0;
+      marker.color.g = 0.0;
+      marker.color.b = 0.0;
+      marker.color.a = 1.0;
 
       marker_array.markers.push_back(marker);
-      if (is_groundtruth) {
-        RCLCPP_INFO(get_logger(), std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i], obs_r).c_str());
-      }
+      RCLCPP_INFO(get_logger(), std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i], obs_r).c_str());
     }
 
-    if (is_groundtruth) {
-      RCLCPP_INFO(get_logger(), "Published arena obstacles.");
-      obstacles_publisher_->publish(marker_array);
-    }
-    else {
-      // no log cuz we publish these a lot
-      measured_obstacles_publisher_->publish(marker_array);
-    }
+    RCLCPP_INFO(get_logger(), "Published arena obstacles.");
+    obstacles_publisher_->publish(marker_array);
   }
   
   /// @brief Callback for fake sensor that publishes obstacles relative to robot with noise
@@ -532,7 +510,7 @@ private:
       // Create marker
       auto marker = visualization_msgs::msg::Marker();
       marker.header.frame_id = "red/base_footprint";
-      marker.header.stamp = get_clock()->now();
+      marker.header.stamp = rclcpp::Time(0);
       marker.id = i;
       marker.type = visualization_msgs::msg::Marker::CYLINDER;
       marker.ns = "fake_sensor";
@@ -566,16 +544,6 @@ private:
     fake_sensor_publisher_->publish(marker_array);
   }
   
-  /// @brief Publish a MarkerArray (in yellow) displaying the relative measurements of the markers
-  void publish_measured_obstacles() {
-    // These will not necessarily align with the red markers due to noise.
-    // If the measured marker cannot be seen by the robot, it should not be displayed
-
-    // TODO actually implement noise + LOS etc
-    // for now just publish ground truth
-    publish_cyl_obstacles(gt_obs_.x, gt_obs_.y, gt_obs_.r, false);
-  }
-
   /// @brief Publish a sensor_messages/LaserScan displaying the simulated laser scan data (in red)
   void publish_laser_scan() {
     // TODO actually simulate laser scan data. for now just publish dummy
@@ -602,7 +570,6 @@ private:
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr count_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr measured_obstacles_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
