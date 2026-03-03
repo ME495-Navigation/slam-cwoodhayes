@@ -58,6 +58,7 @@ add_library(turtlelib
   src/svg.cpp
   src/svg_elements.cpp
   src/diff_drive.cpp
+  src/lidar.cpp
 )
 target_include_directories(turtlelib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

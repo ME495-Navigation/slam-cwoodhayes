@@ -9,6 +9,7 @@
 #include "turtlelib/angle.hpp"
 #include "turtlelib/noise_models.hpp"
 #include "turtlelib/obstacles.hpp"
+#include "turtlelib/lidar.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
@@ -169,6 +170,31 @@ public:
       desc.description = "Maximum range (in meters) for obstacle detection by the fake sensor";
       declare_parameter("max_range", 5.0, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Minimum range of the LiDAR in meters";
+      declare_parameter("lidar_range_min", 0.12, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Maximum range of the LiDAR in meters";
+      declare_parameter("lidar_range_max", 3.5, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Angular resolution of the LiDAR in radians";
+      declare_parameter("lidar_angle_increment", 0.01745329, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Range resolution of the LiDAR in meters";
+      declare_parameter("lidar_resolution", 0.015, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Variance of zero-mean Gaussian noise to add to LiDAR range measurements";
+      declare_parameter("lidar_noise_variance", 0.0, desc);
+    }
 
     auto wheel_radius = get_parameter("wheel_radius").as_double();
     auto track_width = get_parameter("track_width").as_double();
@@ -182,6 +208,14 @@ public:
     basic_sensor_variance_ = get_parameter("basic_sensor_variance").as_double();
     max_range_ = get_parameter("max_range").as_double();
     noisy_diff_drive_ = std::make_unique<NoisyDiffDrive>(wheel_radius, track_width, input_noise, slip_fraction);
+
+    // Initialize LiDAR simulator
+    auto lidar_range_min = get_parameter("lidar_range_min").as_double();
+    auto lidar_range_max = get_parameter("lidar_range_max").as_double();
+    auto lidar_angle_increment = get_parameter("lidar_angle_increment").as_double();
+    auto lidar_resolution = get_parameter("lidar_resolution").as_double();
+    auto lidar_noise_variance = get_parameter("lidar_noise_variance").as_double();
+    lidar_ = std::make_unique<turtlelib::Lidar>(lidar_range_min, lidar_range_max, lidar_angle_increment, lidar_resolution, lidar_noise_variance);
 
     gt_pose_ = get_pose0();
     sim_rate_ = get_parameter("rate").as_double();
@@ -319,7 +353,6 @@ private:
     count_publisher_->publish(count_msg);
     sensor_data_publisher_->publish(sensor_msg);  // clean data -> turtle_control -> blue/joint_states -> odometry
     joint_states_publisher_->publish(joint_states);  // noisy data for red robot visualization
-    publish_laser_scan();
 
     // publish a path for the ground truth robot position with max 500 poses
     auto pose_stamped = geometry_msgs::msg::PoseStamped();
@@ -496,10 +529,9 @@ private:
     std::normal_distribution<double> noise_dist(0.0, std::sqrt(basic_sensor_variance_));
     
     for (size_t i = 0; i < gt_obs_->x.size(); ++i) {
-      // Get obstacle position in world frame
+      // obstacle in world frame
       const auto obs_world = turtlelib::Point2D{gt_obs_->x[i], gt_obs_->y[i]};
-      
-      // Transform to robot frame using Transform2D
+      // obstacle in robot frame
       const auto obs_robot = world_to_robot(obs_world);
       
       // Add Gaussian noise to the measurements
@@ -544,10 +576,11 @@ private:
     }
     
     fake_sensor_publisher_->publish(marker_array);
+    publish_lidar();
   }
   
   /// @brief Publish a sensor_messages/LaserScan displaying the simulated laser scan data (in red)
-  void publish_laser_scan() {
+  void publish_lidar() {
     // TODO actually simulate laser scan data. for now just publish dummy
     auto scan_msg = sensor_msgs::msg::LaserScan();
     scan_msg.header.stamp = get_clock()->now();
@@ -581,6 +614,7 @@ private:
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<Obstacles> gt_obs_;
+  std::unique_ptr<turtlelib::Lidar> lidar_;
 
   bool draw_only_ = false;
 
