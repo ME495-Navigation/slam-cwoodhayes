@@ -45,6 +45,11 @@ namespace turtlelib
             return T_sb_;
         }
 
+        void set_pose(const Transform2D& new_pose)
+        {
+            T_sb_ = new_pose;
+        }
+
         const Twist2D get_body_twist() const
         {
             return Vb_;

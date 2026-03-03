@@ -8,6 +8,7 @@
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/angle.hpp"
 #include "noise_models.hpp"
+#include "obstacles.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
@@ -31,12 +32,6 @@
 #include <queue>
 
 using namespace std::chrono_literals;
-
-struct Obstacles {
-  std::vector<double> x;
-  std::vector<double> y;
-  double r;
-};
 
 /// @class NUSimulator
 /// @brief ROS2 node that simulates a differential drive robot (TurtleBot3) in a 2D environment.
@@ -251,7 +246,7 @@ public:
       create_publisher<visualization_msgs::msg::MarkerArray>("/real_obstacles", qos);
 
     publish_arena();
-    gt_obs_ = {obs_x, obs_y, obs_r};
+    gt_obs_ = std::make_unique<Obstacles>(Obstacles{obs_x, obs_y, obs_r});
     publish_cyl_obstacles(obs_x, obs_y, obs_r);
     
     // Initialize random number generator for sensor noise
@@ -491,9 +486,9 @@ private:
     // Create Gaussian noise distribution
     std::normal_distribution<double> noise_dist(0.0, std::sqrt(basic_sensor_variance_));
     
-    for (size_t i = 0; i < gt_obs_.x.size(); ++i) {
+    for (size_t i = 0; i < gt_obs_->x.size(); ++i) {
       // Get obstacle position in world frame
-      const auto obs_world = turtlelib::Point2D{gt_obs_.x[i], gt_obs_.y[i]};
+      const auto obs_world = turtlelib::Point2D{gt_obs_->x[i], gt_obs_->y[i]};
       
       // Transform to robot frame using Transform2D
       const auto obs_robot = world_to_robot(obs_world);
@@ -525,8 +520,8 @@ private:
         marker.pose.position.z = cyl_height / 2.0;
         marker.pose.orientation.w = 1.0;
         
-        marker.scale.x = 2.0 * gt_obs_.r;  // diameter
-        marker.scale.y = 2.0 * gt_obs_.r;  // diameter
+        marker.scale.x = 2.0 * gt_obs_->r;  // diameter
+        marker.scale.y = 2.0 * gt_obs_->r;  // diameter
         marker.scale.z = cyl_height;
         
         // Yellow color for sensor measurements
@@ -576,7 +571,7 @@ private:
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  Obstacles gt_obs_;
+  std::unique_ptr<Obstacles> gt_obs_;
 
   bool draw_only_ = false;
 

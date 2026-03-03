@@ -83,6 +83,13 @@ public:
     return noisy_robot.get_pose();
   }
 
+  /// @brief Set the real pose of the robot without affecting encoders. Used in case of collision
+  void set_gt_pose(const turtlelib::Transform2D& pose)
+  {
+    clean_robot.set_pose(pose);
+    noisy_robot.set_pose(pose);
+  }
+
 private:
   // no noise, no slip (just for debugging)
   turtlelib::DiffDrive clean_robot;
