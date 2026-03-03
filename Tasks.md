@@ -48,6 +48,8 @@ Task F.2
 Task F.3
 
 # HOMEWORK 3
+Task C.9
+
 Task F.6
 
 Task V.1

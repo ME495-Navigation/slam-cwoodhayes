@@ -49,6 +49,7 @@ struct Obstacles {
 ///   - `~/real_walls` (visualization_msgs::msg::MarkerArray): Arena boundary walls for visualization
 ///   - `~/real_obstacles` (visualization_msgs::msg::MarkerArray): Cylindrical obstacles for visualization
 ///   - `red/sensor_data` (nuturtlebot_msgs::msg::SensorData): Simulated sensor output (ie encoder readings) for the robot
+///   - `/fake_sensor` (visualization_msgs::msg::MarkerArray): Obstacle detections relative to robot at 5Hz with Gaussian noise
 ///
 /// @details Subscribers:
 ///   - `red/wheel_cmd` (nuturtlebot_msgs::msg::WheelCommands): Motor commands to the robot
@@ -163,6 +164,16 @@ public:
       desc.description = "Wheel slip fraction -- bounds of uniform distribution to add slip noise proportional to wheel velocity";
       declare_parameter("slip_fraction", 0.1, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Variance of zero-mean Gaussian noise to add to obstacle sensor measurements";
+      declare_parameter("basic_sensor_variance", 0.0, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Maximum range (in meters) for obstacle detection by the fake sensor";
+      declare_parameter("max_range", 5.0, desc);
+    }
 
     auto wheel_radius = get_parameter("wheel_radius").as_double();
     auto track_width = get_parameter("track_width").as_double();
@@ -173,6 +184,8 @@ public:
     max_path_size_ = get_parameter("max_path_size").as_int();
     auto input_noise = get_parameter("input_noise").as_double();
     auto slip_fraction = get_parameter("slip_fraction").as_double();
+    basic_sensor_variance_ = get_parameter("basic_sensor_variance").as_double();
+    max_range_ = get_parameter("max_range").as_double();
     noisy_diff_drive_ = std::make_unique<NoisyDiffDrive>(wheel_radius, track_width, input_noise, slip_fraction);
 
     gt_pose_ = get_pose0();
@@ -217,6 +230,13 @@ public:
       // obstacle measurements publisher
       measured_obstacles_publisher_ =
         create_publisher<visualization_msgs::msg::MarkerArray>("/measured_obstacles", rclcpp::QoS(10));
+      
+      // fake sensor publisher at 5Hz
+      fake_sensor_publisher_ =
+        create_publisher<visualization_msgs::msg::MarkerArray>("/fake_sensor", rclcpp::QoS(10));
+      
+      fake_sensor_timer_ = create_wall_timer(
+        200ms, std::bind(&NUSimulator::fake_sensor_callback, this));
     }
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
@@ -237,6 +257,10 @@ public:
     publish_arena();
     gt_obs_ = {obs_x, obs_y, obs_r};
     publish_cyl_obstacles(obs_x, obs_y, obs_r, true);
+    
+    // Initialize random number generator for sensor noise
+    rand_gen_ = std::mt19937(std::random_device{}());
+    
     RCLCPP_INFO(get_logger(), "nusimulator node constructed.");
   }
 
@@ -480,6 +504,68 @@ private:
     }
   }
   
+  /// @brief Callback for fake sensor that publishes obstacles relative to robot with noise
+  void fake_sensor_callback() {
+    const auto cyl_height = 0.25;
+    auto marker_array = visualization_msgs::msg::MarkerArray();
+    
+    // Get transform from world to robot frame (inverse of robot pose in world)
+    const auto world_to_robot = gt_pose_.inv();
+    
+    // Create Gaussian noise distribution
+    std::normal_distribution<double> noise_dist(0.0, std::sqrt(basic_sensor_variance_));
+    
+    for (size_t i = 0; i < gt_obs_.x.size(); ++i) {
+      // Get obstacle position in world frame
+      const auto obs_world = turtlelib::Point2D{gt_obs_.x[i], gt_obs_.y[i]};
+      
+      // Transform to robot frame using Transform2D
+      const auto obs_robot = world_to_robot(obs_world);
+      
+      // Add Gaussian noise to the measurements
+      const auto noisy_x = obs_robot.x + noise_dist(rand_gen_);
+      const auto noisy_y = obs_robot.y + noise_dist(rand_gen_);
+      
+      // Calculate distance from robot
+      const auto distance = std::sqrt(noisy_x * noisy_x + noisy_y * noisy_y);
+      
+      // Create marker
+      auto marker = visualization_msgs::msg::Marker();
+      marker.header.frame_id = "red/base_footprint";
+      marker.header.stamp = get_clock()->now();
+      marker.id = i;
+      marker.type = visualization_msgs::msg::Marker::CYLINDER;
+      marker.ns = "fake_sensor";
+      
+      // Check if within range
+      if (distance > max_range_) {
+        // Set action to DELETE if out of range
+        marker.action = visualization_msgs::msg::Marker::DELETE;
+      } else {
+        marker.action = visualization_msgs::msg::Marker::ADD;
+        
+        marker.pose.position.x = noisy_x;
+        marker.pose.position.y = noisy_y;
+        marker.pose.position.z = cyl_height / 2.0;
+        marker.pose.orientation.w = 1.0;
+        
+        marker.scale.x = 2.0 * gt_obs_.r;  // diameter
+        marker.scale.y = 2.0 * gt_obs_.r;  // diameter
+        marker.scale.z = cyl_height;
+        
+        // Yellow color for sensor measurements
+        marker.color.r = 1.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
+      }
+      
+      marker_array.markers.push_back(marker);
+    }
+    
+    fake_sensor_publisher_->publish(marker_array);
+  }
+  
   /// @brief Publish a MarkerArray (in yellow) displaying the relative measurements of the markers
   void publish_measured_obstacles() {
     // These will not necessarily align with the red markers due to noise.
@@ -512,10 +598,12 @@ private:
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr fake_sensor_timer_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr count_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr walls_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr measured_obstacles_publisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_publisher_;
@@ -544,6 +632,11 @@ private:
   double encoder_ticks_per_rad_{};
   double collision_radius_{};
   std::unique_ptr<NoisyDiffDrive> noisy_diff_drive_;
+  
+  // sensor parameters
+  double basic_sensor_variance_{};
+  double max_range_{};
+  std::mt19937 rand_gen_;
 };
 
 int main(int argc, char * argv[])
