@@ -15,6 +15,7 @@ endif()
 # find dependencies
 find_package(Catch2 3 REQUIRED)
 find_package(Doxygen)
+find_package(Armadillo REQUIRED)
 
 # build the documentation
 if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
@@ -59,10 +60,15 @@ add_library(turtlelib
   src/svg_elements.cpp
   src/diff_drive.cpp
   src/lidar.cpp
+  src/ekf.cpp
 )
 target_include_directories(turtlelib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
+  ${ARMADILLO_INCLUDE_DIRS}
+)
+target_link_libraries(turtlelib
+  ${ARMADILLO_LIBRARIES}
 )
 
 add_executable(converter src/converter.cpp)
