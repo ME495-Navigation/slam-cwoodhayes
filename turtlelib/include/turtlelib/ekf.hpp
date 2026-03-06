@@ -2,11 +2,14 @@
 /// @brief contains Extended Kalman Filter class for state estimation.
 /// Uses Armadillo for matrix operations, and references these notes for notation & math:
 /// https://nu-msr.github.io/navigation/lectures/kalman_filter.html
+/// as well as wikipedia for clarity:
+/// https://en.wikipedia.org/wiki/Extended_Kalman_filter
 
 #ifndef EKF_HPP
 #define EKF_HPP
 
 #include "armadillo"
+#include "random"
 
 namespace turtlelib
 {
@@ -53,8 +56,8 @@ namespace turtlelib
     /// @brief constructor
     /// @param process_model process model of the system
     /// @param measurement_model measurement model of the system
-    /// @param R gaussian process noise covariance
-    /// @param Q gaussian measurement noise covariance
+    /// @param R gaussian measurement noise covariance
+    /// @param Q gaussian process noise covariance
     EKF(const ProcessModel & process_model, const MeasurementModel & measurement_model,
         const arma::mat & R, const arma::mat & Q);
 
@@ -77,6 +80,8 @@ namespace turtlelib
     const arma::mat Q_;
     arma::vec state_;
     arma::mat covariance_;
+    std::default_random_engine rng_;
+    std::normal_distribution<double> noise_dist_{0.0, 1.0};
   };
 
 };
