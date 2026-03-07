@@ -51,5 +51,5 @@
   </group>
 
   <!-- TODO remove - this will be published in slam node. just adding for now to test -->
-  <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
+  <node pkg="tf2_ros" exec="static_transform_publisher" name="world_map_tf" args="0 0 0 0 0 0 nusim/world map"/>
 </launch>
