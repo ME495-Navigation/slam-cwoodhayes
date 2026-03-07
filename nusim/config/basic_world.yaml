@@ -10,6 +10,3 @@
 
     arena_x_length: 2.0
     arena_y_length: 2.0
-    
-    basic_sensor_variance: 0.003
-    max_range: 5.0

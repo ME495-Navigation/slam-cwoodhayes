@@ -16,4 +16,8 @@
     lidar_range_max: 8.0
     lidar_angle_increment: 0.01745 # 1 degree in radians
     lidar_resolution: 0.01
-    lidar_noise_variance: 0.03
+    lidar_noise_variance: 0.005
+    
+    # obstacle sensor params
+    basic_sensor_variance: 0.003
+    max_range: 1.0

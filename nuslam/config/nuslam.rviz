@@ -6,11 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TF1
         - /TF1/Frames1
-        - /MarkerArray - Obstacles1/Topic1
-        - /MarkerArray - Obstacles (msr)1
-        - /MarkerArray - Obstacles (msr)1/Status1
+        - /SLAM Pose (green)1
+        - /MarkerArray - Obstacles (gt)1/Topic1
       Splitter Ratio: 0.5
     Tree Height: 812
   - Class: rviz_common/Selection
@@ -67,6 +65,16 @@ Visualization Manager:
           Value: false
         blue/wheel_right_link:
           Value: false
+        green/base_footprint:
+          Value: true
+        green/base_link:
+          Value: true
+        green/base_scan:
+          Value: true
+        green/caster_back_link:
+          Value: true
+        green/imu_link:
+          Value: true
         nusim/world:
           Value: true
         odom:
@@ -271,8 +279,67 @@ Visualization Manager:
       Mass Properties:
         Inertia: false
         Mass: false
-      Name: Localized Pose (blue)
+      Name: Odom Pose (blue)
       TF Prefix: blue
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /green/robot_description
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        base_scan:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        caster_back_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_right_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: SLAM Pose (green)
+      TF Prefix: green
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -290,7 +357,7 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: MarkerArray - Obstacles
+      Name: MarkerArray - Obstacles (gt)
       Namespaces:
         red: true
       Topic:
@@ -302,7 +369,7 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: MarkerArray - Obstacles (msr)
+      Name: MarkerArray - Obstacles (sim)
       Namespaces:
         fake_sensor: true
       Topic:
@@ -311,6 +378,18 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /fake_sensor
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray - Obstacles (SLAM)
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /slam/obstacles
       Value: true
     - Alpha: 1
       Buffer Length: 1
@@ -367,6 +446,34 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /blue/path
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 0; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Path - SLAM
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /green/path
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
