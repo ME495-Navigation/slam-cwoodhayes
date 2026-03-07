@@ -23,45 +23,49 @@ namespace turtlelib
   void EKF::step(const arma::vec & control, const arma::vec & measurement)
   {
     // validate dimensions of control and measurement
-    if (control.n_rows != Q_.n_rows) {
-      throw std::invalid_argument("Control vector dimension must match process noise covariance Q");
+    if (control.n_rows != Q_.n_rows && control.n_rows != 0) {
+      throw std::invalid_argument("Control vector dimension must match process noise covariance Q (or be empty for no control)");
     }
-    if (measurement.n_rows != R_.n_rows) {
-      throw std::invalid_argument("Measurement vector dimension must match measurement noise covariance R");
-    }
-
-    // generate noise samples for process and measurement noise
-    // w=process noise (w_k in notes)
-    arma::vec w = arma::vec(R_.n_rows);
-    // v=measurement noise (v_k in notes)
-    arma::vec v = arma::vec(Q_.n_rows);
-    for (size_t i = 0; i < R_.n_rows; ++i) {
-      w(i) = noise_dist_(rng_) * std::sqrt(R_(i, i));
-    }
-    for (size_t i = 0; i < Q_.n_rows; ++i) {
-      v(i) = noise_dist_(rng_) * std::sqrt(Q_(i, i));
+    if (measurement.n_rows != R_.n_rows && measurement.n_rows != 0) {
+      throw std::invalid_argument("Measurement vector dimension must match measurement noise covariance R (or be empty for no measurement)");
     }
 
-    // state prediction step
-    arma::vec x_hat = process_model_.g(state_, control);
-    arma::mat A = process_model_.A(state_, control);
-    arma::mat cov_hat = A * covariance_ * A.t() + Q_;
+    arma::vec x_hat;
+    arma::mat cov_hat;
 
-    // measurement update step (see wikipedia EKF article for clear steps,
-    // though I use matt's naming conventions for some of the variables)
-    arma::vec z_hat = measurement_model_.h(x_hat);
-    arma::mat H = measurement_model_.H(x_hat);
+    // state prediction step (only if control is provided)
+    if (control.n_rows > 0) {
+      x_hat = process_model_.g(state_, control);
+      arma::mat A = process_model_.A(state_, control);
+      cov_hat = A * covariance_ * A.t() + Q_;
+    } else {
+      // no control: predicted state is current state
+      x_hat = state_;
+      cov_hat = covariance_;
+    }
 
-    // innovation
-    arma::vec y = measurement - z_hat;
-    // innovation covariance
-    arma::mat S = H * cov_hat * H.t() + R_;
-    // kalman gain
-    arma::mat K = cov_hat * H.t() * S.i();
+    // measurement update step (only if measurement is provided)
+    if (measurement.n_rows > 0) {
+      // see wikipedia EKF article for clear steps,
+      // though I use matt's naming conventions for some of the variables
+      arma::vec z_hat = measurement_model_.h(x_hat);
+      arma::mat H = measurement_model_.H(x_hat);
 
-    // final updates
-    state_ = x_hat + K * y;
-    covariance_ = (arma::eye(cov_hat.n_rows, cov_hat.n_cols) - K * H) * cov_hat;
+      // innovation
+      arma::vec y = measurement - z_hat;
+      // innovation covariance
+      arma::mat S = H * cov_hat * H.t() + R_;
+      // kalman gain
+      arma::mat K = cov_hat * H.t() * S.i();
+
+      // final updates
+      state_ = x_hat + K * y;
+      covariance_ = (arma::eye(cov_hat.n_rows, cov_hat.n_cols) - K * H) * cov_hat;
+    } else {
+      // no measurement: propagate prediction as final estimate
+      state_ = x_hat;
+      covariance_ = cov_hat;
+    }
   }
 
 };

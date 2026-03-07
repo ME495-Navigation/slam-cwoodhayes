@@ -28,14 +28,14 @@ public:
 class DDSLAMMeasurementModel : public MeasurementModel
 {
 public:
-  DDSLAMMeasurementModel()
-  : landmark_positions_() {};
+  DDSLAMMeasurementModel() {};
 
   arma::vec h(const arma::vec & state) const override;
   arma::mat H(const arma::vec & state) const override;
+  // sneaky way to make sure we can only calculate the measurement
+  // update for one landmark at a time; see DDSLAM below for usage.
+  size_t observed_landmark_id = 0; 
 
-private:
-  std::unordered_map<int, turtlelib::Point2D> landmark_positions_;
 };
 
 class DDSLAM
