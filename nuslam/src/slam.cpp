@@ -114,7 +114,6 @@ public:
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
     map_id_ = "map"; 
-    world_id_ = "nusim/world";
     wheel_left_ = get_parameter("wheel_left").as_string();
     wheel_right_ = get_parameter("wheel_right").as_string();
     slam_body_id_ = get_parameter("slam_body_id").as_string();
@@ -133,7 +132,7 @@ public:
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
     // publish an initial transform at the origin so that we have a valid tf as soon as possible
-    publish_pose_tf(turtlelib::Transform2D(), world_id_, body_id_);
+    publish_pose_tf(turtlelib::Transform2D(), map_id_, body_id_);
 
     RCLCPP_INFO(get_logger(), "odometry node constructed.");
   }
@@ -196,7 +195,7 @@ private:
 
     // publish odometry msg and tf
     odom_pub_->publish(odom_msg);
-    publish_pose_tf(T_ob, world_id_, body_id_);
+    publish_pose_tf(T_ob, map_id_, body_id_);
 
     // TODO get slam data so this can be fr; for now just re-publish odometry info for slam
     publish_pose_tf(T_ob, odom_id_, slam_body_id_);
@@ -220,7 +219,7 @@ private:
 
     publish_path(
       msg->header.stamp,
-      world_id_,
+      map_id_,
       odom_msg.pose.pose,
       path_buffer_,
       path_pub_);
@@ -295,7 +294,7 @@ private:
 
     turtlelib::Transform2D new_pose({request->x, request->y}, request->theta);
     diff_drive_->reset_to_configuration(new_pose);
-    publish_pose_tf(new_pose, world_id_, body_id_);
+    publish_pose_tf(new_pose, map_id_, body_id_);
     path_buffer_.clear();
     response->success = true;
   }
@@ -315,7 +314,6 @@ private:
   std::string odom_id_;
   std::string slam_body_id_;
   std::string map_id_;
-  std::string world_id_;
   std::string wheel_left_;
   std::string wheel_right_;
   double wheel_radius_;
