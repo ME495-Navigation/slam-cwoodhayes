@@ -61,6 +61,7 @@ add_library(turtlelib
   src/diff_drive.cpp
   src/lidar.cpp
   src/ekf.cpp
+  src/dd_slam.cpp
 )
 target_include_directories(turtlelib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -59,7 +59,7 @@ namespace turtlelib
     /// @param R gaussian measurement noise covariance
     /// @param Q gaussian process noise covariance
     EKF(const ProcessModel & process_model, const MeasurementModel & measurement_model,
-        const arma::mat & R, const arma::mat & Q);
+        const arma::mat & R, const arma::mat & Q, arma::vec initial_state, arma::mat initial_covariance);
 
     /// @brief Performs EKF prediction and update steps given control input and measurement.
     /// @param control control vector u_t-1

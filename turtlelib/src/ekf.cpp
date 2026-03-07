@@ -6,8 +6,9 @@ namespace turtlelib
 {
 
   EKF::EKF(const ProcessModel & process_model, const MeasurementModel & measurement_model,
-           const arma::mat & R, const arma::mat & Q)
-  : process_model_(process_model), measurement_model_(measurement_model), R_(R), Q_(Q)
+           const arma::mat & R, const arma::mat & Q, arma::vec initial_state, arma::mat initial_covariance)
+  : process_model_(process_model), measurement_model_(measurement_model), R_(R), Q_(Q), 
+    state_(initial_state), covariance_(initial_covariance)
   {
     // validate dimensions of R and Q
     if (R.n_rows != R.n_cols) {
