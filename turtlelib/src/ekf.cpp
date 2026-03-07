@@ -30,12 +30,30 @@ namespace turtlelib
       throw std::invalid_argument("Measurement vector dimension must match measurement noise covariance R (or be empty for no measurement)");
     }
 
+    // generate noise samples for process and measurement noise
+    // w=process noise (w_k in notes)
+    arma::vec w = arma::vec(state_.n_rows, arma::fill::zeros);
+    // v=measurement noise (v_k in notes)
+    arma::vec v = arma::vec(R_.n_rows, arma::fill::zeros);
+    
+    // only generate noise if we're actually using those updates
+    if (control.n_rows > 0) {
+      for (size_t i = 0; i < state_.n_rows; ++i) {
+        w(i) = noise_dist_(rng_) * std::sqrt(Q_(i, i));
+      }
+    }
+    if (measurement.n_rows > 0) {
+      for (size_t i = 0; i < R_.n_rows; ++i) {
+        v(i) = noise_dist_(rng_) * std::sqrt(R_(i, i));
+      }
+    }
+
     arma::vec x_hat;
     arma::mat cov_hat;
 
     // state prediction step (only if control is provided)
     if (control.n_rows > 0) {
-      x_hat = process_model_.g(state_, control);
+      x_hat = process_model_.g(state_, control) + w;
       arma::mat A = process_model_.A(state_, control);
       cov_hat = A * covariance_ * A.t() + Q_;
     } else {
@@ -52,7 +70,7 @@ namespace turtlelib
       arma::mat H = measurement_model_.H(x_hat);
 
       // innovation
-      arma::vec y = measurement - z_hat;
+      arma::vec y = (measurement + v) - z_hat;
       // innovation covariance
       arma::mat S = H * cov_hat * H.t() + R_;
       // kalman gain

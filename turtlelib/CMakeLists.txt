@@ -44,6 +44,7 @@ if(BUILD_TESTING AND NOT CMAKE_CROSSCOMPILING)
       test/test_svg.cpp
       test/test_diff_drive.cpp
       test/test_obstacles.cpp
+      test/test_ddslam.cpp
     )
     target_link_libraries(tests Catch2::Catch2WithMain turtlelib)
 

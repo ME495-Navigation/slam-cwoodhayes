@@ -62,6 +62,12 @@ public:
   /// @param bearing measured bearing to the landmark
   void measurement_update(const int landmark_id, const double range, const double bearing);
 
+  /// @brief Get current state estimate (robot pose and landmark positions)
+  arma::vec get_state() const { return ekf_.get_state(); }
+
+  /// @brief Get current covariance estimate
+  arma::mat get_covariance() const { return ekf_.get_covariance(); }
+
 private:
   DiffDrive diff_drive_;
   DDSLAMProcessModel process_model_;
