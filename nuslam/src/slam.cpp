@@ -32,6 +32,7 @@
 /// - odom (nav_msgs/msg/Odometry): Robot odometry pose and twist
 /// - blue/path (nav_msgs/msg/Path): Robot path based on odometry measurements
 /// - green/path (nav_msgs/msg/Path): Robot path based on SLAM pose estimates
+/// - green/joint_states (sensor_msgs/msg/JointState): Wheel joint states for green robot visualization
 ///
 /// Services:
 /// - set_initial_pose (turtle_control/srv/SetPose): Sets the initial pose for odometry
@@ -55,6 +56,7 @@ public:
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos);
     path_pub_ = create_publisher<nav_msgs::msg::Path>("blue/path", qos);
     slam_path_pub_ = create_publisher<nav_msgs::msg::Path>("green/path", qos);
+    green_joint_states_pub_ = create_publisher<sensor_msgs::msg::JointState>("green/joint_states", qos);
 
     initial_pose_srv_ = create_service<turtle_control::srv::SetPose>(
       "set_initial_pose",
@@ -202,6 +204,13 @@ private:
     turtlelib::Transform2D T_om = T_ob; // placeholder for actual SLAM pose estimate (transform from odom to map)
     publish_pose_tf(T_om, map_id_, odom_id_);
 
+    // publish joint states for green robot visualization
+    publish_joint_states(
+      msg->header.stamp,
+      diff_drive_->get_wheel_angles(),
+      diff_drive_->get_wheel_velocities(),
+      green_joint_states_pub_);
+
     publish_path(
       msg->header.stamp,
       odom_id_,
@@ -240,6 +249,20 @@ private:
     path_msg.poses = std::vector<geometry_msgs::msg::PoseStamped>(
       path_buffer.begin(), path_buffer.end());
     path_publisher->publish(path_msg);
+  }
+
+  void publish_joint_states(
+    const builtin_interfaces::msg::Time & stamp,
+    const std::vector<double> & wheel_angles,
+    const std::vector<double> & wheel_velocities,
+    const rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr & joint_states_publisher)
+  {
+    auto joint_states = sensor_msgs::msg::JointState{};
+    joint_states.header.stamp = stamp;
+    joint_states.name = {"wheel_left_joint", "wheel_right_joint"};
+    joint_states.position = wheel_angles;
+    joint_states.velocity = wheel_velocities;
+    joint_states_publisher->publish(joint_states);
   }
 
   void publish_pose_tf(const turtlelib::Transform2D & T, const std::string & parent_frame, const std::string & child_frame)
@@ -281,6 +304,7 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr slam_path_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr green_joint_states_pub_;
   rclcpp::Service<turtle_control::srv::SetPose>::SharedPtr initial_pose_srv_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
