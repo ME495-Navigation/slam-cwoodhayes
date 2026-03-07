@@ -17,6 +17,7 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "turtle_control/srv/set_pose.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 #include "armadillo"
 
 #include <functional>
@@ -29,6 +30,7 @@
 ///
 /// Subscribes:
 /// - joint_states (sensor_msgs/msg/JointState): Current wheel joint positions
+/// - landmark observations topic (visualization_msgs/msg/MarkerArray): Landmark observations in robot frame
 ///
 /// Publishes:
 /// - odom (nav_msgs/msg/Odometry): Robot odometry pose and twist
@@ -113,6 +115,11 @@ public:
       desc.description = "Maximum number of poses in the odometry path";
       declare_parameter("max_path_size", 1000, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Topic for landmark observations (MarkerArray), defaults to simulated sensor topic";
+      declare_parameter("landmark_observations_topic", "/fake_sensor", desc);
+    }
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
     map_id_ = "map"; 
@@ -123,6 +130,11 @@ public:
     wheel_radius_ = get_parameter("wheel_radius").as_double();
     track_width_ = get_parameter("track_width").as_double();
     max_path_size_ = get_parameter("max_path_size").as_int();
+    landmark_observations_topic_ = get_parameter("landmark_observations_topic").as_string();
+
+    landmark_observations_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
+      landmark_observations_topic_, qos,
+      std::bind(&SLAMNode::landmark_observations_cb, this, std::placeholders::_1));
 
     if (wheel_left_.empty() || wheel_right_.empty()) {
       RCLCPP_ERROR(get_logger(), "wheel_left and wheel_right parameters must be specified");
@@ -297,6 +309,28 @@ private:
     tf_broadcaster_->sendTransform(tf);
   }
 
+  void landmark_observations_cb(const visualization_msgs::msg::MarkerArray::SharedPtr msg)
+  {
+    const auto visible_landmark_count = std::count_if(
+      msg->markers.begin(), msg->markers.end(),
+      [](const auto & marker) {
+        return marker.action == visualization_msgs::msg::Marker::ADD;
+      });
+
+    observed_landmarks_ = arma::zeros(2, visible_landmark_count);
+
+    auto col = arma::uword{0};
+    for (const auto & marker : msg->markers) {
+      if (marker.action != visualization_msgs::msg::Marker::ADD) {
+        continue;
+      }
+
+      observed_landmarks_(0, col) = marker.pose.position.x;
+      observed_landmarks_(1, col) = marker.pose.position.y;
+      ++col;
+    }
+  }
+
   /// @brief Callback function for set_initial_pose service. Sets the initial pose of the robot for odometry.
   void set_initial_pose_cb(
     const std::shared_ptr<turtle_control::srv::SetPose::Request> request,
@@ -315,6 +349,7 @@ private:
   }
 
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
+  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr landmark_observations_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr slam_path_pub_;
@@ -323,6 +358,7 @@ private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
   std::unique_ptr<turtlelib::DDSLAM> dd_slam_;
+  arma::mat observed_landmarks_ = arma::zeros(2, 0);
   std::deque<geometry_msgs::msg::PoseStamped> path_buffer_;
   std::deque<geometry_msgs::msg::PoseStamped> slam_path_buffer_;
   size_t max_path_size_;
@@ -330,6 +366,7 @@ private:
   std::string odom_id_;
   std::string slam_body_id_;
   std::string map_id_;
+  std::string landmark_observations_topic_;
   std::string wheel_left_;
   std::string wheel_right_;
   double wheel_radius_;
