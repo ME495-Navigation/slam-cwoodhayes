@@ -43,17 +43,17 @@
 /// - map -> odom transform via tf2 (for SLAM pose estimates)
 /// - odom -> body_id transform via tf2 (ie odom -> blue base_footprint)
 /// - odom -> slam_body_id transform via tf2 (ie odom -> green base_footprint)
-class Odometry : public rclcpp::Node
+class SLAMNode : public rclcpp::Node
 {
 public:
   /// @brief constructor
-  Odometry()
+  SLAMNode()
   : Node("odometry")
   {
     auto qos = rclcpp::QoS(10);
 
     joint_states_sub_ = create_subscription<sensor_msgs::msg::JointState>(
-        "joint_states", qos, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+        "joint_states", qos, std::bind(&SLAMNode::joint_states_cb, this, std::placeholders::_1));
 
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos);
     path_pub_ = create_publisher<nav_msgs::msg::Path>("blue/path", qos);
@@ -62,7 +62,7 @@ public:
 
     initial_pose_srv_ = create_service<turtle_control::srv::SetPose>(
       "set_initial_pose",
-      std::bind(&Odometry::set_initial_pose_cb, this, std::placeholders::_1,
+      std::bind(&SLAMNode::set_initial_pose_cb, this, std::placeholders::_1,
       std::placeholders::_2));
 
     // fetch necessary robot parameters from diff_params.yaml
@@ -339,7 +339,7 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Odometry>());
+  rclcpp::spin(std::make_shared<SLAMNode>());
   rclcpp::shutdown();
   return 0;
 }
