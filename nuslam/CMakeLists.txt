@@ -91,6 +91,7 @@ install(TARGETS slam_node DESTINATION lib/${PROJECT_NAME})
 # Install launch files.
 install(DIRECTORY
   launch
+  config
   DESTINATION share/${PROJECT_NAME}/
 )
 

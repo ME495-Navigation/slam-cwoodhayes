@@ -12,6 +12,7 @@
         <choice value="none"/>
     </arg>
     <arg name="use_rviz" default="true" description="if true, view robot behavior in RViz"/>
+    <arg name="use_odom" default="true" description="if true, run the odometry node to publish odom based on joint states. If false, run nothing (used by slam launchfile, which runs an integrated slam+odom node)"/>
     <let name="rviz_config" value="$(find-pkg-share turtle_control)/config/turtle_control.rviz"/>
     <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
     <let name="nusim_world_config" value="$(find-pkg-share nusim)/config/basic_world.yaml"/>
@@ -21,23 +22,24 @@
         <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
             on_exit="shutdown"
             args="-d $(var rviz_config)"/>
-
-        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
-            <arg name="use_rviz" value="false"/>
-            <arg name="color" value="blue"/>
-            <arg name="use_jsp" value="false"/>
-        </include>
-
-        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml" 
-            if="$(equals $(var robot) nusim)"
-        >
-            <arg name="use_rviz" value="false"/>
-            <arg name="color" value="red"/>
-            <arg name="use_jsp" value="false"/>
-        </include>
     </group>
 
-    <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom"/>
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+        <arg name="use_rviz" value="false"/>
+        <arg name="color" value="blue"/>
+        <arg name="use_jsp" value="false"/>
+    </include>
+
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml" 
+        if="$(equals $(var robot) nusim)"
+    >
+        <arg name="use_rviz" value="false"/>
+        <arg name="color" value="red"/>
+        <arg name="use_jsp" value="false"/>
+    </include>
+
+    <!-- static transform isn't needed by SLAM; so we disable with odom -->
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="world_odom_tf" args="0 0 0 0 0 0 nusim/world odom" if="$(var use_odom)"/>
 
     <!-- robot-specific nodes -->
     <group if="$(equals $(var robot) nusim)">
@@ -57,7 +59,7 @@
             <remap from="joint_states" to="blue/joint_states"/>
         </node>
         <node pkg="turtle_control" exec="odometry" name="odometry" output="screen"
-            on_exit="shutdown">
+            on_exit="shutdown" if="$(var use_odom)">
             <param from="$(var diff_params)"/>
             <param name="wheel_left" value="wheel_left_joint"/>
             <param name="wheel_right" value="wheel_right_joint"/>
@@ -76,7 +78,7 @@
             <remap from="joint_states" to="blue/joint_states"/>
         </node>
         <node pkg="turtle_control" exec="odometry" name="odometry" output="screen"
-            on_exit="shutdown">
+            on_exit="shutdown" if="$(var use_odom)">
             <param from="$(var diff_params)"/>
             <param name="wheel_left" value="wheel_left_joint"/>
             <param name="wheel_right" value="wheel_right_joint"/>
