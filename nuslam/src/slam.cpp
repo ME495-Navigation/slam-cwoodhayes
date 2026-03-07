@@ -201,7 +201,7 @@ private:
     // TODO get slam data so this can be fr; for now just re-publish odometry info for slam
     publish_pose_tf(T_ob, odom_id_, slam_body_id_);
 
-    turtlelib::Transform2D T_om = T_ob; // placeholder for actual SLAM pose estimate (transform from odom to map)
+    turtlelib::Transform2D T_om{}; // placeholder for actual SLAM pose estimate (transform from odom to map)
     publish_pose_tf(T_om, map_id_, odom_id_);
 
     // publish joint states for green robot visualization
