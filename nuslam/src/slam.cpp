@@ -224,32 +224,46 @@ private:
     odom_pub_->publish(odom_msg);
     publish_pose_tf(T_ob, map_id_, body_id_);
 
-    // TODO get slam data so this can be fr; for now just re-publish odometry info for slam
-    publish_pose_tf(T_ob, odom_id_, slam_body_id_);
-
-    turtlelib::Transform2D T_om{}; // placeholder for actual SLAM pose estimate (transform from odom to map)
-    publish_pose_tf(T_om, map_id_, odom_id_);
-
-    // publish joint states for green robot visualization
-    publish_joint_states(
-      msg->header.stamp,
-      diff_drive_->get_wheel_angles(),
-      diff_drive_->get_wheel_velocities(),
-      green_joint_states_pub_);
-
-    publish_path(
-      msg->header.stamp,
-      odom_id_,
-      odom_msg.pose.pose,
-      slam_path_buffer_,
-      slam_path_pub_);
-
     publish_path(
       msg->header.stamp,
       map_id_,
       odom_msg.pose.pose,
       path_buffer_,
       path_pub_);
+
+    // update SLAM estimates
+    // TODO make this concurrency safe by wrapping in a lock.
+    // for now ok because we're using a single threaded executor
+    dd_slam_->odom_update(left_pos, right_pos);
+    auto T_mb = dd_slam_->get_map_to_body();
+    // we need T_mo. derive this from T_mb and T_ob
+    auto T_mo = T_mb * T_ob.inv();
+    publish_pose_tf(T_mo, map_id_, odom_id_);
+    publish_pose_tf(T_ob, odom_id_, body_id_);
+
+    // joint states can come from diff_drive because we don't need slam for encoder vals.
+    publish_joint_states(
+      msg->header.stamp,
+      diff_drive_->get_wheel_angles(),
+      diff_drive_->get_wheel_velocities(),
+      green_joint_states_pub_);
+
+    auto slam_pose = geometry_msgs::msg::Pose();
+    slam_pose.position.x = T_ob.translation().x;
+    slam_pose.position.y = T_ob.translation().y;
+    slam_pose.position.z = 0.0;
+    auto slam_quat = turtlelib::angle_to_2d_planar_quaternion(T_ob.rotation());
+    slam_pose.orientation.x = slam_quat[0];
+    slam_pose.orientation.y = slam_quat[1];
+    slam_pose.orientation.z = slam_quat[2];
+    slam_pose.orientation.w = slam_quat[3];
+
+    publish_path(
+      msg->header.stamp,
+      odom_id_,
+      slam_pose,
+      slam_path_buffer_,
+      slam_path_pub_);
   }
 
   void publish_path(
@@ -311,23 +325,19 @@ private:
 
   void landmark_observations_cb(const visualization_msgs::msg::MarkerArray::SharedPtr msg)
   {
-    const auto visible_landmark_count = std::count_if(
-      msg->markers.begin(), msg->markers.end(),
-      [](const auto & marker) {
-        return marker.action == visualization_msgs::msg::Marker::ADD;
-      });
-
-    observed_landmarks_ = arma::zeros(2, visible_landmark_count);
-
-    auto col = arma::uword{0};
+    // go through the landmarks we got and feed them into SLAM
     for (const auto & marker : msg->markers) {
       if (marker.action != visualization_msgs::msg::Marker::ADD) {
         continue;
       }
 
-      observed_landmarks_(0, col) = marker.pose.position.x;
-      observed_landmarks_(1, col) = marker.pose.position.y;
-      ++col;
+      auto landmark_id = marker.id;
+
+      // calculate range and bearing to the landmark from the marker position
+      auto range = std::hypot(marker.pose.position.x, marker.pose.position.y);
+      auto bearing = std::atan2(marker.pose.position.y, marker.pose.position.x);
+
+      dd_slam_->measurement_update(landmark_id, range, bearing);
     }
   }
 
@@ -358,7 +368,6 @@ private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
   std::unique_ptr<turtlelib::DDSLAM> dd_slam_;
-  arma::mat observed_landmarks_ = arma::zeros(2, 0);
   std::deque<geometry_msgs::msg::PoseStamped> path_buffer_;
   std::deque<geometry_msgs::msg::PoseStamped> slam_path_buffer_;
   size_t max_path_size_;

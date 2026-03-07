@@ -145,7 +145,7 @@ TEST_CASE("DDSLAM get_map_to_odom returns correct transform", "[DDSLAM]")
     
     auto slam = DDSLAM(wheel_radius, wheel_track, R, Q, initial_state, initial_cov);
     
-    auto T_mo = slam.get_map_to_odom();
+    auto T_mo = slam.get_map_to_body();
     
     // Check that the transform matches the state
     REQUIRE_THAT(T_mo.rotation(), WithinAbs(pi / 4.0, 1e-6));

@@ -60,7 +60,7 @@ public:
   /// @param landmark_id id of the observed landmark (key in the landmark_positions map)
   /// @param range measured range to the landmark
   /// @param bearing measured bearing to the landmark
-  void measurement_update(const int landmark_id, const double range, const double bearing);
+  void measurement_update(size_t landmark_id, const double range, const double bearing);
 
   /// @brief Get current state estimate (robot pose and landmark positions)
   arma::vec get_state() const { return ekf_.get_state(); }
@@ -68,9 +68,9 @@ public:
   /// @brief Get current covariance estimate
   arma::mat get_covariance() const { return ekf_.get_covariance(); }
 
-  /// @brief Get the current transform from the map frame to the odom frame, based on the current state estimate of the robot pose. This is useful for publishing a tf between map and odom that reflects the SLAM estimate of the robot's pose in the map.
-  /// @return T_mo
-  Transform2D get_map_to_odom() const;
+  /// @brief Get the current transform from the map frame to the body frame.
+  /// @return T_mb
+  Transform2D get_map_to_body() const;
 
   /// @brief Get the number of landmarks currently being estimated by the EKF. 
   size_t get_num_landmarks() const;

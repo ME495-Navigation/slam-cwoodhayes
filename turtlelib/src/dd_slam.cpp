@@ -146,15 +146,20 @@ namespace turtlelib {
     ekf_.step(control, arma::vec()); // empty measurement since we only want to do the prediction step
   }
 
-  void DDSLAM::measurement_update(const int landmark_id, const double range, const double bearing)
+  void DDSLAM::measurement_update(size_t landmark_id, const double range, const double bearing)
   {
+    if (landmark_id >= get_num_landmarks()) {
+      // TODO dynamically increase size of landmarks list instead
+      throw std::runtime_error("Error: landmark_id exceeds number of landmarks currently in state");
+    }
+
     // set the observed landmark id in the measurement model so that we calculate the measurement update for the correct landmark
     measurement_model_.observed_landmark_id = landmark_id;
     auto measurement = arma::vec({range, bearing});
     ekf_.step(arma::vec(), measurement); // empty control since we only want to do the measurement update step
   }
 
-  Transform2D DDSLAM::get_map_to_odom() const
+  Transform2D DDSLAM::get_map_to_body() const
   {
     auto state = ekf_.get_state();
     auto x = state(1);
