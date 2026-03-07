@@ -12,19 +12,19 @@ namespace turtlelib
   {
     // validate dimensions of R and Q
     if (R.n_rows != R.n_cols) {
-      throw std::invalid_argument("Process noise covariance R must be square");
+      throw std::invalid_argument("Measurement noise covariance R must be square");
     }
     if (Q.n_rows != Q.n_cols) {
-      throw std::invalid_argument("Measurement noise covariance Q must be square");
+      throw std::invalid_argument("Process noise covariance Q must be square");
     }
     return;
   }
 
   void EKF::step(const arma::vec & control, const arma::vec & measurement)
   {
-    // validate dimensions of control and measurement
-    if (control.n_rows != Q_.n_rows && control.n_rows != 0) {
-      throw std::invalid_argument("Control vector dimension must match process noise covariance Q (or be empty for no control)");
+    // validate dimensions of Q and R match state and measurement
+    if (Q_.n_rows != state_.n_rows) {
+      throw std::invalid_argument("Process noise covariance Q must match state dimension");
     }
     if (measurement.n_rows != R_.n_rows && measurement.n_rows != 0) {
       throw std::invalid_argument("Measurement vector dimension must match measurement noise covariance R (or be empty for no measurement)");

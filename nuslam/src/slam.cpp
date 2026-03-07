@@ -147,13 +147,18 @@ public:
 
     // SLAM setup
     // TODO could make these params instead of hardcoding them. for now easier this way.
-    arma::mat R = arma::eye(3, 3) * 0.01; // process noise covariance
-    arma::mat Q = arma::eye(2, 2) * 0.05; // measurement noise covariance
-
+    arma::mat R = arma::eye(2, 2) * 0.05; // measurement noise covariance (range, bearing)
+    
     // TODO make this dynamic later.
     auto n_max_landmarks = 5;
-    arma::vec initial_state = arma::zeros(3 + 2 * n_max_landmarks); // initial state: robot pose (x, y, theta) + 5 landmarks
-    arma::mat initial_covariance = arma::eye(3 + 2 * n_max_landmarks, 3 + 2 * n_max_landmarks) * 1000; // high initial uncertainty
+    auto state_dim = 3 + 2 * n_max_landmarks;
+    
+    // Process noise: only robot pose has noise (landmarks are static in the map)
+    arma::mat Q = arma::zeros(state_dim, state_dim);
+    Q.submat(0, 0, 2, 2) = arma::eye(3, 3) * 0.01; // process noise for robot pose only
+    
+    arma::vec initial_state = arma::zeros(state_dim); // initial state: robot pose (x, y, theta) + 5 landmarks
+    arma::mat initial_covariance = arma::eye(state_dim, state_dim) * 1000; // high initial uncertainty
     dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
       wheel_radius_, track_width_, R, Q, initial_state, initial_covariance
     );
