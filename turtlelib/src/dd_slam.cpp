@@ -154,4 +154,30 @@ namespace turtlelib {
     ekf_.step(arma::vec(), measurement); // empty control since we only want to do the measurement update step
   }
 
+  Transform2D DDSLAM::get_map_to_odom() const
+  {
+    auto state = ekf_.get_state();
+    auto x = state(1);
+    auto y = state(2);
+    auto th = state(0);
+    return Transform2D({x, y}, th);
+  }
+
+  size_t DDSLAM::get_num_landmarks() const
+  {
+    auto state = ekf_.get_state();
+    return (state.n_rows - 3) / 2; // subtract 3 for robot pose, divide by 2 for x and y of each landmark
+  }
+
+  arma::mat DDSLAM::get_landmark_positions() const
+  {
+    auto state = ekf_.get_state();
+    arma::mat landmarks(2, get_num_landmarks());
+    for (size_t i = 0; i < landmarks.n_cols; ++i) {
+      landmarks(0, i) = state(i * 2 + 3); // x position of landmark i
+      landmarks(1, i) = state(i * 2 + 4); // y position of landmark i
+    }
+    return landmarks;
+  }
+
 }

@@ -68,6 +68,17 @@ public:
   /// @brief Get current covariance estimate
   arma::mat get_covariance() const { return ekf_.get_covariance(); }
 
+  /// @brief Get the current transform from the map frame to the odom frame, based on the current state estimate of the robot pose. This is useful for publishing a tf between map and odom that reflects the SLAM estimate of the robot's pose in the map.
+  /// @return T_mo
+  Transform2D get_map_to_odom() const;
+
+  /// @brief Get the number of landmarks currently being estimated by the EKF. 
+  size_t get_num_landmarks() const;
+
+  /// @brief Get the current estimated positions of the landmarks.
+  /// @return 2xN matrix, where N is the number of landmarks. each col is (x, y) position.
+  arma::mat get_landmark_positions() const;
+
 private:
   DiffDrive diff_drive_;
   DDSLAMProcessModel process_model_;

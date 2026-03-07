@@ -128,3 +128,101 @@ TEST_CASE("DDSLAM mixed prediction and measurement updates", "[DDSLAM]")
     // Check that robot moved forward significantly
     REQUIRE(final_state(1) > 1.0);
 }
+
+TEST_CASE("DDSLAM get_map_to_odom returns correct transform", "[DDSLAM]")
+{
+    const auto wheel_radius = 0.1;
+    const auto wheel_track = 0.5;
+    const auto state_dim = 3;  // [theta, x, y]
+    
+    auto R = arma::eye(2, 2);
+    auto Q = arma::eye(state_dim, state_dim) * 0.01;
+    auto initial_state = arma::vec(state_dim);
+    initial_state(0) = pi / 4.0;  // theta = 45 degrees
+    initial_state(1) = 2.0;       // x = 2.0
+    initial_state(2) = 3.0;       // y = 3.0
+    auto initial_cov = arma::eye(state_dim, state_dim) * 0.1;
+    
+    auto slam = DDSLAM(wheel_radius, wheel_track, R, Q, initial_state, initial_cov);
+    
+    auto T_mo = slam.get_map_to_odom();
+    
+    // Check that the transform matches the state
+    REQUIRE_THAT(T_mo.rotation(), WithinAbs(pi / 4.0, 1e-6));
+    REQUIRE_THAT(T_mo.translation().x, WithinAbs(2.0, 1e-6));
+    REQUIRE_THAT(T_mo.translation().y, WithinAbs(3.0, 1e-6));
+}
+
+TEST_CASE("DDSLAM get_num_landmarks returns correct count", "[DDSLAM]")
+{
+    const auto wheel_radius = 0.1;
+    const auto wheel_track = 0.5;
+    
+    auto R = arma::eye(2, 2);
+    auto Q_no_landmarks = arma::eye(3, 3) * 0.01;
+    auto Q_two_landmarks = arma::eye(7, 7) * 0.01;
+    auto Q_three_landmarks = arma::eye(9, 9) * 0.01;
+    
+    SECTION("No landmarks") {
+        auto initial_state = arma::vec(3, arma::fill::zeros);
+        auto initial_cov = arma::eye(3, 3) * 0.1;
+        auto slam = DDSLAM(wheel_radius, wheel_track, R, Q_no_landmarks, initial_state, initial_cov);
+        
+        REQUIRE(slam.get_num_landmarks() == 0);
+    }
+    
+    SECTION("Two landmarks") {
+        auto initial_state = arma::vec(7, arma::fill::zeros);
+        initial_state(3) = 1.0;  // landmark 0 at (1, 2)
+        initial_state(4) = 2.0;
+        initial_state(5) = 3.0;  // landmark 1 at (3, 4)
+        initial_state(6) = 4.0;
+        auto initial_cov = arma::eye(7, 7) * 0.1;
+        auto slam = DDSLAM(wheel_radius, wheel_track, R, Q_two_landmarks, initial_state, initial_cov);
+        
+        REQUIRE(slam.get_num_landmarks() == 2);
+    }
+    
+    SECTION("Three landmarks") {
+        auto initial_state = arma::vec(9, arma::fill::zeros);
+        auto initial_cov = arma::eye(9, 9) * 0.1;
+        auto slam = DDSLAM(wheel_radius, wheel_track, R, Q_three_landmarks, initial_state, initial_cov);
+        
+        REQUIRE(slam.get_num_landmarks() == 3);
+    }
+}
+
+TEST_CASE("DDSLAM get_landmark_positions returns correct positions", "[DDSLAM]")
+{
+    const auto wheel_radius = 0.1;
+    const auto wheel_track = 0.5;
+    const auto state_dim = 7;  // [theta, x, y, lm0_x, lm0_y, lm1_x, lm1_y]
+    
+    auto R = arma::eye(2, 2);
+    auto Q = arma::eye(state_dim, state_dim) * 0.01;
+    auto initial_state = arma::vec(state_dim);
+    initial_state(0) = 0.0;  // robot at origin
+    initial_state(1) = 0.0;
+    initial_state(2) = 0.0;
+    initial_state(3) = 1.5;  // landmark 0 at (1.5, 2.5)
+    initial_state(4) = 2.5;
+    initial_state(5) = -3.0; // landmark 1 at (-3.0, 4.0)
+    initial_state(6) = 4.0;
+    auto initial_cov = arma::eye(state_dim, state_dim) * 0.1;
+    
+    auto slam = DDSLAM(wheel_radius, wheel_track, R, Q, initial_state, initial_cov);
+    
+    auto landmarks = slam.get_landmark_positions();
+    
+    // Check dimensions: 2 rows (x, y), 2 columns (2 landmarks)
+    REQUIRE(landmarks.n_rows == 2);
+    REQUIRE(landmarks.n_cols == 2);
+    
+    // Check landmark 0 position
+    REQUIRE_THAT(landmarks(0, 0), WithinAbs(1.5, 1e-6));
+    REQUIRE_THAT(landmarks(1, 0), WithinAbs(2.5, 1e-6));
+    
+    // Check landmark 1 position
+    REQUIRE_THAT(landmarks(0, 1), WithinAbs(-3.0, 1e-6));
+    REQUIRE_THAT(landmarks(1, 1), WithinAbs(4.0, 1e-6));
+}

@@ -23,6 +23,7 @@ find_package(nav_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(catch_ros2 REQUIRED)
 find_package(turtle_control REQUIRED)
+find_package(Armadillo REQUIRED)
 
 # Add nodes
 add_executable(slam_node src/slam.cpp)
@@ -38,6 +39,7 @@ target_link_libraries(slam_node PUBLIC
   tf2_ros::tf2_ros
   turtlelib::turtlelib
   ${cpp_typesupport_target}
+  ${ARMADILLO_LIBRARIES}
 )
 
 # Install nodes

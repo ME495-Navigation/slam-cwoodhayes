@@ -9,6 +9,7 @@
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/angle.hpp"
 #include "turtlelib/geometry2d.hpp"
+#include "turtlelib/dd_slam.hpp"
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
@@ -16,6 +17,7 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "turtle_control/srv/set_pose.hpp"
+#include "armadillo"
 
 #include <functional>
 #include <numeric>
@@ -130,6 +132,19 @@ public:
     // construct DiffDrive object with parameters
     diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius_, track_width_);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+
+    // SLAM setup
+    // TODO could make these params instead of hardcoding them. for now easier this way.
+    arma::mat R = arma::eye(3, 3) * 0.01; // process noise covariance
+    arma::mat Q = arma::eye(2, 2) * 0.05; // measurement noise covariance
+
+    // TODO make this dynamic later.
+    auto n_max_landmarks = 5;
+    arma::vec initial_state = arma::zeros(3 + 2 * n_max_landmarks); // initial state: robot pose (x, y, theta) + 5 landmarks
+    arma::mat initial_covariance = arma::eye(3 + 2 * n_max_landmarks, 3 + 2 * n_max_landmarks) * 1000; // high initial uncertainty
+    dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
+      wheel_radius_, track_width_, R, Q, initial_state, initial_covariance
+    );
 
     // publish an initial transform at the origin so that we have a valid tf as soon as possible
     publish_pose_tf(turtlelib::Transform2D(), map_id_, body_id_);
@@ -307,6 +322,7 @@ private:
   rclcpp::Service<turtle_control::srv::SetPose>::SharedPtr initial_pose_srv_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
+  std::unique_ptr<turtlelib::DDSLAM> dd_slam_;
   std::deque<geometry_msgs::msg::PoseStamped> path_buffer_;
   std::deque<geometry_msgs::msg::PoseStamped> slam_path_buffer_;
   size_t max_path_size_;
