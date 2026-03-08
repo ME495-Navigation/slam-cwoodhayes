@@ -43,6 +43,7 @@
     <node pkg="nuslam" exec="slam_node" name="nuslam_node" output="screen">
       <param from="$(var diff_params)"/>
       <param from="$(var slam_params)"/>
+      <param from="$(var world_config)"/>
       <param name="wheel_left" value="wheel_left_joint"/>
       <param name="wheel_right" value="wheel_right_joint"/>
       <param name="body_id" value="blue/base_footprint"/>

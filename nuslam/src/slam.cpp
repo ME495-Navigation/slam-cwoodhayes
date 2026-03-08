@@ -144,6 +144,11 @@ public:
       desc.description = "Initial covariance for new landmarks added to the SLAM state";
       declare_parameter("slam_new_landmark_variance", 1000.0, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Radius of obstacles used for SLAM marker visualization";
+      declare_parameter("obstacles.r", 0.038, desc);
+    }
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
     map_id_ = "map"; 
@@ -154,6 +159,7 @@ public:
     wheel_radius_ = get_parameter("wheel_radius").as_double();
     track_width_ = get_parameter("track_width").as_double();
     max_path_size_ = get_parameter("max_path_size").as_int();
+    obstacle_radius_ = get_parameter("obstacles.r").as_double();
     landmark_observations_topic_ = get_parameter("landmark_observations_topic").as_string();
 
     landmark_observations_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
@@ -487,7 +493,7 @@ private:
 
     auto marker_array = visualization_msgs::msg::MarkerArray();
     constexpr auto cyl_height = 0.25;
-    constexpr auto cyl_diameter = 0.076;
+    auto cyl_diameter = 2.0 * obstacle_radius_;
     auto landmark_positions = dd_slam_->get_landmark_positions();
     auto landmark_ids = dd_slam_->get_landmark_ids();
 
@@ -573,6 +579,7 @@ private:
   std::string wheel_right_;
   double wheel_radius_;
   double track_width_;
+  double obstacle_radius_;
 };
 
 int main(int argc, char * argv[])
