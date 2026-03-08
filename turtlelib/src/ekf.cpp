@@ -75,6 +75,7 @@ namespace turtlelib
 
       // debug vars
       K_ = K; 
+      y_ = y;
     } else {
       // no measurement: propagate prediction as final estimate
       state_ = x_hat;

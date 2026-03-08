@@ -80,6 +80,7 @@ namespace turtlelib
     // debugging vars. not used, just written to.
     // kalman gain from most recent update step
     arma::mat K_;
+    arma::mat y_;
 
   private:
     const ProcessModel & process_model_;

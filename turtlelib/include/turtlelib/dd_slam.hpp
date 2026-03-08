@@ -64,6 +64,7 @@ public:
   arma::mat get_covariance() const { return ekf_.get_covariance(); }
 
   arma::mat get_K() const { return ekf_.K_; }
+  arma::vec get_innovation() const { return ekf_.y_; }
 
   /// @brief Get the current transform from the map frame to the body frame.
   /// @return T_mb
