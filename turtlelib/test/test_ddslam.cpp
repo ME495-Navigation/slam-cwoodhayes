@@ -96,6 +96,31 @@ TEST_CASE("DDSLAM measurement update", "[DDSLAM]")
     REQUIRE(cov_after.n_cols == state_dim);
 }
 
+TEST_CASE("DDSLAM measurement update with uninitialized landmark remains finite", "[DDSLAM]")
+{
+    const auto wheel_radius = 0.1;
+    const auto wheel_track = 0.5;
+    const auto state_dim = 5;  // [theta, x, y, landmark1_x, landmark1_y]
+
+    arma::mat R = arma::eye(2, 2) * 0.01;
+    arma::mat Q = arma::eye(3, 3) * 0.01;
+    auto initial_state = arma::vec(state_dim, arma::fill::zeros);
+    arma::mat initial_cov = arma::eye(state_dim, state_dim) * 0.1;
+
+    auto slam = DDSLAM(wheel_radius, wheel_track, R, Q, initial_state, initial_cov);
+
+    slam.measurement_update(0, 1.0, 0.0);
+
+    auto state_after = slam.get_state();
+    auto cov_after = slam.get_covariance();
+
+    REQUIRE(state_after.n_rows == state_dim);
+    REQUIRE(cov_after.n_rows == state_dim);
+    REQUIRE(cov_after.n_cols == state_dim);
+    REQUIRE(state_after.is_finite());
+    REQUIRE(cov_after.is_finite());
+}
+
 TEST_CASE("DDSLAM mixed prediction and measurement updates", "[DDSLAM]")
 {
     const auto wheel_radius = 0.1;

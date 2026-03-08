@@ -8,6 +8,7 @@
 #include "turtlelib/ekf.hpp"
 #include "turtlelib/geometry2d.hpp"
 #include <unordered_map>
+#include <vector>
 
 namespace turtlelib
 {
@@ -80,6 +81,7 @@ private:
   DDSLAMProcessModel process_model_;
   DDSLAMMeasurementModel measurement_model_;
   EKF ekf_;
+  std::vector<bool> landmark_initialized_;
 };
 
 }  // namespace turtlelib

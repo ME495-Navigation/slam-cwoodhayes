@@ -4,6 +4,10 @@
 
 #include "turtlelib/dd_slam.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+
 
 namespace turtlelib {
 
@@ -19,7 +23,8 @@ namespace turtlelib {
       R,
       expand_process_noise(Q_robot_pose, initial_state.n_rows),
       initial_state,
-      initial_covariance)
+      initial_covariance),
+    landmark_initialized_(get_num_landmarks(), false)
   {
   }
 
@@ -132,8 +137,10 @@ namespace turtlelib {
     auto th = state(0);
 
     arma::vec h = {
+      // range
       sqrt(pow(m.x - x, 2) + pow(m.y - y, 2)), 
-      atan2(m.y - y, m.x - x) - th
+      // bearing
+      normalize_angle(atan2(m.y - y, m.x - x) - th)
     };
 
     return h;
@@ -149,7 +156,9 @@ namespace turtlelib {
     auto x = state(1);
     auto y = state(2);
 
-    double d = pow(m.x - x, 2) + pow(m.y - y, 2);
+    auto d = pow(m.x - x, 2) + pow(m.y - y, 2);
+    constexpr auto d_epsilon = 1.0e-12;
+    d = std::max(d, d_epsilon);
     arma::mat H = arma::zeros(2, state.size());
     H(0, 0) = 0;
     H(0, 1) = -(m.x - x) / sqrt(d);
@@ -181,6 +190,22 @@ namespace turtlelib {
     if (landmark_id >= get_num_landmarks()) {
       // TODO dynamically increase size of landmarks list instead
       throw std::runtime_error("Error: landmark_id exceeds number of landmarks currently in state");
+    }
+
+    if (!std::isfinite(range) || !std::isfinite(bearing) || range < 0.0) {
+      throw std::runtime_error("Invalid landmark measurement: range and bearing must be finite, with non-negative range");
+    }
+
+    if (!landmark_initialized_.at(landmark_id)) {
+      auto state = ekf_.get_state();
+      auto th = state(0);
+      auto x = state(1);
+      auto y = state(2);
+
+      state(landmark_id * 2 + 3) = x + range * std::cos(th + bearing);
+      state(landmark_id * 2 + 4) = y + range * std::sin(th + bearing);
+      ekf_.set_state(state);
+      landmark_initialized_.at(landmark_id) = true;
     }
 
     // set the observed landmark id in the measurement model so that we calculate the measurement update for the correct landmark

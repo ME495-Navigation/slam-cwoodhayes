@@ -73,6 +73,10 @@ namespace turtlelib
     /// @brief Get current covariance estimate
     arma::mat get_covariance() const { return covariance_; }
 
+    /// @brief Set the filter state directly.
+    /// @param state new state vector, must match current state dimension
+    void set_state(const arma::vec & state);
+
   private:
     const ProcessModel & process_model_;
     const MeasurementModel & measurement_model_;
@@ -80,8 +84,6 @@ namespace turtlelib
     const arma::mat Q_;
     arma::vec state_;
     arma::mat covariance_;
-    std::default_random_engine rng_;
-    std::normal_distribution<double> noise_dist_{0.0, 1.0};
   };
 
 };
