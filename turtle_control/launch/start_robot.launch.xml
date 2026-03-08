@@ -13,9 +13,11 @@
     </arg>
     <arg name="use_rviz" default="true" description="if true, view robot behavior in RViz"/>
     <arg name="use_odom" default="true" description="if true, run the odometry node to publish odom based on joint states. If false, run nothing (used by slam launchfile, which runs an integrated slam+odom node)"/>
+    <arg name="nusim_world_config" default="$(find-pkg-share nusim)/config/basic_world.yaml"
+        description="Path to the NUsim world configuration file"/>
+
     <let name="rviz_config" value="$(find-pkg-share turtle_control)/config/turtle_control.rviz"/>
     <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-    <let name="nusim_world_config" value="$(find-pkg-share nusim)/config/basic_world.yaml"/>
 
     <!-- use_viz argument handling -->
     <group if="$(var use_rviz)">
