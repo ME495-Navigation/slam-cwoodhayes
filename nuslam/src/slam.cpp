@@ -335,12 +335,12 @@ private:
       diff_drive_->get_wheel_velocities(),
       green_joint_states_pub_);
 
-    // Green path should show SLAM estimate (odom -> green/base_footprint)
+    // Green path should show SLAM estimate in map frame
     auto slam_pose = geometry_msgs::msg::Pose();
-    slam_pose.position.x = T_og.translation().x;
-    slam_pose.position.y = T_og.translation().y;
+    slam_pose.position.x = T_mb.translation().x;
+    slam_pose.position.y = T_mb.translation().y;
     slam_pose.position.z = 0.0;
-    auto slam_quat = turtlelib::angle_to_2d_planar_quaternion(T_og.rotation());
+    auto slam_quat = turtlelib::angle_to_2d_planar_quaternion(T_mb.rotation());
     slam_pose.orientation.x = slam_quat[0];
     slam_pose.orientation.y = slam_quat[1];
     slam_pose.orientation.z = slam_quat[2];
@@ -348,7 +348,7 @@ private:
 
     publish_path(
       msg->header.stamp,
-      odom_id_,
+      map_id_,
       slam_pose,
       slam_path_buffer_,
       slam_path_pub_);
