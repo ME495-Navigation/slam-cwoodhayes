@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <format>
 #include <stdexcept>
 
 
@@ -13,7 +14,7 @@ namespace turtlelib {
 
   DDSLAM::DDSLAM(
     double wheel_radius, double wheel_track, arma::mat R, arma::mat Q_robot_pose,
-    arma::vec initial_state, arma::mat initial_covariance)
+    arma::vec initial_state, arma::mat initial_covariance, size_t max_landmarks)
   : diff_drive_(wheel_radius, wheel_track),
     process_model_(),
     measurement_model_(),
@@ -21,14 +22,21 @@ namespace turtlelib {
       process_model_,
       measurement_model_,
       R,
-      expand_process_noise(Q_robot_pose, initial_state.n_rows),
+      expand_process_noise(Q_robot_pose, 3),
       initial_state,
       initial_covariance),
-    landmark_initialized_(get_num_landmarks(), false)
+    Q_robot_pose_(Q_robot_pose),
+    max_landmarks_(max_landmarks)
   {
+    if (initial_state.n_rows != 3) {
+      throw std::runtime_error("initial_state must contain only [theta, x, y] for dynamic landmark growth");
+    }
+    if (initial_covariance.n_rows != 3 || initial_covariance.n_cols != 3) {
+      throw std::runtime_error("initial_covariance must be 3x3 to match initial robot-only state");
+    }
   }
 
-  arma::mat DDSLAM::expand_process_noise(const arma::mat & Q_robot_pose, size_t state_dim)
+  arma::mat DDSLAM::expand_process_noise(const arma::mat & Q_robot_pose, arma::uword state_dim)
   {
     if (Q_robot_pose.n_rows != 3 || Q_robot_pose.n_cols != 3) {
       throw std::runtime_error("Q_robot_pose must be a 3x3 matrix");
@@ -190,29 +198,47 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
 
   void DDSLAM::measurement_update(size_t landmark_id, const double range, const double bearing)
   {
-    if (landmark_id >= get_num_landmarks()) {
-      // TODO dynamically increase size of landmarks list instead
-      throw std::runtime_error("Error: landmark_id exceeds number of landmarks currently in state");
-    }
-
     if (!std::isfinite(range) || !std::isfinite(bearing) || range < 0.0) {
       throw std::runtime_error("Invalid landmark measurement: range and bearing must be finite, with non-negative range");
     }
 
-    if (!landmark_initialized_.at(landmark_id)) {
+    if (!landmark_id_to_slot_.contains(landmark_id)) {
+      if (get_num_landmarks() >= max_landmarks_) {
+        auto msg = std::format(
+          "Cannot add landmark id {}: maximum of {} landmarks reached",
+          landmark_id,
+          max_landmarks_);
+        throw std::runtime_error(msg);
+      }
+
       auto state = ekf_.get_state();
+      auto covariance = ekf_.get_covariance();
+
       auto th = state(0);
       auto x = state(1);
       auto y = state(2);
 
-      state(landmark_id * 2 + 3) = x + range * std::cos(th + bearing);
-      state(landmark_id * 2 + 4) = y + range * std::sin(th + bearing);
-      ekf_.set_state(state);
-      landmark_initialized_.at(landmark_id) = true;
+      auto new_state = arma::vec(state.n_rows + 2, arma::fill::zeros);
+      new_state.subvec(0, state.n_rows - 1) = state;
+      new_state(state.n_rows) = x + range * std::cos(th + bearing);
+      new_state(state.n_rows + 1) = y + range * std::sin(th + bearing);
+
+      auto new_covariance = arma::mat(covariance.n_rows + 2, covariance.n_cols + 2, arma::fill::zeros);
+      new_covariance.submat(0, 0, covariance.n_rows - 1, covariance.n_cols - 1) = covariance;
+      constexpr auto new_landmark_variance = 1000.0;
+      new_covariance(covariance.n_rows, covariance.n_cols) = new_landmark_variance;
+      new_covariance(covariance.n_rows + 1, covariance.n_cols + 1) = new_landmark_variance;
+
+      auto new_process_noise = expand_process_noise(Q_robot_pose_, new_state.n_rows);
+      ekf_.resize_filter(new_state, new_covariance, new_process_noise);
+
+      auto landmark_slot = slot_to_landmark_id_.size();
+      landmark_id_to_slot_[landmark_id] = landmark_slot;
+      slot_to_landmark_id_.push_back(landmark_id);
     }
 
     // set the observed landmark id in the measurement model so that we calculate the measurement update for the correct landmark
-    measurement_model_.observed_landmark_id = landmark_id;
+    measurement_model_.observed_landmark_id = landmark_id_to_slot_.at(landmark_id);
     auto measurement = arma::vec({range, bearing});
     ekf_.step(arma::vec(), measurement); // empty control since we only want to do the measurement update step
   }
@@ -228,19 +254,23 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
 
   size_t DDSLAM::get_num_landmarks() const
   {
-    auto state = ekf_.get_state();
-    return (state.n_rows - 3) / 2; // subtract 3 for robot pose, divide by 2 for x and y of each landmark
+    return slot_to_landmark_id_.size();
   }
 
   arma::mat DDSLAM::get_landmark_positions() const
   {
     auto state = ekf_.get_state();
     arma::mat landmarks(2, get_num_landmarks());
-    for (size_t i = 0; i < landmarks.n_cols; ++i) {
+    for (arma::uword i = 0; i < landmarks.n_cols; ++i) {
       landmarks(0, i) = state(i * 2 + 3); // x position of landmark i
       landmarks(1, i) = state(i * 2 + 4); // y position of landmark i
     }
     return landmarks;
+  }
+
+  std::vector<size_t> DDSLAM::get_landmark_ids() const
+  {
+    return slot_to_landmark_id_;
   }
 
 }

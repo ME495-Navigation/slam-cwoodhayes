@@ -7,6 +7,7 @@
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/ekf.hpp"
 #include "turtlelib/geometry2d.hpp"
+#include <limits>
 #include <unordered_map>
 #include <vector>
 
@@ -44,7 +45,8 @@ class DDSLAM
 public:
   DDSLAM(
     double wheel_radius, double wheel_track, arma::mat R, arma::mat Q_robot_pose,
-    arma::vec initial_state, arma::mat initial_covariance);
+    arma::vec initial_state, arma::mat initial_covariance,
+    size_t max_landmarks = std::numeric_limits<size_t>::max());
 
   /// @brief Perform EKF prediction step given control input (odometry)
   /// @param new_phi_left left wheel angular position
@@ -77,14 +79,21 @@ public:
   /// @return 2xN matrix, where N is the number of landmarks. each col is (x, y) position.
   arma::mat get_landmark_positions() const;
 
+  /// @brief Get landmark ids ordered by internal landmark slot.
+  /// @return vector of landmark ids where element i corresponds to state entries (2*i+3, 2*i+4)
+  std::vector<size_t> get_landmark_ids() const;
+
 private:
-  static arma::mat expand_process_noise(const arma::mat & Q_robot_pose, size_t state_dim);
+  static arma::mat expand_process_noise(const arma::mat & Q_robot_pose, arma::uword state_dim);
 
   DiffDrive diff_drive_;
   DDSLAMProcessModel process_model_;
   DDSLAMMeasurementModel measurement_model_;
   EKF ekf_;
-  std::vector<bool> landmark_initialized_;
+  arma::mat Q_robot_pose_;
+  size_t max_landmarks_;
+  std::unordered_map<size_t, size_t> landmark_id_to_slot_;
+  std::vector<size_t> slot_to_landmark_id_;
 };
 
 }  // namespace turtlelib

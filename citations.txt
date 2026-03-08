@@ -18,3 +18,4 @@
 [14] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 03/01/2026. Commit prior is 42e7f56b528666530aec201dd33c50b075be9827. Commit after is bb252c0c207ad9560170cf1b6df6af488cb161f4
 [15] https://mathworld.wolfram.com/Circle-LineIntersection.html. Used on 03/02/2026.
 [16] Claude Haiku 4.5. Anthropic (used through VS Code). Used on 03/06/2026. Commit prior is 720ff38094ec390a90fdbb2b56c1e090291cd056. Commit after is 05f18ff04916028b6a7be65b852ef5f5a762d0f4
+[17] Claude Sonnet 4.6. Anthropic. Used on Mar 08, 2026, Transcript Available: https://claude.ai/share/e7b90050-5f65-41fc-8256-0ec10a514f93

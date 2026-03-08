@@ -91,4 +91,25 @@ namespace turtlelib
     state_ = state;
   }
 
+  void EKF::resize_filter(
+    const arma::vec & state, const arma::mat & covariance, const arma::mat & Q)
+  {
+    if (covariance.n_rows != covariance.n_cols) {
+      throw std::invalid_argument("New covariance must be square");
+    }
+    if (Q.n_rows != Q.n_cols) {
+      throw std::invalid_argument("New process noise covariance Q must be square");
+    }
+    if (covariance.n_rows != state.n_rows) {
+      throw std::invalid_argument("New covariance dimension must match new state dimension");
+    }
+    if (Q.n_rows != state.n_rows) {
+      throw std::invalid_argument("New process noise covariance Q must match new state dimension");
+    }
+
+    state_ = state;
+    covariance_ = covariance;
+    Q_ = Q;
+  }
+
 };

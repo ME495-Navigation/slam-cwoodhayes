@@ -77,6 +77,12 @@ namespace turtlelib
     /// @param state new state vector, must match current state dimension
     void set_state(const arma::vec & state);
 
+    /// @brief Resize EKF state and covariances together.
+    /// @param state new state vector
+    /// @param covariance new covariance matrix (must be square and match state dimension)
+    /// @param Q new process noise covariance (must be square and match state dimension)
+    void resize_filter(const arma::vec & state, const arma::mat & covariance, const arma::mat & Q);
+
     // debugging vars. not used, just written to.
     // kalman gain from most recent update step
     arma::mat K_;
@@ -86,7 +92,7 @@ namespace turtlelib
     const ProcessModel & process_model_;
     const MeasurementModel & measurement_model_;
     const arma::mat R_;
-    const arma::mat Q_;
+    arma::mat Q_;
     arma::vec state_;
     arma::mat covariance_;
 

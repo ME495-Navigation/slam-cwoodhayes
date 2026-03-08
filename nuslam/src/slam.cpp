@@ -26,7 +26,6 @@
 #include <format>
 #include <queue>
 #include <sstream>
-#include <unordered_set>
 
 /// \brief Node for SLAM + odometry estimation of the robot.
 ///
@@ -177,7 +176,7 @@ public:
       throw std::runtime_error(msg);
     }
 
-    auto state_dim = static_cast<arma::uword>(3 + 2 * n_max_landmarks);
+    constexpr arma::uword state_dim = 3;
 
     auto R_values = get_parameter("slam_R").as_double_array();
     auto Q_values = get_parameter("slam_Q").as_double_array();
@@ -221,7 +220,8 @@ public:
     initial_covariance *= 1000;
 
     dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
-      wheel_radius_, track_width_, R, Q, initial_state, initial_covariance
+      wheel_radius_, track_width_, R, Q, initial_state, initial_covariance,
+      static_cast<size_t>(n_max_landmarks)
     );
 
     // publish initial transforms at the origin so that we have valid tf as soon as possible
@@ -467,7 +467,6 @@ private:
       auto cov = dd_slam_->get_covariance();
       auto P_robot = cov.submat(0, 0, 2, 2);
       RCLCPP_INFO(get_logger(), "robot pose cov trace: %f", arma::trace(P_robot));
-      observed_landmark_ids_.insert(landmark_id);
       auto K = dd_slam_->get_K();
       auto matrix_stream = std::ostringstream{};
       matrix_stream << "K robot (2x2):\n" << K << '\n';
@@ -482,11 +481,10 @@ private:
     constexpr auto cyl_height = 0.25;
     constexpr auto cyl_diameter = 0.076;
     auto landmark_positions = dd_slam_->get_landmark_positions();
+    auto landmark_ids = dd_slam_->get_landmark_ids();
 
-    for (const auto landmark_id : observed_landmark_ids_) {
-      if (landmark_id >= landmark_positions.n_cols) {
-        continue;
-      }
+    for (arma::uword landmark_slot = 0; landmark_slot < landmark_positions.n_cols; ++landmark_slot) {
+      auto landmark_id = landmark_ids.at(landmark_slot);
 
       auto marker = visualization_msgs::msg::Marker();
       marker.header.frame_id = map_id_;
@@ -496,8 +494,8 @@ private:
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.ns = "slam_obstacles";
 
-      marker.pose.position.x = landmark_positions(0, landmark_id);
-      marker.pose.position.y = landmark_positions(1, landmark_id);
+      marker.pose.position.x = landmark_positions(0, landmark_slot);
+      marker.pose.position.y = landmark_positions(1, landmark_slot);
       marker.pose.position.z = cyl_height / 2.0;
       marker.pose.orientation.w = 1.0;
 
@@ -511,12 +509,9 @@ private:
       marker.color.a = 1.0;
 
       marker_array.markers.push_back(marker);
-      
-
+    }
 
     slam_obstacles_pub_->publish(marker_array);
-      
-    }
 
     publish_slam_pose();
   }
@@ -568,7 +563,6 @@ private:
   std::string landmark_observations_topic_;
   std::string wheel_left_;
   std::string wheel_right_;
-  std::unordered_set<size_t> observed_landmark_ids_;
   double wheel_radius_;
   double track_width_;
 };
