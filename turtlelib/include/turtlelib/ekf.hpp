@@ -77,6 +77,10 @@ namespace turtlelib
     /// @param state new state vector, must match current state dimension
     void set_state(const arma::vec & state);
 
+    // debugging vars. not used, just written to.
+    // kalman gain from most recent update step
+    arma::mat K_;
+
   private:
     const ProcessModel & process_model_;
     const MeasurementModel & measurement_model_;
@@ -84,6 +88,7 @@ namespace turtlelib
     const arma::mat Q_;
     arma::vec state_;
     arma::mat covariance_;
+
   };
 
 };

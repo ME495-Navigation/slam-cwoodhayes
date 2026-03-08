@@ -1,5 +1,6 @@
 
 # include "turtlelib/ekf.hpp"
+#include "turtlelib/angle.hpp"
 # include "armadillo"
 
 #include <format>
@@ -60,6 +61,9 @@ namespace turtlelib
 
       // innovation
       arma::vec y = measurement - z_hat;
+      // TODO clean this up. should not hardcode this in ekf class, should be in slam.
+      y(1) = normalize_angle(y(1)); // normalize bearing innovation to [-pi, pi]
+
       // innovation covariance
       arma::mat S = H * P * H.t() + R_;
       // kalman gain
@@ -68,6 +72,9 @@ namespace turtlelib
       // final updates
       state_ = x_hat + K * y;
       covariance_ = (arma::eye(P.n_rows, P.n_cols) - K * H) * P;
+
+      // debug vars
+      K_ = K; 
     } else {
       // no measurement: propagate prediction as final estimate
       state_ = x_hat;

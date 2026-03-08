@@ -63,6 +63,8 @@ public:
   /// @brief Get current covariance estimate
   arma::mat get_covariance() const { return ekf_.get_covariance(); }
 
+  arma::mat get_K() const { return ekf_.K_; }
+
   /// @brief Get the current transform from the map frame to the body frame.
   /// @return T_mb
   Transform2D get_map_to_body() const;

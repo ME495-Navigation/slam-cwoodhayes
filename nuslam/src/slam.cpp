@@ -387,13 +387,13 @@ private:
 
   void publish_slam_pose()
   {
-    auto covariance = dd_slam_->get_covariance();
-    if (covariance.n_rows < 3 || covariance.n_cols < 3) {
+    auto cov = dd_slam_->get_covariance();
+    if (cov.n_rows < 3 || cov.n_cols < 3) {
       RCLCPP_WARN(
         get_logger(),
         "SLAM covariance is smaller than 3x3 (got %lux%lu), cannot publish /slam/pose covariance",
-        static_cast<unsigned long>(covariance.n_rows),
-        static_cast<unsigned long>(covariance.n_cols));
+        static_cast<unsigned long>(cov.n_rows),
+        static_cast<unsigned long>(cov.n_cols));
       return;
     }
 
@@ -414,15 +414,15 @@ private:
     slam_pose_msg.pose.pose.orientation.w = quat[3];
 
     slam_pose_msg.pose.covariance.fill(0.0);
-    slam_pose_msg.pose.covariance[0] = covariance(1, 1);
-    slam_pose_msg.pose.covariance[1] = covariance(1, 2);
-    slam_pose_msg.pose.covariance[5] = covariance(1, 0);
-    slam_pose_msg.pose.covariance[6] = covariance(2, 1);
-    slam_pose_msg.pose.covariance[7] = covariance(2, 2);
-    slam_pose_msg.pose.covariance[11] = covariance(2, 0);
-    slam_pose_msg.pose.covariance[30] = covariance(0, 1);
-    slam_pose_msg.pose.covariance[31] = covariance(0, 2);
-    slam_pose_msg.pose.covariance[35] = covariance(0, 0);
+    slam_pose_msg.pose.covariance[0] = cov(1, 1);
+    slam_pose_msg.pose.covariance[1] = cov(1, 2);
+    slam_pose_msg.pose.covariance[5] = cov(1, 0);
+    slam_pose_msg.pose.covariance[6] = cov(2, 1);
+    slam_pose_msg.pose.covariance[7] = cov(2, 2);
+    slam_pose_msg.pose.covariance[11] = cov(2, 0);
+    slam_pose_msg.pose.covariance[30] = cov(0, 1);
+    slam_pose_msg.pose.covariance[31] = cov(0, 2);
+    slam_pose_msg.pose.covariance[35] = cov(0, 0);
 
     slam_pose_pub_->publish(slam_pose_msg);
   }
@@ -460,7 +460,15 @@ private:
       auto bearing = std::atan2(marker.pose.position.y, marker.pose.position.x);
 
       dd_slam_->measurement_update(landmark_id, range, bearing);
+      auto msg = std::format("MSR UPDATE lm_id={}: range={:.2f}, bearing={:.2f} - new cov={}", landmark_id, range, bearing, dd_slam_->get_covariance()(0, 0));
+      RCLCPP_INFO(get_logger(), msg.c_str());
+      auto P_robot = dd_slam_->get_covariance().submat(0, 0, 2, 2);
+      RCLCPP_INFO(get_logger(), "robot pose cov trace: %f", arma::trace(P_robot));
       observed_landmark_ids_.insert(landmark_id);
+      auto K = dd_slam_->get_K();
+      auto matrix_stream = std::ostringstream{};
+      matrix_stream << "K robot (2x2):\n" << K << '\n';
+      RCLCPP_INFO(get_logger(), "%s", matrix_stream.str().c_str());
     }
 
     auto marker_array = visualization_msgs::msg::MarkerArray();
