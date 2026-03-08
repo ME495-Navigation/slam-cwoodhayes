@@ -20,5 +20,6 @@
     
     # obstacle sensor params
     basic_sensor_variance: 0.005
-    # simulated sensor max range (m)
-    max_range: 4.0
+    # simulated sensor max range (m). 
+    # small for testing purposes.
+    max_range: 1.5
