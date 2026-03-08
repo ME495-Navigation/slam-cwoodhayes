@@ -42,14 +42,8 @@ class DDSLAM
 {
 public:
   DDSLAM(
-    double wheel_radius, double wheel_track, arma::mat R, arma::mat Q,
-    arma::vec initial_state, arma::mat initial_covariance)
-  : diff_drive_(wheel_radius, wheel_track),
-    process_model_(),
-    measurement_model_(),
-    ekf_(process_model_, measurement_model_, R, Q, initial_state, initial_covariance)
-  {
-  }
+    double wheel_radius, double wheel_track, arma::mat R, arma::mat Q_robot_pose,
+    arma::vec initial_state, arma::mat initial_covariance);
 
   /// @brief Perform EKF prediction step given control input (odometry)
   /// @param new_phi_left left wheel angular position
@@ -80,6 +74,8 @@ public:
   arma::mat get_landmark_positions() const;
 
 private:
+  static arma::mat expand_process_noise(const arma::mat & Q_robot_pose, size_t state_dim);
+
   DiffDrive diff_drive_;
   DDSLAMProcessModel process_model_;
   DDSLAMMeasurementModel measurement_model_;

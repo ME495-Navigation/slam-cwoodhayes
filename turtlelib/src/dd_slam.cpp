@@ -7,6 +7,36 @@
 
 namespace turtlelib {
 
+  DDSLAM::DDSLAM(
+    double wheel_radius, double wheel_track, arma::mat R, arma::mat Q_robot_pose,
+    arma::vec initial_state, arma::mat initial_covariance)
+  : diff_drive_(wheel_radius, wheel_track),
+    process_model_(),
+    measurement_model_(),
+    ekf_(
+      process_model_,
+      measurement_model_,
+      R,
+      expand_process_noise(Q_robot_pose, initial_state.n_rows),
+      initial_state,
+      initial_covariance)
+  {
+  }
+
+  arma::mat DDSLAM::expand_process_noise(const arma::mat & Q_robot_pose, size_t state_dim)
+  {
+    if (Q_robot_pose.n_rows != 3 || Q_robot_pose.n_cols != 3) {
+      throw std::runtime_error("Q_robot_pose must be a 3x3 matrix");
+    }
+    if (state_dim < 3) {
+      throw std::runtime_error("state_dim must be at least 3 for [theta, x, y]");
+    }
+
+    auto Q_full = arma::mat(state_dim, state_dim, arma::fill::zeros);
+    Q_full.submat(0, 0, 2, 2) = Q_robot_pose;
+    return Q_full;
+  }
+
   arma::vec DDSLAMProcessModel::g(const arma::vec & state, const arma::vec & control) const
   {
     // state is [theta, x, y, landmark1_x, landmark1_y, landmark2_x, landmark2_y,...]

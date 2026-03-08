@@ -17,7 +17,7 @@ TEST_CASE("DDSLAM basic construction and initialization", "[DDSLAM]")
     
     // Create simple covariance matrices
     auto R = arma::eye(2, 2);  // measurement noise (2D: range, bearing)
-    auto Q = arma::eye(state_dim, state_dim);  // process noise
+    arma::mat Q = arma::eye(3, 3);  // robot pose process noise block
     auto initial_state = arma::vec(state_dim, arma::fill::zeros);
     auto initial_cov = arma::eye(state_dim, state_dim);
     
@@ -44,7 +44,7 @@ TEST_CASE("DDSLAM prediction step (odom_update)", "[DDSLAM]")
     const auto state_dim = 3;
     
     auto R = arma::eye(2, 2);
-    auto Q = arma::eye(state_dim, state_dim) * 0.01;
+    arma::mat Q = arma::eye(3, 3) * 0.01;
     auto initial_state = arma::vec(state_dim, arma::fill::zeros);
     auto initial_cov = arma::eye(state_dim, state_dim) * 0.1;
     
@@ -76,7 +76,7 @@ TEST_CASE("DDSLAM measurement update", "[DDSLAM]")
     const auto state_dim = 5;  // [theta, x, y, landmark1_x, landmark1_y]
     
     auto R = arma::eye(2, 2);
-    auto Q = arma::eye(state_dim, state_dim) * 0.01;
+    arma::mat Q = arma::eye(3, 3) * 0.01;
     auto initial_state = arma::vec(state_dim, arma::fill::zeros);
     initial_state(3) = 1.0;  // landmark at (1, 0)
     initial_state(4) = 0.0;
@@ -103,7 +103,7 @@ TEST_CASE("DDSLAM mixed prediction and measurement updates", "[DDSLAM]")
     const auto state_dim = 3;
     
     auto R = arma::eye(2, 2) * 0.01;
-    auto Q = arma::eye(state_dim, state_dim) * 0.01;
+    arma::mat Q = arma::eye(3, 3) * 0.01;
     auto initial_state = arma::vec(state_dim, arma::fill::zeros);
     auto initial_cov = arma::eye(state_dim, state_dim) * 0.1;
     
@@ -136,7 +136,7 @@ TEST_CASE("DDSLAM get_map_to_odom returns correct transform", "[DDSLAM]")
     const auto state_dim = 3;  // [theta, x, y]
     
     auto R = arma::eye(2, 2);
-    auto Q = arma::eye(state_dim, state_dim) * 0.01;
+    arma::mat Q = arma::eye(3, 3) * 0.01;
     auto initial_state = arma::vec(state_dim);
     initial_state(0) = pi / 4.0;  // theta = 45 degrees
     initial_state(1) = 2.0;       // x = 2.0
@@ -159,14 +159,12 @@ TEST_CASE("DDSLAM get_num_landmarks returns correct count", "[DDSLAM]")
     const auto wheel_track = 0.5;
     
     auto R = arma::eye(2, 2);
-    auto Q_no_landmarks = arma::eye(3, 3) * 0.01;
-    auto Q_two_landmarks = arma::eye(7, 7) * 0.01;
-    auto Q_three_landmarks = arma::eye(9, 9) * 0.01;
+    arma::mat Q_robot_pose = arma::eye(3, 3) * 0.01;
     
     SECTION("No landmarks") {
         auto initial_state = arma::vec(3, arma::fill::zeros);
         auto initial_cov = arma::eye(3, 3) * 0.1;
-        auto slam = DDSLAM(wheel_radius, wheel_track, R, Q_no_landmarks, initial_state, initial_cov);
+        auto slam = DDSLAM(wheel_radius, wheel_track, R, Q_robot_pose, initial_state, initial_cov);
         
         REQUIRE(slam.get_num_landmarks() == 0);
     }
@@ -178,7 +176,7 @@ TEST_CASE("DDSLAM get_num_landmarks returns correct count", "[DDSLAM]")
         initial_state(5) = 3.0;  // landmark 1 at (3, 4)
         initial_state(6) = 4.0;
         auto initial_cov = arma::eye(7, 7) * 0.1;
-        auto slam = DDSLAM(wheel_radius, wheel_track, R, Q_two_landmarks, initial_state, initial_cov);
+        auto slam = DDSLAM(wheel_radius, wheel_track, R, Q_robot_pose, initial_state, initial_cov);
         
         REQUIRE(slam.get_num_landmarks() == 2);
     }
@@ -186,7 +184,7 @@ TEST_CASE("DDSLAM get_num_landmarks returns correct count", "[DDSLAM]")
     SECTION("Three landmarks") {
         auto initial_state = arma::vec(9, arma::fill::zeros);
         auto initial_cov = arma::eye(9, 9) * 0.1;
-        auto slam = DDSLAM(wheel_radius, wheel_track, R, Q_three_landmarks, initial_state, initial_cov);
+        auto slam = DDSLAM(wheel_radius, wheel_track, R, Q_robot_pose, initial_state, initial_cov);
         
         REQUIRE(slam.get_num_landmarks() == 3);
     }
@@ -199,7 +197,7 @@ TEST_CASE("DDSLAM get_landmark_positions returns correct positions", "[DDSLAM]")
     const auto state_dim = 7;  // [theta, x, y, lm0_x, lm0_y, lm1_x, lm1_y]
     
     auto R = arma::eye(2, 2);
-    auto Q = arma::eye(state_dim, state_dim) * 0.01;
+    arma::mat Q = arma::eye(3, 3) * 0.01;
     auto initial_state = arma::vec(state_dim);
     initial_state(0) = 0.0;  // robot at origin
     initial_state(1) = 0.0;

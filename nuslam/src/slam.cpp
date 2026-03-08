@@ -25,6 +25,7 @@
 #include <ranges>
 #include <format>
 #include <queue>
+#include <sstream>
 #include <unordered_set>
 
 /// \brief Node for SLAM + odometry estimation of the robot.
@@ -122,6 +123,21 @@ public:
       desc.description = "Topic for landmark observations (MarkerArray), defaults to simulated sensor topic";
       declare_parameter("landmark_observations_topic", "/fake_sensor", desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Maximum number of landmarks in SLAM state";
+      declare_parameter("slam_n_max_landmarks", 5, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "SLAM measurement covariance matrix R as row-major array (2x2)";
+      declare_parameter("slam_R", std::vector<double>{0.05, 0.0, 0.0, 0.05}, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "SLAM process covariance robot-pose block Q as row-major array (3x3)";
+      declare_parameter("slam_Q", std::vector<double>{0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01}, desc);
+    }
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
     map_id_ = "map"; 
@@ -147,20 +163,61 @@ public:
     diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius_, track_width_);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
-    // SLAM setup
-    // TODO could make these params instead of hardcoding them. for now easier this way.
-    arma::mat R = arma::eye(2, 2) * 0.05; // measurement noise covariance (range, bearing)
-    
-    // TODO make this dynamic later.
-    auto n_max_landmarks = 5;
-    auto state_dim = 3 + 2 * n_max_landmarks;
-    
-    // Process noise: only robot pose has noise (landmarks are static in the map)
-    arma::mat Q = arma::zeros(state_dim, state_dim);
-    Q.submat(0, 0, 2, 2) = arma::eye(3, 3) * 0.01; // process noise for robot pose only
-    
-    arma::vec initial_state = arma::zeros(state_dim); // initial state: robot pose (x, y, theta) + 5 landmarks
-    arma::mat initial_covariance = arma::eye(state_dim, state_dim) * 1000; // high initial uncertainty
+    // SLAM setup from parameters
+    auto n_max_landmarks = get_parameter("slam_n_max_landmarks").as_int();
+    if (n_max_landmarks < 0) {
+      throw std::runtime_error("slam_n_max_landmarks must be non-negative");
+    }
+    if (n_max_landmarks > 1000) {
+      auto msg = std::format(
+        "slam_n_max_landmarks is too large ({}). Refusing to allocate oversized SLAM state.",
+        n_max_landmarks);
+      throw std::runtime_error(msg);
+    }
+
+    auto state_dim = static_cast<arma::uword>(3 + 2 * n_max_landmarks);
+
+    auto R_values = get_parameter("slam_R").as_double_array();
+    auto Q_values = get_parameter("slam_Q").as_double_array();
+
+    if (R_values.size() != 4) {
+      throw std::runtime_error("slam_R must contain exactly 4 values for a 2x2 matrix");
+    }
+    if (Q_values.size() != 9) {
+      auto msg = std::format(
+        "slam_Q must contain 9 values for a 3x3 matrix, got {}",
+        Q_values.size());
+      throw std::runtime_error(msg);
+    }
+
+    auto R = arma::mat(2, 2, arma::fill::none);
+    for (size_t row = 0; row < 2; ++row) {
+      for (size_t col = 0; col < 2; ++col) {
+        R(row, col) = R_values[row * 2 + col];
+      }
+    }
+
+    auto Q = arma::mat(3, 3, arma::fill::none);
+    for (size_t row = 0; row < 3; ++row) {
+      for (size_t col = 0; col < 3; ++col) {
+        Q(row, col) = Q_values[row * 3 + col];
+      }
+    }
+
+    auto config_stream = std::ostringstream{};
+    config_stream << "SLAM configuration: slam_n_max_landmarks=" << n_max_landmarks
+                  << ", state_dim=" << static_cast<size_t>(state_dim);
+    RCLCPP_INFO(get_logger(), "%s", config_stream.str().c_str());
+
+    auto matrix_stream = std::ostringstream{};
+    matrix_stream << "SLAM matrix R (2x2):\n" << R << '\n';
+    matrix_stream << "SLAM matrix Q_robot_pose (3x3):\n" << Q;
+    RCLCPP_INFO(get_logger(), "%s", matrix_stream.str().c_str());
+
+    auto initial_state = arma::vec(state_dim, arma::fill::zeros);
+    auto initial_covariance = arma::mat(state_dim, state_dim, arma::fill::eye);
+    initial_covariance *= 1000;
+
     dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
       wheel_radius_, track_width_, R, Q, initial_state, initial_covariance
     );
@@ -171,7 +228,7 @@ public:
     publish_pose_tf(identity, map_id_, body_id_);
     publish_pose_tf(identity, odom_id_, slam_body_id_);
 
-    RCLCPP_INFO(get_logger(), "odometry node constructed.");
+    RCLCPP_INFO(get_logger(), "SLAM node constructed.");
   }
 
 private:
