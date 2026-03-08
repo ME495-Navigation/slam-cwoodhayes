@@ -223,7 +223,9 @@ public:
 
     auto initial_state = arma::vec(3, arma::fill::zeros);
     auto initial_covariance = arma::mat(3, 3, arma::fill::eye);
-    initial_covariance *= 1000;
+    // small initial uncertainty in robot pose. we start with no map, so
+    // everything we figure out is relative to the start location anyhow.
+    initial_covariance *= .01; 
 
     dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
       wheel_radius_, track_width_, R, Q, initial_state, initial_covariance,
