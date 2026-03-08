@@ -111,43 +111,24 @@ Arguments (pass arguments as '<name>:=<value>'):
 Note that the above command will display 
 additional arguments from included launchfiles (not shown above) due to a known bug in the launch framework.
 
-# Nuturtle Description
-URDF files for Nuturtle 
-* `ros2 launch nuturtle_description load_one.launch.xml` to see the robot in rviz.
-* `ros2 launch nuturtle_description load_all.launch.xml` to see four copies of the robot in rviz.
-![](images/rviz.png)
-* The rqt_graph when all four robots are visualized (Nodes Only, Hide Debug) is:
-![](images/rqt_graph.svg)
-
-## Launch File Details
-* `ros2 launch nuturtle_description load_one.launch.xml --show-arguments`
-```
-  Arguments (pass arguments as '<name>:=<value>'):
-
-    'use_rviz':
-        Launch RViz for visualization
-        (default: 'true')
-
-    'use_jsp':
-        Launch joint_state_publisher for default joint states
-        (default: 'true')
-
-    'color':
-        Determines namespace for nodes launched by this file, and colors the URDF model. Valid choices are: ['red', 'green', 'blue', 'purple']
-        (default: 'purple')
-```
-* `ros2 launch nuturtle_description load_all.launch.xml --show-arguments`
-
-The `load_all` launchfile accepts no arguments; however, the above command will display 
-arguments from the `load_one` launchfile as shown above due to a known bug in `launch`. 
-
 # turtlelib Description
-Implements geometric primitives and operations upon them.
+Geometry & visualization helpers:
 - `angle.hpp` - helper functions for working with angles in degrees and radians
 - `geometry2d.hpp` - two-dimensional geometric primitives (Points, Vectors) and operations upon them
 - `se2d.hpp` - two-dimensional SE2 transformations + twists, that can operate on points + vectors
 - `svg.hpp` - visualization functions for the above using SVG files as output.
+- `svg_elements.hpp` - reusable SVG drawing element primitives (points, vectors, frames, document spec)
+
+Kinematics:
 - `diff_drive.hpp` - handles inverse and forward kinematics for an arbitrary diff-drive robot. For derivations of the math used, see [doc/Kinematics.pdf](doc/Kinematics.pdf)
+
+EKF, SLAM, and noisy simulation:
+- `dd_slam.hpp` - diff-drive specific EKF-SLAM wrapper and process/measurement models
+- `ekf.hpp` - generic Extended Kalman Filter interfaces and implementation for process/measurement models
+- `lidar.hpp` - LiDAR simulation utilities for generating noisy range scans from map obstacles
+- `noise_models.hpp` - simulation noise helpers (e.g., noisy diff-drive wheel and slip behavior)
+- `obstacles.hpp` - obstacle container and collision handling utilities for robot poses
+
 
 # nusim Description
 A custom turtlebot arena simulator based on rviz. 
@@ -182,3 +163,33 @@ Arguments (pass arguments as '<name>:=<value>'):
 ```
 
 ![rviz screenshot from nusim](nusim/images/nusim1.png)
+
+# Nuturtle Description
+URDF files for Nuturtle 
+* `ros2 launch nuturtle_description load_one.launch.xml` to see the robot in rviz.
+* `ros2 launch nuturtle_description load_all.launch.xml` to see four copies of the robot in rviz.
+![](images/rviz.png)
+* The rqt_graph when all four robots are visualized (Nodes Only, Hide Debug) is:
+![](images/rqt_graph.svg)
+
+## Launch File Details
+* `ros2 launch nuturtle_description load_one.launch.xml --show-arguments`
+```
+  Arguments (pass arguments as '<name>:=<value>'):
+
+    'use_rviz':
+        Launch RViz for visualization
+        (default: 'true')
+
+    'use_jsp':
+        Launch joint_state_publisher for default joint states
+        (default: 'true')
+
+    'color':
+        Determines namespace for nodes launched by this file, and colors the URDF model. Valid choices are: ['red', 'green', 'blue', 'purple']
+        (default: 'purple')
+```
+* `ros2 launch nuturtle_description load_all.launch.xml --show-arguments`
+
+The `load_all` launchfile accepts no arguments; however, the above command will display 
+arguments from the `load_one` launchfile as shown above due to a known bug in `launch`. 
