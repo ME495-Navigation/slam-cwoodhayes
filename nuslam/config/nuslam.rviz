@@ -6,10 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TF1
         - /TF1/Frames1
-        - /SLAM Pose (green)1
         - /MarkerArray - Obstacles (gt)1/Topic1
+        - /SLAM Odometry1
       Splitter Ratio: 0.5
     Tree Height: 812
   - Class: rviz_common/Selection
@@ -107,19 +106,19 @@ Visualization Manager:
       Show Names: true
       Tree:
         nusim/world:
-          blue/base_footprint:
-            blue/base_link:
-              blue/base_scan:
-                {}
-              blue/caster_back_link:
-                {}
-              blue/imu_link:
-                {}
-              blue/wheel_left_link:
-                {}
-              blue/wheel_right_link:
-                {}
           map:
+            blue/base_footprint:
+              blue/base_link:
+                blue/base_scan:
+                  {}
+                blue/caster_back_link:
+                  {}
+                blue/imu_link:
+                  {}
+                blue/wheel_left_link:
+                  {}
+                blue/wheel_right_link:
+                  {}
             odom:
               green/base_footprint:
                 green/base_link:
@@ -403,7 +402,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray - Obstacles (SLAM)
       Namespaces:
-        {}
+        slam_obstacles: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -529,6 +528,45 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz_default_plugins/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 1
+      Name: SLAM Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /slam/pose
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -563,16 +601,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 3.34871506690979
+      Distance: 4.025933742523193
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.03401485085487366
-        Y: -0.11802822351455688
-        Z: -0.11071622371673584
+        X: -0.020367704331874847
+        Y: -0.07040230929851532
+        Z: -0.1220414936542511
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

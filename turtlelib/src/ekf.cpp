@@ -35,18 +35,20 @@ namespace turtlelib
         R_.n_rows));
     }
 
+    // predicted state est
     arma::vec x_hat;
-    arma::mat cov_hat;
+    // predicted covariance est
+    arma::mat P;
 
     // state prediction step (only if control is provided)
     if (control.n_rows > 0) {
       x_hat = process_model_.g(state_, control);
       arma::mat A = process_model_.A(state_, control);
-      cov_hat = A * covariance_ * A.t() + Q_;
+      P = A * covariance_ * A.t() + Q_;
     } else {
       // no control: predicted state is current state
       x_hat = state_;
-      cov_hat = covariance_;
+      P = covariance_;
     }
 
     // measurement update step (only if measurement is provided)
@@ -59,17 +61,17 @@ namespace turtlelib
       // innovation
       arma::vec y = measurement - z_hat;
       // innovation covariance
-      arma::mat S = H * cov_hat * H.t() + R_;
+      arma::mat S = H * P * H.t() + R_;
       // kalman gain
-      arma::mat K = cov_hat * H.t() * S.i();
+      arma::mat K = P * H.t() * S.i();
 
       // final updates
       state_ = x_hat + K * y;
-      covariance_ = (arma::eye(cov_hat.n_rows, cov_hat.n_cols) - K * H) * cov_hat;
+      covariance_ = (arma::eye(P.n_rows, P.n_cols) - K * H) * P;
     } else {
       // no measurement: propagate prediction as final estimate
       state_ = x_hat;
-      covariance_ = cov_hat;
+      covariance_ = P;
     }
   }
 

@@ -36,6 +36,7 @@
 ///
 /// Publishes:
 /// - odom (nav_msgs/msg/Odometry): Robot odometry pose and twist
+/// - /slam/pose (nav_msgs/msg/Odometry): SLAM pose estimate with EKF covariance for RViz
 /// - blue/path (nav_msgs/msg/Path): Robot path based on odometry measurements
 /// - green/path (nav_msgs/msg/Path): Robot path based on SLAM pose estimates
 /// - green/joint_states (sensor_msgs/msg/JointState): Wheel joint states for green robot visualization
@@ -60,6 +61,7 @@ public:
         "joint_states", qos, std::bind(&SLAMNode::joint_states_cb, this, std::placeholders::_1));
 
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos);
+    slam_pose_pub_ = create_publisher<nav_msgs::msg::Odometry>("/slam/pose", qos);
     path_pub_ = create_publisher<nav_msgs::msg::Path>("blue/path", qos);
     slam_path_pub_ = create_publisher<nav_msgs::msg::Path>("green/path", qos);
     green_joint_states_pub_ = create_publisher<sensor_msgs::msg::JointState>("green/joint_states", qos);
@@ -302,6 +304,7 @@ private:
     // TODO make this concurrency safe by wrapping in a lock.
     // for now ok because we're using a single threaded executor
     dd_slam_->odom_update(left_pos, right_pos);
+    publish_slam_pose();
     auto T_mb = dd_slam_->get_map_to_body();
     // we need T_mo. derive this from T_mb and T_ob
     auto T_mo = T_mb * T_ob.inv();
@@ -382,6 +385,48 @@ private:
     joint_states_publisher->publish(joint_states);
   }
 
+  void publish_slam_pose()
+  {
+    auto covariance = dd_slam_->get_covariance();
+    if (covariance.n_rows < 3 || covariance.n_cols < 3) {
+      RCLCPP_WARN(
+        get_logger(),
+        "SLAM covariance is smaller than 3x3 (got %lux%lu), cannot publish /slam/pose covariance",
+        static_cast<unsigned long>(covariance.n_rows),
+        static_cast<unsigned long>(covariance.n_cols));
+      return;
+    }
+
+    auto T_mb = dd_slam_->get_map_to_body();
+    auto slam_pose_msg = nav_msgs::msg::Odometry();
+    slam_pose_msg.header.stamp = get_clock()->now();
+    slam_pose_msg.header.frame_id = map_id_;
+    slam_pose_msg.child_frame_id = slam_body_id_;
+
+    slam_pose_msg.pose.pose.position.x = T_mb.translation().x;
+    slam_pose_msg.pose.pose.position.y = T_mb.translation().y;
+    slam_pose_msg.pose.pose.position.z = 0.0;
+
+    auto quat = turtlelib::angle_to_2d_planar_quaternion(T_mb.rotation());
+    slam_pose_msg.pose.pose.orientation.x = quat[0];
+    slam_pose_msg.pose.pose.orientation.y = quat[1];
+    slam_pose_msg.pose.pose.orientation.z = quat[2];
+    slam_pose_msg.pose.pose.orientation.w = quat[3];
+
+    slam_pose_msg.pose.covariance.fill(0.0);
+    slam_pose_msg.pose.covariance[0] = covariance(1, 1);
+    slam_pose_msg.pose.covariance[1] = covariance(1, 2);
+    slam_pose_msg.pose.covariance[5] = covariance(1, 0);
+    slam_pose_msg.pose.covariance[6] = covariance(2, 1);
+    slam_pose_msg.pose.covariance[7] = covariance(2, 2);
+    slam_pose_msg.pose.covariance[11] = covariance(2, 0);
+    slam_pose_msg.pose.covariance[30] = covariance(0, 1);
+    slam_pose_msg.pose.covariance[31] = covariance(0, 2);
+    slam_pose_msg.pose.covariance[35] = covariance(0, 0);
+
+    slam_pose_pub_->publish(slam_pose_msg);
+  }
+
   void publish_pose_tf(const turtlelib::Transform2D & T, const std::string & parent_frame, const std::string & child_frame)
   {
     const auto quat = turtlelib::angle_to_2d_planar_quaternion(T.rotation());
@@ -457,6 +502,8 @@ private:
     slam_obstacles_pub_->publish(marker_array);
       
     }
+
+    publish_slam_pose();
   }
 
   /// @brief Callback function for set_initial_pose service. Sets the initial pose of the robot for odometry.
@@ -487,6 +534,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr landmark_observations_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr slam_pose_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr slam_path_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr green_joint_states_pub_;
