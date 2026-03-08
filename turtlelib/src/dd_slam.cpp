@@ -176,14 +176,17 @@ namespace turtlelib {
   }
 
 
-  void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
-  {
-    // calculate control input (odometry) from wheel angles and perform EKF prediction step
+void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
+{
     diff_drive_.forward_kinematics(new_phi_left, new_phi_right);
     auto V_b = diff_drive_.get_body_twist();
+    // skip prediction if robot didn't move
+    if (std::abs(V_b.omega) < 1e-4 && std::abs(V_b.x) < 1e-4) {
+        return;
+    }
     auto control = arma::vec({V_b.omega, V_b.x, V_b.y});
-    ekf_.step(control, arma::vec()); // empty measurement since we only want to do the prediction step
-  }
+    ekf_.step(control, arma::vec());
+}
 
   void DDSLAM::measurement_update(size_t landmark_id, const double range, const double bearing)
   {

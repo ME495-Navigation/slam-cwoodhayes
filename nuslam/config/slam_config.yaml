@@ -6,6 +6,6 @@
 
     # 3x3 process covariance robot-pose block [theta, x, y] (row-major)
     # Landmark blocks are auto-filled with zeros in DDSLAM constructor
-    slam_Q: [0.002, 0.0, 0.0,
-             0.0, 0.001, 0.0,
-             0.0, 0.0, 0.001]
+    slam_Q: [0.0002, 0.0, 0.0,
+             0.0, 0.0001, 0.0,
+             0.0, 0.0, 0.0001]
