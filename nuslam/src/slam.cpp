@@ -25,6 +25,7 @@
 #include <ranges>
 #include <format>
 #include <queue>
+#include <unordered_set>
 
 /// \brief Node for SLAM + odometry estimation of the robot.
 ///
@@ -61,6 +62,7 @@ public:
     path_pub_ = create_publisher<nav_msgs::msg::Path>("blue/path", qos);
     slam_path_pub_ = create_publisher<nav_msgs::msg::Path>("green/path", qos);
     green_joint_states_pub_ = create_publisher<sensor_msgs::msg::JointState>("green/joint_states", qos);
+    slam_obstacles_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("/slam/obstacles", qos);
 
     initial_pose_srv_ = create_service<turtle_control::srv::SetPose>(
       "set_initial_pose",
@@ -356,6 +358,47 @@ private:
       auto bearing = std::atan2(marker.pose.position.y, marker.pose.position.x);
 
       dd_slam_->measurement_update(landmark_id, range, bearing);
+      observed_landmark_ids_.insert(landmark_id);
+    }
+
+    auto marker_array = visualization_msgs::msg::MarkerArray();
+    constexpr auto cyl_height = 0.25;
+    constexpr auto cyl_diameter = 0.076;
+    auto landmark_positions = dd_slam_->get_landmark_positions();
+
+    for (const auto landmark_id : observed_landmark_ids_) {
+      if (landmark_id >= landmark_positions.n_cols) {
+        continue;
+      }
+
+      auto marker = visualization_msgs::msg::Marker();
+      marker.header.frame_id = map_id_;
+      marker.header.stamp = get_clock()->now();
+      marker.id = static_cast<int>(landmark_id);
+      marker.type = visualization_msgs::msg::Marker::CYLINDER;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      marker.ns = "slam_obstacles";
+
+      marker.pose.position.x = landmark_positions(0, landmark_id);
+      marker.pose.position.y = landmark_positions(1, landmark_id);
+      marker.pose.position.z = cyl_height / 2.0;
+      marker.pose.orientation.w = 1.0;
+
+      marker.scale.x = cyl_diameter;
+      marker.scale.y = cyl_diameter;
+      marker.scale.z = cyl_height;
+
+      marker.color.r = 0.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+      marker.color.a = 1.0;
+
+      marker_array.markers.push_back(marker);
+      
+
+
+    slam_obstacles_pub_->publish(marker_array);
+      
     }
   }
 
@@ -390,6 +433,7 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr slam_path_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr green_joint_states_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr slam_obstacles_pub_;
   rclcpp::Service<turtle_control::srv::SetPose>::SharedPtr initial_pose_srv_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
@@ -404,6 +448,7 @@ private:
   std::string landmark_observations_topic_;
   std::string wheel_left_;
   std::string wheel_right_;
+  std::unordered_set<size_t> observed_landmark_ids_;
   double wheel_radius_;
   double track_width_;
 };
