@@ -14,7 +14,9 @@ namespace turtlelib {
 
   DDSLAM::DDSLAM(
     double wheel_radius, double wheel_track, arma::mat R, arma::mat Q_robot_pose,
-    arma::vec initial_state, arma::mat initial_covariance, size_t max_landmarks)
+    arma::vec initial_state, arma::mat initial_covariance, size_t max_landmarks,
+    double new_landmark_variance
+  )
   : diff_drive_(wheel_radius, wheel_track),
     process_model_(),
     measurement_model_(),
@@ -26,7 +28,8 @@ namespace turtlelib {
       initial_state,
       initial_covariance),
     Q_robot_pose_(Q_robot_pose),
-    max_landmarks_(max_landmarks)
+    max_landmarks_(max_landmarks),
+    new_landmark_variance_(new_landmark_variance)
   {
     if (initial_state.n_rows != 3) {
       throw std::runtime_error("initial_state must contain only [theta, x, y] for dynamic landmark growth");
@@ -218,6 +221,7 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
       auto x = state(1);
       auto y = state(2);
 
+      // resize the state & covariance to include the new landmark
       auto new_state = arma::vec(state.n_rows + 2, arma::fill::zeros);
       new_state.subvec(0, state.n_rows - 1) = state;
       new_state(state.n_rows) = x + range * std::cos(th + bearing);
@@ -225,9 +229,8 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
 
       auto new_covariance = arma::mat(covariance.n_rows + 2, covariance.n_cols + 2, arma::fill::zeros);
       new_covariance.submat(0, 0, covariance.n_rows - 1, covariance.n_cols - 1) = covariance;
-      constexpr auto new_landmark_variance = 1000.0;
-      new_covariance(covariance.n_rows, covariance.n_cols) = new_landmark_variance;
-      new_covariance(covariance.n_rows + 1, covariance.n_cols + 1) = new_landmark_variance;
+      new_covariance(covariance.n_rows, covariance.n_cols) = new_landmark_variance_;
+      new_covariance(covariance.n_rows + 1, covariance.n_cols + 1) = new_landmark_variance_;
 
       auto new_process_noise = expand_process_noise(Q_robot_pose_, new_state.n_rows);
       ekf_.resize_filter(new_state, new_covariance, new_process_noise);

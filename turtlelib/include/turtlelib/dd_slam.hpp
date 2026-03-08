@@ -46,7 +46,9 @@ public:
   DDSLAM(
     double wheel_radius, double wheel_track, arma::mat R, arma::mat Q_robot_pose,
     arma::vec initial_state, arma::mat initial_covariance,
-    size_t max_landmarks = std::numeric_limits<size_t>::max());
+    size_t max_landmarks,
+    double new_landmark_variance = 1000.0
+  );
 
   /// @brief Perform EKF prediction step given control input (odometry)
   /// @param new_phi_left left wheel angular position
@@ -94,6 +96,7 @@ private:
   size_t max_landmarks_;
   std::unordered_map<size_t, size_t> landmark_id_to_slot_;
   std::vector<size_t> slot_to_landmark_id_;
+  double new_landmark_variance_;
 };
 
 }  // namespace turtlelib

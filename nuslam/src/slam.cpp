@@ -139,6 +139,11 @@ public:
       desc.description = "SLAM process covariance robot-pose block Q as row-major array (3x3)";
       declare_parameter("slam_Q", std::vector<double>{0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01}, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Initial covariance for new landmarks added to the SLAM state";
+      declare_parameter("slam_new_landmark_variance", 1000.0, desc);
+    }
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
     map_id_ = "map"; 
@@ -176,10 +181,9 @@ public:
       throw std::runtime_error(msg);
     }
 
-    constexpr arma::uword state_dim = 3;
-
     auto R_values = get_parameter("slam_R").as_double_array();
     auto Q_values = get_parameter("slam_Q").as_double_array();
+    auto new_landmark_variance = get_parameter("slam_new_landmark_variance").as_double();
 
     if (R_values.size() != 4) {
       throw std::runtime_error("slam_R must contain exactly 4 values for a 2x2 matrix");
@@ -205,23 +209,25 @@ public:
       }
     }
 
-    auto config_stream = std::ostringstream{};
-    config_stream << "SLAM configuration: slam_n_max_landmarks=" << n_max_landmarks
-                  << ", state_dim=" << static_cast<size_t>(state_dim);
-    RCLCPP_INFO(get_logger(), "%s", config_stream.str().c_str());
+    auto config_msg = std::format(
+      "SLAM configuration:\n"
+      "slam_n_max_landmarks: {}\n"
+      "slam_new_landmark_variance: {}\n",
+      n_max_landmarks, new_landmark_variance);
+    RCLCPP_INFO(get_logger(), "%s", config_msg.c_str());
 
     auto matrix_stream = std::ostringstream{};
     matrix_stream << "SLAM matrix R (2x2):\n" << R << '\n';
     matrix_stream << "SLAM matrix Q_robot_pose (3x3):\n" << Q;
     RCLCPP_INFO(get_logger(), "%s", matrix_stream.str().c_str());
 
-    auto initial_state = arma::vec(state_dim, arma::fill::zeros);
-    auto initial_covariance = arma::mat(state_dim, state_dim, arma::fill::eye);
+    auto initial_state = arma::vec(3, arma::fill::zeros);
+    auto initial_covariance = arma::mat(3, 3, arma::fill::eye);
     initial_covariance *= 1000;
 
     dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
       wheel_radius_, track_width_, R, Q, initial_state, initial_covariance,
-      static_cast<size_t>(n_max_landmarks)
+      static_cast<size_t>(n_max_landmarks), new_landmark_variance
     );
 
     // publish initial transforms at the origin so that we have valid tf as soon as possible
