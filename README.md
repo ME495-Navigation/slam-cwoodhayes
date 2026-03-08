@@ -30,10 +30,39 @@ colcon build
 
 # Package List
 This repository consists of several ROS packages:
+- `nuslam` - SLAM + odometry estimation package for turtlebot3
 - `turtle_control` - Control functionality for the turtlebot3. Supports odometry + control of the robot in simulation and in hardware.
 - `nuturtle_description` - contains models, configs, and visualization files for the `turtlebot3` burger, adapted from the official [turtlebot3_description](https://index.ros.org/p/turtlebot3_description/) package.
-- `turtlelib` - a C++ library that implements a variety of geometric helper functions & visualization support using SVG's.
 - `nusim` - a custom turtlebot arena simulator based on RViz which supports our SLAM algorithm development
+- `turtlelib` - pure C++ library that implements helper code for the packages above (geometry, kinematics, EKF + SLAM abstract implementations)
+
+# nuslam Description
+Implements EKF-SLAM for the turtlebot3.
+
+https://github.com/user-attachments/assets/98b15d36-1264-4295-b9a9-0fb8c69cb47d
+
+> Above: The result of running `ros2 launch nuslam slam.launch.xml cmd_src:=teleop robot:=nusim use_rviz:=true`, then driving the robot around. Red obstacles, walls, and robot are ground-truth. Yellow obstacles are noisy landmark measurements provided by `nusim` and consumed by `nuslam`. Blue robot is an odometry-only pose estimate. Green robot is the `nuslam` SLAM pose estimate; it also shows the pose covariance as an ellipse + angular field of view (purple & yellow, respectively). **Note that when the ground truth collides with an obstacle, the odometry estimate keeps driving, but the SLAM estimate correctly stays with ground truth.**
+
+Node summary:
+- `slam_node` (`nuslam_node` in launch): computes wheel-odometry and EKF-SLAM pose estimates, publishes `odom` (pure odometry-based estimate, like the `odometry` node below) and `/slam/pose` (odometry + LiDAR-based combined estimate using EKF SLAM), and broadcasts TF `map->odom->[robot]`.
+    - EKF parameters, simulated noise configuration, and more are available as parameters (see `nuslam/config/*`)
+
+## Launch File Details
+The `slam.launch.xml` launchfile starts robot control (sim or hardware), RViz visualization, the SLAM node, and supporting TF/static transforms.
+
+* `ros2 launch nuslam slam.launch.xml --show-arguments`
+
+```
+Arguments (pass arguments as '<name>:=<value>'):
+
+  'cmd_src':
+    Source of cmd_vel commands. Valid choices are: ['circle', 'teleop', 'none']
+    (default: 'circle')
+
+  'robot':
+    what robot to control (sim vs hardware etc). Valid choices are: ['nusim', 'localhost', 'none']
+    (default: 'nusim')
+```
 
 # turtle_control Description
 Controls the turtlebot3 in simulation or hardware and provides odometry. Node summary:
