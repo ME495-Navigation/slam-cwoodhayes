@@ -1,8 +1,8 @@
 /**:
   ros__parameters:
     # 2x2 measurement covariance matrix (row-major)
-    slam_R: [40.0, 0.0,
-             0.0, 10.0]
+    slam_R: [0.5, 0.0,
+             0.0, 0.1]
 
     # 3x3 process covariance robot-pose block [theta, x, y] (row-major)
     # Landmark blocks are auto-filled with zeros in DDSLAM constructor
