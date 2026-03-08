@@ -9,6 +9,7 @@
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/angle.hpp"
 #include "turtlelib/geometry2d.hpp"
+#include "turtlelib/dd_slam.hpp"
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
@@ -16,20 +17,25 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "turtle_control/srv/set_pose.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
+#include "armadillo"
 
 #include <functional>
 #include <numeric>
 #include <ranges>
 #include <format>
 #include <queue>
+#include <sstream>
 
 /// \brief Node for SLAM + odometry estimation of the robot.
 ///
 /// Subscribes:
 /// - joint_states (sensor_msgs/msg/JointState): Current wheel joint positions
+/// - landmark observations topic (visualization_msgs/msg/MarkerArray): Landmark observations in robot frame
 ///
 /// Publishes:
 /// - odom (nav_msgs/msg/Odometry): Robot odometry pose and twist
+/// - /slam/pose (nav_msgs/msg/Odometry): SLAM pose estimate with EKF covariance for RViz
 /// - blue/path (nav_msgs/msg/Path): Robot path based on odometry measurements
 /// - green/path (nav_msgs/msg/Path): Robot path based on SLAM pose estimates
 /// - green/joint_states (sensor_msgs/msg/JointState): Wheel joint states for green robot visualization
@@ -41,26 +47,28 @@
 /// - map -> odom transform via tf2 (for SLAM pose estimates)
 /// - odom -> body_id transform via tf2 (ie odom -> blue base_footprint)
 /// - odom -> slam_body_id transform via tf2 (ie odom -> green base_footprint)
-class Odometry : public rclcpp::Node
+class SLAMNode : public rclcpp::Node
 {
 public:
   /// @brief constructor
-  Odometry()
+  SLAMNode()
   : Node("odometry")
   {
     auto qos = rclcpp::QoS(10);
 
     joint_states_sub_ = create_subscription<sensor_msgs::msg::JointState>(
-        "joint_states", qos, std::bind(&Odometry::joint_states_cb, this, std::placeholders::_1));
+        "joint_states", qos, std::bind(&SLAMNode::joint_states_cb, this, std::placeholders::_1));
 
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", qos);
+    slam_pose_pub_ = create_publisher<nav_msgs::msg::Odometry>("/slam/pose", qos);
     path_pub_ = create_publisher<nav_msgs::msg::Path>("blue/path", qos);
     slam_path_pub_ = create_publisher<nav_msgs::msg::Path>("green/path", qos);
     green_joint_states_pub_ = create_publisher<sensor_msgs::msg::JointState>("green/joint_states", qos);
+    slam_obstacles_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("/slam/obstacles", qos);
 
     initial_pose_srv_ = create_service<turtle_control::srv::SetPose>(
       "set_initial_pose",
-      std::bind(&Odometry::set_initial_pose_cb, this, std::placeholders::_1,
+      std::bind(&SLAMNode::set_initial_pose_cb, this, std::placeholders::_1,
       std::placeholders::_2));
 
     // fetch necessary robot parameters from diff_params.yaml
@@ -111,10 +119,34 @@ public:
       desc.description = "Maximum number of poses in the odometry path";
       declare_parameter("max_path_size", 1000, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Topic for landmark observations (MarkerArray), defaults to simulated sensor topic";
+      declare_parameter("landmark_observations_topic", "/fake_sensor", desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Maximum number of landmarks in SLAM state";
+      declare_parameter("slam_n_max_landmarks", 5, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "SLAM measurement covariance matrix R as row-major array (2x2)";
+      declare_parameter("slam_R", std::vector<double>{0.05, 0.0, 0.0, 0.05}, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "SLAM process covariance robot-pose block Q as row-major array (3x3)";
+      declare_parameter("slam_Q", std::vector<double>{0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01}, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Initial covariance for new landmarks added to the SLAM state";
+      declare_parameter("slam_new_landmark_variance", 1000.0, desc);
+    }
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
     map_id_ = "map"; 
-    world_id_ = "nusim/world";
     wheel_left_ = get_parameter("wheel_left").as_string();
     wheel_right_ = get_parameter("wheel_right").as_string();
     slam_body_id_ = get_parameter("slam_body_id").as_string();
@@ -122,6 +154,11 @@ public:
     wheel_radius_ = get_parameter("wheel_radius").as_double();
     track_width_ = get_parameter("track_width").as_double();
     max_path_size_ = get_parameter("max_path_size").as_int();
+    landmark_observations_topic_ = get_parameter("landmark_observations_topic").as_string();
+
+    landmark_observations_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
+      landmark_observations_topic_, qos,
+      std::bind(&SLAMNode::landmark_observations_cb, this, std::placeholders::_1));
 
     if (wheel_left_.empty() || wheel_right_.empty()) {
       RCLCPP_ERROR(get_logger(), "wheel_left and wheel_right parameters must be specified");
@@ -132,10 +169,74 @@ public:
     diff_drive_ = std::make_unique<turtlelib::DiffDrive>(wheel_radius_, track_width_);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
-    // publish an initial transform at the origin so that we have a valid tf as soon as possible
-    publish_pose_tf(turtlelib::Transform2D(), world_id_, body_id_);
+    // SLAM setup from parameters
+    auto n_max_landmarks = get_parameter("slam_n_max_landmarks").as_int();
+    if (n_max_landmarks < 0) {
+      throw std::runtime_error("slam_n_max_landmarks must be non-negative");
+    }
+    if (n_max_landmarks > 1000) {
+      auto msg = std::format(
+        "slam_n_max_landmarks is too large ({}). Refusing to allocate oversized SLAM state.",
+        n_max_landmarks);
+      throw std::runtime_error(msg);
+    }
 
-    RCLCPP_INFO(get_logger(), "odometry node constructed.");
+    auto R_values = get_parameter("slam_R").as_double_array();
+    auto Q_values = get_parameter("slam_Q").as_double_array();
+    auto new_landmark_variance = get_parameter("slam_new_landmark_variance").as_double();
+
+    if (R_values.size() != 4) {
+      throw std::runtime_error("slam_R must contain exactly 4 values for a 2x2 matrix");
+    }
+    if (Q_values.size() != 9) {
+      auto msg = std::format(
+        "slam_Q must contain 9 values for a 3x3 matrix, got {}",
+        Q_values.size());
+      throw std::runtime_error(msg);
+    }
+
+    auto R = arma::mat(2, 2, arma::fill::none);
+    for (size_t row = 0; row < 2; ++row) {
+      for (size_t col = 0; col < 2; ++col) {
+        R(row, col) = R_values[row * 2 + col];
+      }
+    }
+
+    auto Q = arma::mat(3, 3, arma::fill::none);
+    for (size_t row = 0; row < 3; ++row) {
+      for (size_t col = 0; col < 3; ++col) {
+        Q(row, col) = Q_values[row * 3 + col];
+      }
+    }
+
+    auto config_msg = std::format(
+      "SLAM configuration:\n"
+      "slam_n_max_landmarks: {}\n"
+      "slam_new_landmark_variance: {}\n",
+      n_max_landmarks, new_landmark_variance);
+    RCLCPP_INFO(get_logger(), "%s", config_msg.c_str());
+
+    auto matrix_stream = std::ostringstream{};
+    matrix_stream << "SLAM matrix R (2x2):\n" << R << '\n';
+    matrix_stream << "SLAM matrix Q_robot_pose (3x3):\n" << Q;
+    RCLCPP_INFO(get_logger(), "%s", matrix_stream.str().c_str());
+
+    auto initial_state = arma::vec(3, arma::fill::zeros);
+    auto initial_covariance = arma::mat(3, 3, arma::fill::eye);
+    initial_covariance *= 1000;
+
+    dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
+      wheel_radius_, track_width_, R, Q, initial_state, initial_covariance,
+      static_cast<size_t>(n_max_landmarks), new_landmark_variance
+    );
+
+    // publish initial transforms at the origin so that we have valid tf as soon as possible
+    auto identity = turtlelib::Transform2D();
+    publish_pose_tf(identity, map_id_, odom_id_);
+    publish_pose_tf(identity, map_id_, body_id_);
+    publish_pose_tf(identity, odom_id_, slam_body_id_);
+
+    RCLCPP_INFO(get_logger(), "SLAM node constructed.");
   }
 
 private:
@@ -196,34 +297,59 @@ private:
 
     // publish odometry msg and tf
     odom_pub_->publish(odom_msg);
-    publish_pose_tf(T_ob, world_id_, body_id_);
 
-    // TODO get slam data so this can be fr; for now just re-publish odometry info for slam
-    publish_pose_tf(T_ob, odom_id_, slam_body_id_);
+    // Blue path shows pure odometry in map frame
+    publish_path(
+      msg->header.stamp,
+      map_id_,
+      odom_msg.pose.pose,
+      path_buffer_,
+      path_pub_);
 
-    turtlelib::Transform2D T_om{}; // placeholder for actual SLAM pose estimate (transform from odom to map)
-    publish_pose_tf(T_om, map_id_, odom_id_);
+    // update SLAM estimates
+    // TODO make this concurrency safe by wrapping in a lock.
+    // for now ok because we're using a single threaded executor
+    dd_slam_->odom_update(left_pos, right_pos);
+    publish_slam_pose();
+    auto T_mb = dd_slam_->get_map_to_body();
+    // we need T_mo. derive this from T_mb and T_ob
+    auto T_mo = T_mb * T_ob.inv();
+    
+    // Publish TF tree:
+    // - map -> odom: SLAM correction
+    // - map -> blue/base_footprint: pure odometry (stays fixed even as odom frame is corrected)
+    // - odom -> green/base_footprint: SLAM estimate in odom frame
+    publish_pose_tf(T_mo, map_id_, odom_id_);
+    publish_pose_tf(T_ob, map_id_, body_id_);
+    
+    // Compute SLAM estimate in odom frame for green robot
+    auto T_og = T_mo.inv() * T_mb;
+    publish_pose_tf(T_og, odom_id_, slam_body_id_);
 
-    // publish joint states for green robot visualization
+    // joint states can come from diff_drive because we don't need slam for encoder vals.
     publish_joint_states(
       msg->header.stamp,
       diff_drive_->get_wheel_angles(),
       diff_drive_->get_wheel_velocities(),
       green_joint_states_pub_);
 
-    publish_path(
-      msg->header.stamp,
-      odom_id_,
-      odom_msg.pose.pose,
-      slam_path_buffer_,
-      slam_path_pub_);
+    // Green path should show SLAM estimate (odom -> green/base_footprint)
+    auto slam_pose = geometry_msgs::msg::Pose();
+    slam_pose.position.x = T_og.translation().x;
+    slam_pose.position.y = T_og.translation().y;
+    slam_pose.position.z = 0.0;
+    auto slam_quat = turtlelib::angle_to_2d_planar_quaternion(T_og.rotation());
+    slam_pose.orientation.x = slam_quat[0];
+    slam_pose.orientation.y = slam_quat[1];
+    slam_pose.orientation.z = slam_quat[2];
+    slam_pose.orientation.w = slam_quat[3];
 
     publish_path(
       msg->header.stamp,
-      world_id_,
-      odom_msg.pose.pose,
-      path_buffer_,
-      path_pub_);
+      odom_id_,
+      slam_pose,
+      slam_path_buffer_,
+      slam_path_pub_);
   }
 
   void publish_path(
@@ -265,6 +391,48 @@ private:
     joint_states_publisher->publish(joint_states);
   }
 
+  void publish_slam_pose()
+  {
+    auto cov = dd_slam_->get_covariance();
+    if (cov.n_rows < 3 || cov.n_cols < 3) {
+      RCLCPP_WARN(
+        get_logger(),
+        "SLAM covariance is smaller than 3x3 (got %lux%lu), cannot publish /slam/pose covariance",
+        static_cast<unsigned long>(cov.n_rows),
+        static_cast<unsigned long>(cov.n_cols));
+      return;
+    }
+
+    auto T_mb = dd_slam_->get_map_to_body();
+    auto slam_pose_msg = nav_msgs::msg::Odometry();
+    slam_pose_msg.header.stamp = get_clock()->now();
+    slam_pose_msg.header.frame_id = map_id_;
+    slam_pose_msg.child_frame_id = slam_body_id_;
+
+    slam_pose_msg.pose.pose.position.x = T_mb.translation().x;
+    slam_pose_msg.pose.pose.position.y = T_mb.translation().y;
+    slam_pose_msg.pose.pose.position.z = 0.0;
+
+    auto quat = turtlelib::angle_to_2d_planar_quaternion(T_mb.rotation());
+    slam_pose_msg.pose.pose.orientation.x = quat[0];
+    slam_pose_msg.pose.pose.orientation.y = quat[1];
+    slam_pose_msg.pose.pose.orientation.z = quat[2];
+    slam_pose_msg.pose.pose.orientation.w = quat[3];
+
+    slam_pose_msg.pose.covariance.fill(0.0);
+    slam_pose_msg.pose.covariance[0] = cov(1, 1);
+    slam_pose_msg.pose.covariance[1] = cov(1, 2);
+    slam_pose_msg.pose.covariance[5] = cov(1, 0);
+    slam_pose_msg.pose.covariance[6] = cov(2, 1);
+    slam_pose_msg.pose.covariance[7] = cov(2, 2);
+    slam_pose_msg.pose.covariance[11] = cov(2, 0);
+    slam_pose_msg.pose.covariance[30] = cov(0, 1);
+    slam_pose_msg.pose.covariance[31] = cov(0, 2);
+    slam_pose_msg.pose.covariance[35] = cov(0, 0);
+
+    slam_pose_pub_->publish(slam_pose_msg);
+  }
+
   void publish_pose_tf(const turtlelib::Transform2D & T, const std::string & parent_frame, const std::string & child_frame)
   {
     const auto quat = turtlelib::angle_to_2d_planar_quaternion(T.rotation());
@@ -283,6 +451,77 @@ private:
     tf_broadcaster_->sendTransform(tf);
   }
 
+  void landmark_observations_cb(const visualization_msgs::msg::MarkerArray::SharedPtr msg)
+  {
+    // go through the landmarks we got and feed them into SLAM
+    for (const auto & marker : msg->markers) {
+      if (marker.action != visualization_msgs::msg::Marker::ADD) {
+        continue;
+      }
+
+      auto landmark_id = marker.id;
+
+      // calculate range and bearing to the landmark from the marker position
+      auto range = std::hypot(marker.pose.position.x, marker.pose.position.y);
+      auto bearing = std::atan2(marker.pose.position.y, marker.pose.position.x);
+
+      dd_slam_->measurement_update(landmark_id, range, bearing);
+      auto y = dd_slam_->get_innovation();
+      auto msg = std::format("MSR UPDATE lm_id={}: range={:.2f}, bearing={:.2f} - innovation={:.2f}, {:.2f}",
+        landmark_id, range, bearing, y(0), y(1));
+      RCLCPP_INFO(get_logger(), msg.c_str());
+      auto cov = dd_slam_->get_covariance();
+      auto P_robot = cov.submat(0, 0, 2, 2);
+      RCLCPP_INFO(get_logger(), "robot pose cov trace: %f", arma::trace(P_robot));
+      auto K = dd_slam_->get_K();
+      auto matrix_stream = std::ostringstream{};
+      matrix_stream << "K robot (2x2):\n" << K << '\n';
+      RCLCPP_INFO(get_logger(), "%s", matrix_stream.str().c_str());
+      // print diagonal of full covariance
+      auto cov_diag_stream = std::ostringstream{};
+      cov_diag_stream << arma::diagvec(cov).t();
+      RCLCPP_INFO(get_logger(), "cov diagonal: %s", cov_diag_stream.str().c_str());
+    }
+
+    auto marker_array = visualization_msgs::msg::MarkerArray();
+    constexpr auto cyl_height = 0.25;
+    constexpr auto cyl_diameter = 0.076;
+    auto landmark_positions = dd_slam_->get_landmark_positions();
+    auto landmark_ids = dd_slam_->get_landmark_ids();
+
+    for (arma::uword landmark_slot = 0; landmark_slot < landmark_positions.n_cols; ++landmark_slot) {
+      auto landmark_id = landmark_ids.at(landmark_slot);
+
+      auto marker = visualization_msgs::msg::Marker();
+      marker.header.frame_id = map_id_;
+      marker.header.stamp = get_clock()->now();
+      marker.id = static_cast<int>(landmark_id);
+      marker.type = visualization_msgs::msg::Marker::CYLINDER;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      marker.ns = "slam_obstacles";
+
+      marker.pose.position.x = landmark_positions(0, landmark_slot);
+      marker.pose.position.y = landmark_positions(1, landmark_slot);
+      marker.pose.position.z = cyl_height / 2.0;
+      marker.pose.orientation.w = 1.0;
+
+      marker.scale.x = cyl_diameter;
+      marker.scale.y = cyl_diameter;
+      marker.scale.z = cyl_height;
+
+      marker.color.r = 0.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+      marker.color.a = 1.0;
+
+      marker_array.markers.push_back(marker);
+    }
+
+    slam_obstacles_pub_->publish(marker_array);
+
+    publish_slam_pose();
+  }
+
   /// @brief Callback function for set_initial_pose service. Sets the initial pose of the robot for odometry.
   void set_initial_pose_cb(
     const std::shared_ptr<turtle_control::srv::SetPose::Request> request,
@@ -295,19 +534,31 @@ private:
 
     turtlelib::Transform2D new_pose({request->x, request->y}, request->theta);
     diff_drive_->reset_to_configuration(new_pose);
-    publish_pose_tf(new_pose, world_id_, body_id_);
+    
+    // Publish initial transforms for blue robot (odometry in map frame)
+    publish_pose_tf(new_pose, map_id_, body_id_);
     path_buffer_.clear();
+    
+    // Also reset SLAM: identity map -> odom, and green robot at origin in odom frame
+    publish_pose_tf(turtlelib::Transform2D(), map_id_, odom_id_);
+    publish_pose_tf(new_pose, odom_id_, slam_body_id_);
+    slam_path_buffer_.clear();
+    
     response->success = true;
   }
 
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
+  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr landmark_observations_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr slam_pose_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr slam_path_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr green_joint_states_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr slam_obstacles_pub_;
   rclcpp::Service<turtle_control::srv::SetPose>::SharedPtr initial_pose_srv_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<turtlelib::DiffDrive> diff_drive_;
+  std::unique_ptr<turtlelib::DDSLAM> dd_slam_;
   std::deque<geometry_msgs::msg::PoseStamped> path_buffer_;
   std::deque<geometry_msgs::msg::PoseStamped> slam_path_buffer_;
   size_t max_path_size_;
@@ -315,7 +566,7 @@ private:
   std::string odom_id_;
   std::string slam_body_id_;
   std::string map_id_;
-  std::string world_id_;
+  std::string landmark_observations_topic_;
   std::string wheel_left_;
   std::string wheel_right_;
   double wheel_radius_;
@@ -325,7 +576,7 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Odometry>());
+  rclcpp::spin(std::make_shared<SLAMNode>());
   rclcpp::shutdown();
   return 0;
 }

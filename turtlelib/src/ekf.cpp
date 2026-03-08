@@ -1,6 +1,9 @@
 
 # include "turtlelib/ekf.hpp"
+#include "turtlelib/angle.hpp"
 # include "armadillo"
+
+#include <format>
 
 namespace turtlelib
 {
@@ -12,54 +15,41 @@ namespace turtlelib
   {
     // validate dimensions of R and Q
     if (R.n_rows != R.n_cols) {
-      throw std::invalid_argument("Process noise covariance R must be square");
+      throw std::invalid_argument("Measurement noise covariance R must be square");
     }
     if (Q.n_rows != Q.n_cols) {
-      throw std::invalid_argument("Measurement noise covariance Q must be square");
+      throw std::invalid_argument("Process noise covariance Q must be square");
     }
     return;
   }
 
   void EKF::step(const arma::vec & control, const arma::vec & measurement)
   {
-    // validate dimensions of control and measurement
-    if (control.n_rows != Q_.n_rows && control.n_rows != 0) {
-      throw std::invalid_argument("Control vector dimension must match process noise covariance Q (or be empty for no control)");
+    // validate dimensions of Q and R match state and measurement
+    if (Q_.n_rows != state_.n_rows) {
+      throw std::invalid_argument("Process noise covariance Q must match state dimension");
     }
     if (measurement.n_rows != R_.n_rows && measurement.n_rows != 0) {
-      throw std::invalid_argument("Measurement vector dimension must match measurement noise covariance R (or be empty for no measurement)");
+      throw std::invalid_argument(std::format(
+        "Measurement vector dimension must match measurement noise covariance R (or be empty for no measurement): measurement.n_rows={}, R.n_rows={}",
+        measurement.n_rows,
+        R_.n_rows));
     }
 
-    // generate noise samples for process and measurement noise
-    // w=process noise (w_k in notes)
-    arma::vec w = arma::vec(state_.n_rows, arma::fill::zeros);
-    // v=measurement noise (v_k in notes)
-    arma::vec v = arma::vec(R_.n_rows, arma::fill::zeros);
-    
-    // only generate noise if we're actually using those updates
-    if (control.n_rows > 0) {
-      for (size_t i = 0; i < state_.n_rows; ++i) {
-        w(i) = noise_dist_(rng_) * std::sqrt(Q_(i, i));
-      }
-    }
-    if (measurement.n_rows > 0) {
-      for (size_t i = 0; i < R_.n_rows; ++i) {
-        v(i) = noise_dist_(rng_) * std::sqrt(R_(i, i));
-      }
-    }
-
+    // predicted state est
     arma::vec x_hat;
-    arma::mat cov_hat;
+    // predicted covariance est
+    arma::mat P;
 
     // state prediction step (only if control is provided)
     if (control.n_rows > 0) {
-      x_hat = process_model_.g(state_, control) + w;
+      x_hat = process_model_.g(state_, control);
       arma::mat A = process_model_.A(state_, control);
-      cov_hat = A * covariance_ * A.t() + Q_;
+      P = A * covariance_ * A.t() + Q_;
     } else {
       // no control: predicted state is current state
       x_hat = state_;
-      cov_hat = covariance_;
+      P = covariance_;
     }
 
     // measurement update step (only if measurement is provided)
@@ -70,20 +60,56 @@ namespace turtlelib
       arma::mat H = measurement_model_.H(x_hat);
 
       // innovation
-      arma::vec y = (measurement + v) - z_hat;
+      arma::vec y = measurement - z_hat;
+      // TODO clean this up. should not hardcode this in ekf class, should be in slam.
+      y(1) = normalize_angle(y(1)); // normalize bearing innovation to [-pi, pi]
+
       // innovation covariance
-      arma::mat S = H * cov_hat * H.t() + R_;
+      arma::mat S = H * P * H.t() + R_;
       // kalman gain
-      arma::mat K = cov_hat * H.t() * S.i();
+      arma::mat K = P * H.t() * S.i();
 
       // final updates
       state_ = x_hat + K * y;
-      covariance_ = (arma::eye(cov_hat.n_rows, cov_hat.n_cols) - K * H) * cov_hat;
+      covariance_ = (arma::eye(P.n_rows, P.n_cols) - K * H) * P;
+
+      // debug vars
+      K_ = K; 
+      y_ = y;
     } else {
       // no measurement: propagate prediction as final estimate
       state_ = x_hat;
-      covariance_ = cov_hat;
+      covariance_ = P;
     }
+  }
+
+  void EKF::set_state(const arma::vec & state)
+  {
+    if (state.n_rows != state_.n_rows) {
+      throw std::invalid_argument("New state dimension must match existing EKF state dimension");
+    }
+    state_ = state;
+  }
+
+  void EKF::resize_filter(
+    const arma::vec & state, const arma::mat & covariance, const arma::mat & Q)
+  {
+    if (covariance.n_rows != covariance.n_cols) {
+      throw std::invalid_argument("New covariance must be square");
+    }
+    if (Q.n_rows != Q.n_cols) {
+      throw std::invalid_argument("New process noise covariance Q must be square");
+    }
+    if (covariance.n_rows != state.n_rows) {
+      throw std::invalid_argument("New covariance dimension must match new state dimension");
+    }
+    if (Q.n_rows != state.n_rows) {
+      throw std::invalid_argument("New process noise covariance Q must match new state dimension");
+    }
+
+    state_ = state;
+    covariance_ = covariance;
+    Q_ = Q;
   }
 
 };

@@ -23,6 +23,7 @@
   <!-- constants -->
   <let name="rviz_config" value="$(find-pkg-share nuslam)/config/nuslam.rviz"/>
   <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+  <let name="slam_params" value="$(find-pkg-share nuslam)/config/slam_config.yaml"/>
   <let name="nusim_world_config" value="$(find-pkg-share nusim)/config/basic_world.yaml"/>
 
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
@@ -40,6 +41,7 @@
   <group if="$(equals $(var robot) nusim)">
     <node pkg="nuslam" exec="slam_node" name="nuslam_node" output="screen">
       <param from="$(var diff_params)"/>
+      <param from="$(var slam_params)"/>
       <param name="wheel_left" value="wheel_left_joint"/>
       <param name="wheel_right" value="wheel_right_joint"/>
       <param name="body_id" value="blue/base_footprint"/>
