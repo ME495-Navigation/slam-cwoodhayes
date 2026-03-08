@@ -312,7 +312,7 @@ private:
     noisy_diff_drive_->set_gt_pose(new_gt_pose_);
     if (gt_obs_->did_collide()) {
       auto msg = std::format("Collision ({}) Pose: {:D.3f} -> {:D.3f}.", count_msg.data, gt_pose_, new_gt_pose_);
-      RCLCPP_WARN(get_logger(), msg.c_str());
+      RCLCPP_DEBUG(get_logger(), msg.c_str());
     }
     gt_pose_ = new_gt_pose_;
 

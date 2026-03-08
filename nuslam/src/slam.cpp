@@ -117,7 +117,7 @@ public:
     {
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
       desc.description = "Maximum number of poses in the odometry path";
-      declare_parameter("max_path_size", 1000, desc);
+      declare_parameter("max_path_size", 4000, desc);
     }
     {
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -474,21 +474,24 @@ private:
       auto bearing = std::atan2(marker.pose.position.y, marker.pose.position.x);
 
       dd_slam_->measurement_update(landmark_id, range, bearing);
+
+#ifndef NDEBUG
       auto y = dd_slam_->get_innovation();
       auto msg = std::format("MSR UPDATE lm_id={}: range={:.2f}, bearing={:.2f} - innovation={:.2f}, {:.2f}",
         landmark_id, range, bearing, y(0), y(1));
-      RCLCPP_INFO(get_logger(), msg.c_str());
+      RCLCPP_DEBUG(get_logger(), msg.c_str());
       auto cov = dd_slam_->get_covariance();
       auto P_robot = cov.submat(0, 0, 2, 2);
-      RCLCPP_INFO(get_logger(), "robot pose cov trace: %f", arma::trace(P_robot));
+      RCLCPP_DEBUG(get_logger(), "robot pose cov trace: %f", arma::trace(P_robot));
       auto K = dd_slam_->get_K();
       auto matrix_stream = std::ostringstream{};
       matrix_stream << "K robot (2x2):\n" << K << '\n';
-      RCLCPP_INFO(get_logger(), "%s", matrix_stream.str().c_str());
+      RCLCPP_DEBUG(get_logger(), "%s", matrix_stream.str().c_str());
       // print diagonal of full covariance
       auto cov_diag_stream = std::ostringstream{};
       cov_diag_stream << arma::diagvec(cov).t();
-      RCLCPP_INFO(get_logger(), "cov diagonal: %s", cov_diag_stream.str().c_str());
+      RCLCPP_DEBUG(get_logger(), "cov diagonal: %s", cov_diag_stream.str().c_str());
+#endif
     }
 
     auto marker_array = visualization_msgs::msg::MarkerArray();
