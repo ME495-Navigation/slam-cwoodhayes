@@ -11,4 +11,4 @@
              0.0, 0.0, 0.0001]
 
     n_max_landmarks: 10
-    slam_new_landmark_variance: 200.0
+    slam_new_landmark_variance: 1000.0
