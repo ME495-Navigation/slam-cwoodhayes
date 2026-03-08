@@ -163,8 +163,11 @@ public:
       wheel_radius_, track_width_, R, Q, initial_state, initial_covariance
     );
 
-    // publish an initial transform at the origin so that we have a valid tf as soon as possible
-    publish_pose_tf(turtlelib::Transform2D(), map_id_, body_id_);
+    // publish initial transforms at the origin so that we have valid tf as soon as possible
+    auto identity = turtlelib::Transform2D();
+    publish_pose_tf(identity, map_id_, odom_id_);
+    publish_pose_tf(identity, map_id_, body_id_);
+    publish_pose_tf(identity, odom_id_, slam_body_id_);
 
     RCLCPP_INFO(get_logger(), "odometry node constructed.");
   }
@@ -227,8 +230,8 @@ private:
 
     // publish odometry msg and tf
     odom_pub_->publish(odom_msg);
-    publish_pose_tf(T_ob, map_id_, body_id_);
 
+    // Blue path shows pure odometry in map frame
     publish_path(
       msg->header.stamp,
       map_id_,
@@ -243,8 +246,17 @@ private:
     auto T_mb = dd_slam_->get_map_to_body();
     // we need T_mo. derive this from T_mb and T_ob
     auto T_mo = T_mb * T_ob.inv();
+    
+    // Publish TF tree:
+    // - map -> odom: SLAM correction
+    // - map -> blue/base_footprint: pure odometry (stays fixed even as odom frame is corrected)
+    // - odom -> green/base_footprint: SLAM estimate in odom frame
     publish_pose_tf(T_mo, map_id_, odom_id_);
-    publish_pose_tf(T_ob, odom_id_, body_id_);
+    publish_pose_tf(T_ob, map_id_, body_id_);
+    
+    // Compute SLAM estimate in odom frame for green robot
+    auto T_og = T_mo.inv() * T_mb;
+    publish_pose_tf(T_og, odom_id_, slam_body_id_);
 
     // joint states can come from diff_drive because we don't need slam for encoder vals.
     publish_joint_states(
@@ -253,11 +265,12 @@ private:
       diff_drive_->get_wheel_velocities(),
       green_joint_states_pub_);
 
+    // Green path should show SLAM estimate (odom -> green/base_footprint)
     auto slam_pose = geometry_msgs::msg::Pose();
-    slam_pose.position.x = T_ob.translation().x;
-    slam_pose.position.y = T_ob.translation().y;
+    slam_pose.position.x = T_og.translation().x;
+    slam_pose.position.y = T_og.translation().y;
     slam_pose.position.z = 0.0;
-    auto slam_quat = turtlelib::angle_to_2d_planar_quaternion(T_ob.rotation());
+    auto slam_quat = turtlelib::angle_to_2d_planar_quaternion(T_og.rotation());
     slam_pose.orientation.x = slam_quat[0];
     slam_pose.orientation.y = slam_quat[1];
     slam_pose.orientation.z = slam_quat[2];
@@ -358,8 +371,16 @@ private:
 
     turtlelib::Transform2D new_pose({request->x, request->y}, request->theta);
     diff_drive_->reset_to_configuration(new_pose);
+    
+    // Publish initial transforms for blue robot (odometry in map frame)
     publish_pose_tf(new_pose, map_id_, body_id_);
     path_buffer_.clear();
+    
+    // Also reset SLAM: identity map -> odom, and green robot at origin in odom frame
+    publish_pose_tf(turtlelib::Transform2D(), map_id_, odom_id_);
+    publish_pose_tf(new_pose, odom_id_, slam_body_id_);
+    slam_path_buffer_.clear();
+    
     response->success = true;
   }
 
