@@ -30,17 +30,17 @@ namespace turtlelib
         /// @param new_pose The new pose to set for the robot, given as a Transform2D
         void reset_to_configuration(const Transform2D& new_pose);
 
-        auto get_wheel_angles() const
+        std::vector<double> get_wheel_angles() const
         {
             return std::vector{phi_left_, phi_right_};
         }
 
-        auto get_wheel_velocities() const
+        std::vector<double> get_wheel_velocities() const
         {
             return std::vector{phi_dot_left_, phi_dot_right_};
         }
 
-        const Transform2D& get_pose() const
+        const Transform2D get_pose() const
         {
             return T_sb_;
         }

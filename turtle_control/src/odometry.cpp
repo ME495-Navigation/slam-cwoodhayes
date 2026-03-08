@@ -37,6 +37,16 @@
 ///
 /// Broadcasts:
 /// - odom -> body_id transform via tf2 (ie odom -> blue base_footprint)
+///
+/// Parameters:
+/// - body_id (string): Name of the body frame of the robot. Defaults to "base_footprint".
+/// - odom_id (string): Name of the odometry frame. Defaults to "odom".
+/// - wheel_left (string): Name of the left wheel joint. Required (no default).
+/// - wheel_right (string): Name of the right wheel joint. Required (no default).
+/// - wheel_radius (double): Radius of the wheels. Defaults to 0.1.
+/// - track_width (double): Distance between the wheels. Defaults to 0.5.
+/// - max_path_size (int): Maximum number of poses in the odometry path. Defaults to 1000.
+
 class Odometry : public rclcpp::Node
 {
 public:
