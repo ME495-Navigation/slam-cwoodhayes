@@ -64,7 +64,8 @@ class NUSimulator : public rclcpp::Node
 public:
   /// @brief Node constructor
 
-  NUSimulator() : Node("nusimulator"), count_(0), gt_pose_()
+  NUSimulator()
+  : Node("nusimulator"), count_(0), gt_pose_()
   {
     {
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -534,7 +535,7 @@ private:
       RCLCPP_INFO(
         get_logger(),
         std::format("Added obstacle at ({}, {}) with radius {}", obs_x[i], obs_y[i], obs_r)
-          .c_str());
+        .c_str());
     }
 
     RCLCPP_INFO(get_logger(), "Published arena obstacles.");
