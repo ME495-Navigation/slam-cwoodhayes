@@ -11,4 +11,4 @@
     arena_x_length: 5.0
     arena_y_length: 5.0
 
-    max_path_length: 6000
+    max_path_size: 10000
