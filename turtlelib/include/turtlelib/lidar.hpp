@@ -25,11 +25,15 @@ namespace turtlelib
     /// @note We assume that the LiDAR sweeps 360deg around.
     Lidar(double min_range, double max_range, double angle_increment, double resolution, double noise_variance);
 
-    /// @brief Simulate a LiDAR scan from a given robot pose and set of obstacles
+    /// @brief Simulate a LiDAR scan from a given robot pose, cylinder obstacles, and wall segments
     /// @param pose The robot's pose in the world frame
-    /// @param obstacles The obstacles in the environment
+    /// @param obstacles The cylindrical obstacles in the environment
+    /// @param walls Axis-aligned inner wall surfaces as line segments
     /// @return A vector of range measurements corresponding to each angle increment, with added Gaussian noise
-    std::vector<double> simulate_scan(const Transform2D& pose, const Obstacles& obstacles);
+    std::vector<double> simulate_scan(
+      const Transform2D& pose,
+      const Obstacles& obstacles,
+      const std::vector<LineSegment>& walls = {});
 
     /// @brief Get the minimum range of the LiDAR
     /// @return Minimum range in meters
@@ -52,12 +56,17 @@ namespace turtlelib
     constexpr double get_angle_max() const { return M_PI; }
 
   private:
-    /// @brief Find the first point along a ray from the robot's pose that intersects an obstacle
+    /// @brief Find the first point along a ray from the robot's pose that intersects an obstacle or wall
     /// @param pose The robot's pose in the world frame
     /// @param angle The angle of the ray relative to the robot's heading
-    /// @param obstacles The obstacles in the environment
-    /// @return The distance to the intersection, or max_range if no intersection
-    double ray_trace(const Transform2D& pose, double angle, const Obstacles& obstacles) const;
+    /// @param obstacles The cylindrical obstacles in the environment
+    /// @param walls Wall inner surfaces as line segments
+    /// @return The distance to the closest intersection, or max_range if none
+    double ray_trace(
+      const Transform2D& pose,
+      double angle,
+      const Obstacles& obstacles,
+      const std::vector<LineSegment>& walls) const;
 
     double min_range_;
     double max_range_;

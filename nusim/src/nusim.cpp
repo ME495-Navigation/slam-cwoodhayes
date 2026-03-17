@@ -50,6 +50,8 @@ using namespace std::chrono_literals;
 ///   readings) for the robot
 ///   - `/fake_sensor` (visualization_msgs::msg::MarkerArray): Obstacle detections relative to robot
 ///   at 5Hz with Gaussian noise
+///   - `red/scan` (sensor_msgs::msg::LaserScan): Simulated LiDAR scan with optional Gaussian noise,
+///   published at 5Hz alongside the fake sensor
 ///
 /// @details Subscribers:
 ///   - `red/wheel_cmd` (nuturtlebot_msgs::msg::WheelCommands): Motor commands to the robot
@@ -297,7 +299,7 @@ public:
     obstacles_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("/real_obstacles", qos);
 
-    publish_arena();
+    gt_walls_ = publish_arena();
     gt_obs_ = std::make_unique<Obstacles>(Obstacles{obs_x, obs_y, obs_r});
     publish_cyl_obstacles(obs_x, obs_y, obs_r);
 
@@ -441,8 +443,9 @@ private:
     return {{x, y}, theta};
   }
 
-  /// @brief publish the walls of the arena according to the parameters
-  void publish_arena()
+  /// @brief Publish the walls of the arena and return the inner surface line segments.
+  /// @return The four inner wall surfaces as line segments in the world (nusim/world) XY plane
+  std::vector<turtlelib::LineSegment> publish_arena()
   {
     double x_len = get_parameter("arena_x_length").as_double();
     double y_len = get_parameter("arena_y_length").as_double();
@@ -498,6 +501,18 @@ private:
 
     walls_publisher_->publish(marker_array);
     RCLCPP_INFO(get_logger(), "Published arena walls.");
+
+    // Return the four inner surfaces as line segments
+    return {
+      // bottom inner surface
+      {{x_min, y_min}, {x_max, y_min}},
+      // top inner surface
+      {{x_min, y_max}, {x_max, y_max}},
+      // left inner surface
+      {{x_min, y_min}, {x_min, y_max}},
+      // right inner surface
+      {{x_max, y_min}, {x_max, y_max}},
+    };
   }
 
   /// @brief publish cylindrical obstacles as configured on startup.
@@ -609,7 +624,7 @@ private:
   void publish_lidar()
   {
     // Simulate a laserscan
-    auto ranges = lidar_->simulate_scan(gt_pose_, *gt_obs_);
+    auto ranges = lidar_->simulate_scan(gt_pose_, *gt_obs_, gt_walls_);
 
     auto scan_msg = sensor_msgs::msg::LaserScan();
     scan_msg.header.stamp = get_clock()->now();
@@ -644,6 +659,7 @@ private:
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<Obstacles> gt_obs_;
+  std::vector<turtlelib::LineSegment> gt_walls_;
   std::unique_ptr<turtlelib::Lidar> lidar_;
 
   bool draw_only_ = false;

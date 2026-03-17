@@ -17,7 +17,7 @@ namespace turtlelib
     rand_gen_(std::random_device{}())
     {}
 
-  double Lidar::ray_trace(const Transform2D& pose, double angle, const Obstacles& obstacles) const
+  double Lidar::ray_trace(const Transform2D& pose, double angle, const Obstacles& obstacles, const std::vector<LineSegment>& walls) const
   {
     Vector2D ray_origin = pose.translation();
     Vector2D ray_dir{std::cos(pose.rotation() + angle), std::sin(pose.rotation() + angle)};
@@ -64,15 +64,37 @@ namespace turtlelib
       }
       ///////////////////////////////// End_Citation[15] ///////////////////////////////
     }
-    
+
+    // Ray-segment intersection for each wall
+    for (const auto & wall : walls) {
+      // segment direction
+      const auto ab_x = wall.end.x - wall.start.x;
+      const auto ab_y = wall.end.y - wall.start.y;
+      // vector from ray origin to segment start
+      const auto oa_x = wall.start.x - ray_origin.x;
+      const auto oa_y = wall.start.y - ray_origin.y;
+
+      // solve: [ray_dir  -ab] [t, s]^T = oa  via Cramer's rule
+      const auto det = ab_x * ray_dir.y - ab_y * ray_dir.x;
+      if (std::abs(det) < 1e-12) {
+        continue;  // ray parallel to segment
+      }
+      const auto t = (ab_x * oa_y - ab_y * oa_x) / det;
+      const auto s = (ray_dir.x * oa_y - ray_dir.y * oa_x) / det;
+
+      if (t > 0.0 && s >= 0.0 && s <= 1.0 && t < closest_dist) {
+        closest_dist = t;
+      }
+    }
+
     return std::max(min_range_, closest_dist);
   }
 
-  std::vector<double> Lidar::simulate_scan(const Transform2D& pose, const Obstacles& obstacles)
+  std::vector<double> Lidar::simulate_scan(const Transform2D& pose, const Obstacles& obstacles, const std::vector<LineSegment>& walls)
   {
     std::vector<double> ranges;
     for (double angle = 0.0; angle < 2 * M_PI; angle += angle_increment_) {
-      double range = ray_trace(pose, angle, obstacles);
+      double range = ray_trace(pose, angle, obstacles, walls);
       // add noise then clamp
       range += noise_dist_(rand_gen_);
       if (range < min_range_) {

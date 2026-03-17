@@ -157,6 +157,16 @@ namespace turtlelib
     /// \return The normalized vector.
     /// \throws std::invalid_input if in is the zero vector
     Vector2D normalize(Vector2D in);
+
+    /// \brief A line segment in 2D, defined by two endpoints
+    struct LineSegment
+    {
+        /// \brief The start endpoint of the segment
+        Point2D start{};
+
+        /// \brief The end endpoint of the segment
+        Point2D end{};
+    };
 }
 
 /// \brief A Formatter for 2D points
