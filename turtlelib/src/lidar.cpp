@@ -7,7 +7,7 @@
 namespace turtlelib
 {
 
-  Lidar::Lidar(double min_range, double max_range, double angle_increment, double resolution, double noise_variance):
+  LidarSim::LidarSim(double min_range, double max_range, double angle_increment, double resolution, double noise_variance):
     min_range_(min_range), 
     max_range_(max_range), 
     angle_increment_(angle_increment), 
@@ -17,7 +17,7 @@ namespace turtlelib
     rand_gen_(std::random_device{}())
     {}
 
-  double Lidar::ray_trace(const Transform2D& pose, double angle, const Obstacles& obstacles, const std::vector<LineSegment>& walls) const
+  double LidarSim::ray_trace(const Transform2D& pose, double angle, const Obstacles& obstacles, const std::vector<LineSegment>& walls) const
   {
     Vector2D ray_origin = pose.translation();
     Vector2D ray_dir{std::cos(pose.rotation() + angle), std::sin(pose.rotation() + angle)};
@@ -90,7 +90,7 @@ namespace turtlelib
     return std::max(min_range_, closest_dist);
   }
 
-  std::vector<double> Lidar::simulate_scan(const Transform2D& pose, const Obstacles& obstacles, const std::vector<LineSegment>& walls)
+  std::vector<double> LidarSim::simulate_scan(const Transform2D& pose, const Obstacles& obstacles, const std::vector<LineSegment>& walls)
   {
     std::vector<double> ranges;
     for (double angle = 0.0; angle < 2 * M_PI; angle += angle_increment_) {

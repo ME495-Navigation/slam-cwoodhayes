@@ -226,7 +226,7 @@ public:
     auto lidar_angle_increment = get_parameter("lidar_angle_increment").as_double();
     auto lidar_resolution = get_parameter("lidar_resolution").as_double();
     auto lidar_noise_variance = get_parameter("lidar_noise_variance").as_double();
-    lidar_ = std::make_unique<turtlelib::Lidar>(
+    lidar_ = std::make_unique<turtlelib::LidarSim>(
       lidar_range_min, lidar_range_max, lidar_angle_increment, lidar_resolution,
       lidar_noise_variance);
 
@@ -660,7 +660,7 @@ private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<Obstacles> gt_obs_;
   std::vector<turtlelib::LineSegment> gt_walls_;
-  std::unique_ptr<turtlelib::Lidar> lidar_;
+  std::unique_ptr<turtlelib::LidarSim> lidar_;
 
   bool draw_only_ = false;
 

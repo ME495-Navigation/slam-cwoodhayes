@@ -13,17 +13,17 @@
 namespace turtlelib
 {
 
-  class Lidar
+  class LidarSim
   {
   public:
-    /// @brief Construct a new Lidar object
+    /// @brief Construct a new LidarSim object
     /// @param min_range Minimum range of the LiDAR in meters
     /// @param max_range Maximum range of the LiDAR in meters
     /// @param angle_increment Angular resolution of the LiDAR in radians
     /// @param resolution Range resolution of the LiDAR in meters
     /// @param noise_variance Variance of zero-mean Gaussian noise to add to range measurements
     /// @note We assume that the LiDAR sweeps 360deg around.
-    Lidar(double min_range, double max_range, double angle_increment, double resolution, double noise_variance);
+    LidarSim(double min_range, double max_range, double angle_increment, double resolution, double noise_variance);
 
     /// @brief Simulate a LiDAR scan from a given robot pose, cylinder obstacles, and wall segments
     /// @param pose The robot's pose in the world frame
