@@ -43,6 +43,7 @@ if(BUILD_TESTING AND NOT CMAKE_CROSSCOMPILING)
       test/test_se2d.cpp
       test/test_svg.cpp
       test/test_diff_drive.cpp
+      test/test_lidar.cpp
       test/test_obstacles.cpp
       test/test_ddslam.cpp
     )
