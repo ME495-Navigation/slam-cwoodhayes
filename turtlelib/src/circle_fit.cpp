@@ -177,4 +177,26 @@ namespace turtlelib
       std::sqrt(sigma_sq)
     };
   }
+
+  std::vector<Circle> CylinderDetector::detect(const std::vector<double> & ranges, double angle_increment)
+  {
+    const auto clusters = cluster(ranges, angle_increment, distance_threshold_);
+
+    auto circles = std::vector<Circle>{};
+    for (const auto & cluster : clusters) {
+      if (cluster.size() >= 3) {
+        try {
+          const auto [circle, rmse] = fit_circle(cluster);
+
+          // TODO filter out bad fits using rmse + matt's algo
+          circles.push_back(circle);
+        } catch (const std::exception & e) {
+          // Circle fit failed for this cluster; skip it.
+          continue;
+        }
+      }
+    }
+
+    return circles;
+  }
 }

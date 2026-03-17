@@ -29,6 +29,25 @@ namespace turtlelib
   /// @param points The vector of 2D points
   /// @return A tuple containing the fitted circle and the RMSE of the fit.
   std::tuple<turtlelib::Circle, double> fit_circle(const std::vector<Point2D> & points);
-}
+
+  class CylinderDetector
+  {
+  public:
+    /// @brief Construct a new CylinderDetector object
+    /// @param distance_threshold The maximum allowed distance between consecutive points in a cluster
+    CylinderDetector(
+      double distance_threshold
+    ) : distance_threshold_(distance_threshold) {}
+
+    /// @brief Detect cylindrical obstacles from LiDAR range measurements
+    /// @param ranges The vector of LiDAR range measurements
+    /// @param angle_increment The angular resolution of the LiDAR in radians
+    /// @return A vector of detected circles representing cylindrical obstacles
+    std::vector<turtlelib::Circle> detect(const std::vector<double> & ranges, double angle_increment);
+  private:
+    double distance_threshold_;
+
+  };
+};
 
 #endif
