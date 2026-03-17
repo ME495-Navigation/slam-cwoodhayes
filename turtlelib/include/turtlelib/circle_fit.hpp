@@ -1,0 +1,34 @@
+/// @file
+/// @brief LiDAR point clustering and circle fitting utilities
+
+#ifndef TURTLELIB_CIRCLE_FIT_HPP_INCLUDE_GUARD
+#define TURTLELIB_CIRCLE_FIT_HPP_INCLUDE_GUARD
+
+#include <tuple>
+#include <vector>
+
+#include "turtlelib/geometry2d.hpp"
+
+namespace turtlelib
+{
+  /// @brief Cluster LiDAR range measurements into contiguous segments based on a distance threshold
+  /// @param ranges The vector of LiDAR range measurements
+  /// @param angle_increment The angular resolution of the LiDAR in radians
+  /// @param distance_threshold The maximum allowed distance between consecutive points in a cluster
+  /// @return A vector of clusters, where each cluster is a vector of (x, y) points in the robot frame
+  std::vector<std::vector<Point2D>> cluster(
+    const std::vector<double> & ranges,
+    double angle_increment,
+    double distance_threshold);
+
+  /// @brief Fit a circle to a set of 2D points
+  /// @note This follows the algorithm described here:
+  ///   https://projecteuclid.org/euclid.ejs/1251119958
+  ///   and summarized in the course notes here:
+  ///   https://nu-msr.github.io/navigation/lectures/circle_fit.html
+  /// @param points The vector of 2D points
+  /// @return A tuple containing the fitted circle and the RMSE of the fit.
+  std::tuple<turtlelib::Circle, double> fit_circle(const std::vector<Point2D> & points);
+}
+
+#endif

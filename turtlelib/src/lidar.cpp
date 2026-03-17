@@ -106,49 +106,4 @@ namespace turtlelib
     }
     return ranges;
   }
-
-  std::vector<std::vector<Point2D>> cluster(const std::vector<double>& ranges, double angle_increment, double distance_threshold)
-  {
-    std::vector<std::vector<Point2D>> clusters;
-    std::vector<Point2D> current_cluster;
-
-    for (size_t i = 0; i < ranges.size(); ++i) {
-      double range = ranges[i];
-      double angle = i * angle_increment;
-      Point2D point{range * std::cos(angle), range * std::sin(angle)};
-
-      if (current_cluster.empty()) {
-        current_cluster.push_back(point);
-      } else {
-        const auto& last_point = current_cluster.back();
-        double dist = std::hypot(point.x - last_point.x, point.y - last_point.y);
-        if (dist <= distance_threshold) {
-          current_cluster.push_back(point);
-        } else {
-          clusters.push_back(current_cluster);
-          current_cluster.clear();
-          current_cluster.push_back(point);
-        }
-      }
-    }
-
-    if (!current_cluster.empty()) {
-      // if this cluster wraps around, merge it with the first cluster
-      if (!clusters.empty()) {
-        const auto& first_point = clusters.front().front();
-        const auto& last_point = current_cluster.back();
-        double dist = std::hypot(first_point.x - last_point.x, first_point.y - last_point.y);
-        if (dist <= distance_threshold) {
-          clusters.front().insert(clusters.front().begin(), current_cluster.begin(), current_cluster.end());
-        } else {
-          clusters.push_back(current_cluster);
-        }
-      } else {
-        clusters.push_back(current_cluster);
-      }
-    }
-
-    return clusters;
-  }
-
 }

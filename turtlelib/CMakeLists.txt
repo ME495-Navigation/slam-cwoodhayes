@@ -43,7 +43,7 @@ if(BUILD_TESTING AND NOT CMAKE_CROSSCOMPILING)
       test/test_se2d.cpp
       test/test_svg.cpp
       test/test_diff_drive.cpp
-      test/test_lidar.cpp
+      test/circle_tests.cpp
       test/test_obstacles.cpp
       test/test_ddslam.cpp
     )
@@ -62,6 +62,7 @@ add_library(turtlelib
   src/svg_elements.cpp
   src/diff_drive.cpp
   src/lidar.cpp
+  src/circle_fit.cpp
   src/ekf.cpp
   src/dd_slam.cpp
 )

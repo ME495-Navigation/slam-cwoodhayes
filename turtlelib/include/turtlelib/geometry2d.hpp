@@ -167,6 +167,15 @@ namespace turtlelib
         /// \brief The end endpoint of the segment
         Point2D end{};
     };
+
+    /// \brief A circle in 2D, defined by a center point and a radius
+    struct Circle
+    {
+        /// \brief The center point of the circle
+        Point2D center{};
+        /// \brief The radius of the circle
+        double radius = 0.0;
+    };
 }
 
 /// \brief A Formatter for 2D points

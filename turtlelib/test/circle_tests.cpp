@@ -1,9 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <numbers>
 #include <vector>
 
-#include "turtlelib/lidar.hpp"
+#include "turtlelib/circle_fit.hpp"
 
 using namespace turtlelib;
 using namespace Catch::Matchers;
@@ -30,7 +31,7 @@ TEST_CASE("cluster merges wrap-around endpoints", "[lidar][cluster]")
   // Points at index 0 and 3 are both at range 1.0 and should be spatially close
   // when angle_increment is ~120deg, causing wrap-around merge.
   const auto ranges = std::vector<double>{1.0, 5.0, 5.0, 1.0};
-  const auto angle_increment = 2.0 * M_PI / 3.0;
+  const auto angle_increment = 2.0 * std::numbers::pi / 3.0;
   const auto distance_threshold = 0.5;
 
   const auto clusters = cluster(ranges, angle_increment, distance_threshold);

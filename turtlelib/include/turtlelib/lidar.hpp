@@ -79,12 +79,6 @@ namespace turtlelib
     std::default_random_engine rand_gen_;
   };
 
-  /// @brief Cluster LiDAR range measurements into contiguous segments based on a distance threshold
-  /// @param ranges The vector of LiDAR range measurements
-  /// @param angle_increment The angular resolution of the LiDAR in radians
-  /// @param distance_threshold The maximum allowed distance between consecutive points in a cluster
-  /// @return A vector of clusters, where each cluster is a vector of (x, y) points in the robot frame
-  std::vector<std::vector<Point2D>> cluster(const std::vector<double>& ranges, double angle_increment, double distance_threshold);
 }
 
 #endif // LIDAR_HPP
