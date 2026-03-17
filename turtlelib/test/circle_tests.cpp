@@ -43,3 +43,39 @@ TEST_CASE("cluster merges wrap-around endpoints", "[lidar][cluster]")
   REQUIRE(clusters[1].size() == 1);
   REQUIRE(clusters[2].size() == 1);
 }
+
+TEST_CASE("fit_circle matches reference dataset 1", "[lidar][circle_fit]")
+{
+  const auto points = std::vector<Point2D>{
+    {1.0, 7.0},
+    {2.0, 6.0},
+    {5.0, 8.0},
+    {7.0, 7.0},
+    {9.0, 5.0},
+    {3.0, 7.0}
+  };
+
+  const auto [circle, rmse] = fit_circle(points);
+
+  REQUIRE_THAT(circle.center.x, WithinAbs(4.615482, 1e-4));
+  REQUIRE_THAT(circle.center.y, WithinAbs(2.807354, 1e-4));
+  REQUIRE_THAT(circle.radius, WithinAbs(4.8275, 1e-4));
+  REQUIRE(rmse >= 0.0);
+}
+
+TEST_CASE("fit_circle matches reference dataset 2", "[lidar][circle_fit]")
+{
+  const auto points = std::vector<Point2D>{
+    {-1.0, 0.0},
+    {-0.3, -0.06},
+    {0.3, 0.1},
+    {1.0, 0.0}
+  };
+
+  const auto [circle, rmse] = fit_circle(points);
+
+  REQUIRE_THAT(circle.center.x, WithinAbs(0.4908357, 1e-4));
+  REQUIRE_THAT(circle.center.y, WithinAbs(-22.15212, 1e-4));
+  REQUIRE_THAT(circle.radius, WithinAbs(22.17979, 1e-4));
+  REQUIRE(rmse >= 0.0);
+}
