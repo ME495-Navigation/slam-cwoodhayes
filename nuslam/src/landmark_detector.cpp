@@ -12,7 +12,7 @@
 ///   - red/scan (sensor_msgs::msg/LaserScan): Laser scan data from the simulator
 ///
 /// Publishes:
-///   - /detected_obstacles (visualization_msgs::msg/MarkerArray): Detected landmarks as cylinders
+///   - /landmarks (visualization_msgs::msg/MarkerArray): Detected landmarks as cylinders
 ///
 /// Parameters:
 ///   - obstacles.h (double): Height of cylinder markers for detected obstacles
@@ -39,7 +39,7 @@ public:
 
     // Create publisher for landmarks
     landmarks_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>(
-      "/detected_obstacles", rclcpp::QoS(10));
+      "/landmarks", rclcpp::QoS(10));
 
     RCLCPP_INFO(get_logger(), "Landmark detector node started.");
   }
@@ -66,7 +66,7 @@ private:
     marker.pose.orientation.w = 1.0;
 
     // Set scale (diameter and height)
-    const auto diameter = 0.1;
+    const auto diameter = 0.2;
     marker.scale.x = diameter;
     marker.scale.y = diameter;
     marker.scale.z = cylinder_height_;
