@@ -58,3 +58,7 @@ Task F.6
 Task V.1
 Task V.2
 Task V.3 - except no laserscan from turtle to test with yet
+
+# HOMEWORK 4
+Task S.1
+Task S.2
