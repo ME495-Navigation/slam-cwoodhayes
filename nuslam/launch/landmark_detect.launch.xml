@@ -24,6 +24,7 @@
     <param from="$(find-pkg-share nuslam)/config/slam_demo_world.yaml"/>
     <param from="$(find-pkg-share nuslam)/config/slam_config.yaml"/>
     <remap from="landmarks" to="/detected_obstacles"/>
+    <param name="robot_frame" value="red/base_link"/>
   </node>
 
   <let name="rviz_config" value="$(find-pkg-share nuslam)/config/landmarks.rviz"/>

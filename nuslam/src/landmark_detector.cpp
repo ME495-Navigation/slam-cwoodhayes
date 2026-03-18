@@ -19,6 +19,7 @@
 ///
 /// Parameters:
 ///   - obstacles.h (double): Height of cylinder markers for detected obstacles
+///   - robot_frame (string): Frame ID for marker frame_id (e.g., red/base_footprint)
 ///   - detector.distance_threshold (double): Maximum distance between consecutive points in a LiDAR cluster
 ///   - detector.rmse_threshold (double): RMSE threshold for accepting circle fits
 ///   - detector.inscribed_angle_mean_range_deg (array): Range of mean inscribed angles [min, max]
@@ -35,6 +36,11 @@ public:
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
       desc.description = "Height of cylinder obstacles";
       declare_parameter("obstacles.h", 0.25, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Frame ID for marker frame_id";
+      declare_parameter("robot_frame", std::string("red/base_footprint"), desc);
     }
     {
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -58,6 +64,7 @@ public:
     }
 
     cylinder_height_ = get_parameter("obstacles.h").as_double();
+    robot_frame_ = get_parameter("robot_frame").as_string();
 
     // Create detector configuration
     auto angle_range = get_parameter("detector.inscribed_angle_mean_range_deg").as_double_array();
@@ -106,7 +113,7 @@ private:
     // Create markers for each detected circle
     for (size_t i = 0; i < detected_circles.size(); ++i) {
       auto marker = visualization_msgs::msg::Marker();
-      marker.header.frame_id = "red/base_footprint";
+      marker.header.frame_id = robot_frame_;
       marker.header.stamp = get_clock()->now();
       marker.id = static_cast<int>(i);
       marker.type = visualization_msgs::msg::Marker::CYLINDER;
@@ -140,6 +147,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr landmarks_publisher_;
   std::unique_ptr<turtlelib::CylinderDetector> detector_;
   double cylinder_height_{};
+  std::string robot_frame_;
 };
 
 int main(int argc, char * argv[])
