@@ -42,8 +42,16 @@ target_link_libraries(slam_node PUBLIC
   ${ARMADILLO_LIBRARIES}
 )
 
+add_executable(landmarks src/landmark_detector.cpp)
+target_link_libraries(landmarks PUBLIC
+  ${geometry_msgs_TARGETS}
+  ${visualization_msgs_TARGETS}
+  rclcpp::rclcpp
+  ${cpp_typesupport_target}
+)
+
 # Install nodes
-install(TARGETS slam_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS slam_node landmarks DESTINATION lib/${PROJECT_NAME})
 
 # if(BUILD_TESTING)
 #   include(CTest)
