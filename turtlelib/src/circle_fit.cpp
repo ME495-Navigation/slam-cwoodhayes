@@ -211,6 +211,7 @@ namespace turtlelib
     const auto & p1 = points.front();
     const auto & p2 = points.back();
     auto angles = std::vector<double>{};
+    auto dist_mean = 0.0;
 
     for (const auto & point : std::ranges::subrange(points.begin() + 1, points.end() - 1)) {
       // compute inscribed angle using law of cosines
@@ -218,6 +219,19 @@ namespace turtlelib
       const auto v2 = p2 - point;
       const auto inscribed = angle(v1, v2) * 180.0 / M_PI;
       angles.push_back(inscribed);
+
+      // and maintain a running mean of distance from us
+      dist_mean += std::hypot(point.x, point.y);
+    }
+
+    // as a 3rd check, see if this is convex or concave
+    // by looking if the mean of the non-endpoints is closer (convex)
+    // or further (concave) from us than the endpoints.
+    // we only want convex obstacles.
+    dist_mean /= static_cast<double>(points.size() - 2);
+    const auto endpoints_dist = (std::hypot(p1.x, p1.y) + std::hypot(p2.x, p2.y)) / 2.0;
+    if (dist_mean >= endpoints_dist) {
+      return false;  // likely concave, so fail the check
     }
 
     // get mean and std dev of angles

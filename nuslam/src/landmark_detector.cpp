@@ -111,10 +111,12 @@ private:
     // Detect circles from the LiDAR scan
     auto detected_circles = detector_->detect(ranges, msg->angle_increment);
 
+    #ifdef DEBUG
     auto debugmsg = std::format(
       "Detected {} circles in laser scan ({})", 
       detected_circles.size(), ranges.size());
-    RCLCPP_INFO(get_logger(), debugmsg.c_str());
+    RCLCPP_DEBUG(get_logger(), debugmsg.c_str());
+    #endif
 
     // Create markers for each detected circle
     for (size_t i = 0; i < detected_circles.size(); ++i) {
