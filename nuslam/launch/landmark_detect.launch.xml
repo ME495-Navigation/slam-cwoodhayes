@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- args -->
+  <arg name="robot" default="nusim" description="what robot to control (sim vs hardware etc)">
+    <choice value="nusim"/>
+    <choice value="localhost"/>
+    <choice value="none"/>
+  </arg>
+  <arg name="cmd_src" default="teleop" description="Source of cmd_vel commands">
+    <choice value="circle"/>
+    <choice value="teleop"/>
+    <choice value="none"/>
+  </arg>
+
+  <!-- launch normal SLAM nodes -->
+  <include file="$(find-pkg-share nuslam)/launch/slam.launch.xml">
+    <arg name="robot" value="$(var robot)"/>
+    <arg name="cmd_src" value="$(var cmd_src)"/>
+  </include>
+
+  <!-- also launch landmark detection node -->
+  <node pkg="nuslam" exec="landmarks" name="landmarks" output="screen">
+  </node>
+
+</launch>

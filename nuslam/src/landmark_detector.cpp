@@ -26,7 +26,7 @@ public:
 
     // Create publisher for landmarks
     landmarks_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>(
-      "/landmarks", rclcpp::QoS(10));
+      "/detected_obstacles", rclcpp::QoS(10));
 
     RCLCPP_INFO(get_logger(), "Landmark detector node started.");
   }
