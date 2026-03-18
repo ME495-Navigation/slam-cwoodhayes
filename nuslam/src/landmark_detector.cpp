@@ -19,7 +19,9 @@
 ///
 /// Parameters:
 ///   - obstacles.h (double): Height of cylinder markers for detected obstacles
-///   - distance_threshold (double): Maximum distance between consecutive points in a LiDAR cluster
+///   - detector.distance_threshold (double): Maximum distance between consecutive points in a LiDAR cluster
+///   - detector.inscribed_angle_mean_range_deg (array): Range of mean inscribed angles [min, max]
+///   - detector.inscribed_angle_stddev_threshold_deg (double): Threshold for inscribed angle std dev
 class LandmarkDetector : public rclcpp::Node
 {
 public:
@@ -36,12 +38,29 @@ public:
     {
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
       desc.description = "Maximum distance between consecutive points in a LiDAR cluster";
-      declare_parameter("distance_threshold", 0.01, desc);
+      declare_parameter("detector.distance_threshold", 0.01, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Range of mean inscribed angles [min, max] in degrees";
+      declare_parameter("detector.inscribed_angle_mean_range_deg", std::vector<double>{90.0, 130.0}, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Threshold for standard deviation of inscribed angles in degrees";
+      declare_parameter("detector.inscribed_angle_stddev_threshold_deg", 10.0, desc);
     }
 
     cylinder_height_ = get_parameter("obstacles.h").as_double();
-    auto distance_threshold = get_parameter("distance_threshold").as_double();
-    detector_ = std::make_unique<turtlelib::CylinderDetector>(distance_threshold);
+
+    // Create detector configuration
+    auto angle_range = get_parameter("detector.inscribed_angle_mean_range_deg").as_double_array();
+    auto config = turtlelib::DetectorConfig{
+      get_parameter("detector.distance_threshold").as_double(),
+      {angle_range[0], angle_range[1]},
+      get_parameter("detector.inscribed_angle_stddev_threshold_deg").as_double()
+    };
+    detector_ = std::make_unique<turtlelib::CylinderDetector>(config);
 
     // Create subscription to laser scan
     scan_subscription_ = create_subscription<sensor_msgs::msg::LaserScan>(

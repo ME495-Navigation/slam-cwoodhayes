@@ -14,4 +14,7 @@
     slam_new_landmark_variance: 1000.0
 
     # Landmark detection parameters
-    distance_threshold: 0.03
+    detector:
+      distance_threshold: 0.03
+      inscribed_angle_mean_range_deg: [90.0, 130.0]
+      inscribed_angle_stddev_threshold_deg: 10.0

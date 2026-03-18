@@ -30,14 +30,25 @@ namespace turtlelib
   /// @return A tuple containing the fitted circle and the RMSE of the fit.
   std::tuple<turtlelib::Circle, double> fit_circle(const std::vector<Point2D> & points);
 
+  /// @brief Configuration for cylinder detection
+  struct DetectorConfig
+  {
+    /// @brief Maximum allowed distance between consecutive points in a cluster (meters)
+    double distance_threshold = 0.01;
+    /// @brief Range of mean inscribed angles to accept for circle detection (degrees)
+    std::pair<double, double> inscribed_angle_mean_range_deg{90.0, 130.0};
+    /// @brief Threshold for standard deviation of inscribed angles (degrees)
+    double inscribed_angle_stddev_threshold_deg = 10.0;
+  };
+
   class CylinderDetector
   {
   public:
     /// @brief Construct a new CylinderDetector object
-    /// @param distance_threshold The maximum allowed distance between consecutive points in a cluster
-    CylinderDetector(
-      double distance_threshold
-    ) : distance_threshold_(distance_threshold) {}
+    /// @param config Configuration parameters for cylinder detection
+    explicit CylinderDetector(const DetectorConfig & config)
+    : cfg_(config)
+    {}
 
     /// @brief Detect cylindrical obstacles from LiDAR range measurements
     /// @param ranges The vector of LiDAR range measurements
@@ -45,7 +56,12 @@ namespace turtlelib
     /// @return A vector of detected circles representing cylindrical obstacles
     std::vector<turtlelib::Circle> detect(const std::vector<double> & ranges, double angle_increment);
   private:
-    double distance_threshold_;
+
+    /// @brief Check if the mean inscribed angle of the points with respect to the arc endpoints
+    /// is consistent across points
+    bool inscribed_angle_check(const std::vector<Point2D> & points, const Circle & circle);
+
+    DetectorConfig cfg_;
 
   };
 };

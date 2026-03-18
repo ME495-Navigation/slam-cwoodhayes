@@ -180,7 +180,7 @@ namespace turtlelib
 
   std::vector<Circle> CylinderDetector::detect(const std::vector<double> & ranges, double angle_increment)
   {
-    const auto clusters = cluster(ranges, angle_increment, distance_threshold_);
+    const auto clusters = cluster(ranges, angle_increment, cfg_.distance_threshold);
 
     auto circles = std::vector<Circle>{};
     for (const auto & cluster : clusters) {
