@@ -35,6 +35,8 @@ namespace turtlelib
   {
     /// @brief Maximum allowed distance between consecutive points in a cluster (meters)
     double distance_threshold = 0.01;
+    /// @brief RMSE threshold for accepting circle fits
+    double rmse_threshold = 0.1;
     /// @brief Range of mean inscribed angles to accept for circle detection (degrees)
     std::pair<double, double> inscribed_angle_mean_range_deg{90.0, 130.0};
     /// @brief Threshold for standard deviation of inscribed angles (degrees)
@@ -59,7 +61,7 @@ namespace turtlelib
 
     /// @brief Check if the mean inscribed angle of the points with respect to the arc endpoints
     /// is consistent across points
-    bool inscribed_angle_check(const std::vector<Point2D> & points, const Circle & circle);
+    bool inscribed_angle_check(const std::vector<Point2D> & points);
 
     DetectorConfig cfg_;
 

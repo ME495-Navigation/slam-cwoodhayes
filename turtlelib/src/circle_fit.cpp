@@ -188,7 +188,12 @@ namespace turtlelib
         try {
           const auto [circle, rmse] = fit_circle(cluster);
 
-          // TODO filter out bad fits using rmse + matt's algo
+          if (!std::isfinite(rmse) || rmse > cfg_.rmse_threshold) {
+            continue;  // filter out bad fits based on RMSE threshold
+          }
+          if (!inscribed_angle_check(cluster)) {
+            continue;  // filter out fits that don't have consistent inscribed angles
+          }
           circles.push_back(circle);
         } catch (const std::exception & e) {
           // Circle fit failed for this cluster; skip it.
@@ -198,5 +203,38 @@ namespace turtlelib
     }
 
     return circles;
+  }
+
+  bool CylinderDetector::inscribed_angle_check(const std::vector<Point2D> & points)
+  {
+    // grab endpoints
+    const auto & p1 = points.front();
+    const auto & p2 = points.back();
+    auto angles = std::vector<double>{};
+
+    for (const auto & point : std::ranges::subrange(points.begin() + 1, points.end() - 1)) {
+      // compute inscribed angle using law of cosines
+      const auto v1 = p1 - point;
+      const auto v2 = p2 - point;
+      const auto inscribed = angle(v1, v2) * 180.0 / M_PI;
+      angles.push_back(inscribed);
+    }
+
+    // get mean and std dev of angles
+    const auto mean = std::accumulate(angles.begin(), angles.end(), 0.0) / static_cast<double>(angles.size());
+    const auto variance = std::accumulate(angles.begin(), angles.end(), 0.0, [&](double acc, double angle) {
+      const auto diff = angle - mean;
+      return acc + diff * diff;
+    }) / static_cast<double>(angles.size());
+    const auto stddev = std::sqrt(variance);
+  
+    // check if mean and std dev are within thresholds
+    const bool mean_ok = (
+      mean >= cfg_.inscribed_angle_mean_range_deg.first 
+      && mean <= cfg_.inscribed_angle_mean_range_deg.second
+    );
+    const bool stddev_ok = stddev <= cfg_.inscribed_angle_stddev_threshold_deg;
+
+    return mean_ok && stddev_ok;
   }
 }

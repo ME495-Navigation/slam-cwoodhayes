@@ -20,6 +20,7 @@
 /// Parameters:
 ///   - obstacles.h (double): Height of cylinder markers for detected obstacles
 ///   - detector.distance_threshold (double): Maximum distance between consecutive points in a LiDAR cluster
+///   - detector.rmse_threshold (double): RMSE threshold for accepting circle fits
 ///   - detector.inscribed_angle_mean_range_deg (array): Range of mean inscribed angles [min, max]
 ///   - detector.inscribed_angle_stddev_threshold_deg (double): Threshold for inscribed angle std dev
 class LandmarkDetector : public rclcpp::Node
@@ -42,6 +43,11 @@ public:
     }
     {
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "RMSE threshold for accepting circle fits";
+      declare_parameter("detector.rmse_threshold", 0.1, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
       desc.description = "Range of mean inscribed angles [min, max] in degrees";
       declare_parameter("detector.inscribed_angle_mean_range_deg", std::vector<double>{90.0, 130.0}, desc);
     }
@@ -57,6 +63,7 @@ public:
     auto angle_range = get_parameter("detector.inscribed_angle_mean_range_deg").as_double_array();
     auto config = turtlelib::DetectorConfig{
       get_parameter("detector.distance_threshold").as_double(),
+      get_parameter("detector.rmse_threshold").as_double(),
       {angle_range[0], angle_range[1]},
       get_parameter("detector.inscribed_angle_stddev_threshold_deg").as_double()
     };
