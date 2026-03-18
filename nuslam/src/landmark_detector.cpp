@@ -2,6 +2,7 @@
 /// \brief Landmark detection node that processes laser scan data and publishes detected landmarks.
 
 #include "rclcpp/rclcpp.hpp"
+#include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
@@ -11,7 +12,10 @@
 ///   - red/scan (sensor_msgs::msg/LaserScan): Laser scan data from the simulator
 ///
 /// Publishes:
-///   - /landmarks (visualization_msgs::msg/MarkerArray): Detected landmarks as markers
+///   - /detected_obstacles (visualization_msgs::msg/MarkerArray): Detected landmarks as cylinders
+///
+/// Parameters:
+///   - obstacles.h (double): Height of cylinder markers for detected obstacles
 class LandmarkDetector : public rclcpp::Node
 {
 public:
@@ -19,6 +23,15 @@ public:
   LandmarkDetector()
   : Node("landmark_detector")
   {
+    // Declare obstacle height parameter
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Height of cylinder obstacles";
+      declare_parameter("obstacles.h", 0.25, desc);
+    }
+
+    cylinder_height_ = get_parameter("obstacles.h").as_double();
+
     // Create subscription to laser scan
     scan_subscription_ = create_subscription<sensor_msgs::msg::LaserScan>(
       "red/scan", 10,
@@ -38,24 +51,25 @@ private:
   {
     auto marker_array = visualization_msgs::msg::MarkerArray();
 
-    // Create a dummy blue marker at (1, 2)
+    // Create a dummy blue cylinder marker at (1, 2)
     auto marker = visualization_msgs::msg::Marker();
     marker.header.frame_id = "red/base_footprint";
     marker.header.stamp = get_clock()->now();
     marker.id = 0;
-    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.type = visualization_msgs::msg::Marker::CYLINDER;
     marker.action = visualization_msgs::msg::Marker::ADD;
 
     // Set position (dummy landmark at 1, 2)
     marker.pose.position.x = 1.0;
     marker.pose.position.y = 2.0;
-    marker.pose.position.z = 0.0;
+    marker.pose.position.z = cylinder_height_ / 2.0;
     marker.pose.orientation.w = 1.0;
 
-    // Set scale
-    marker.scale.x = 0.1;
-    marker.scale.y = 0.1;
-    marker.scale.z = 0.1;
+    // Set scale (diameter and height)
+    const auto diameter = 0.1;
+    marker.scale.x = diameter;
+    marker.scale.y = diameter;
+    marker.scale.z = cylinder_height_;
 
     // Set blue color
     marker.color.r = 0.0;
@@ -69,6 +83,7 @@ private:
 
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_subscription_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr landmarks_publisher_;
+  double cylinder_height_{};
 };
 
 int main(int argc, char * argv[])

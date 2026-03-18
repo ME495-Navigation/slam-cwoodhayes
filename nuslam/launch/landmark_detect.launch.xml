@@ -19,7 +19,8 @@
   </include>
 
   <!-- also launch landmark detection node -->
-  <node pkg="nuslam" exec="landmarks" name="landmarks" output="screen">
+  <node pkg="nuslam" exec="landmark_detector_node" name="landmarks" output="screen">
+    <param from="$(find-pkg-share nuslam)/config/slam_demo_world.yaml"/>
   </node>
 
 </launch>
