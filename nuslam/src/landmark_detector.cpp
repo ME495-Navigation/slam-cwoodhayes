@@ -62,6 +62,11 @@ public:
       desc.description = "Threshold for standard deviation of inscribed angles in degrees";
       declare_parameter("detector.inscribed_angle_stddev_threshold_deg", 10.0, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Minimum number of points required in a cluster to attempt circle fitting";
+      declare_parameter("detector.min_cluster_size", 3, desc);
+    }
 
     cylinder_height_ = get_parameter("obstacles.h").as_double();
     robot_frame_ = get_parameter("robot_frame").as_string();
@@ -72,7 +77,8 @@ public:
       get_parameter("detector.distance_threshold").as_double(),
       get_parameter("detector.rmse_threshold").as_double(),
       {angle_range[0], angle_range[1]},
-      get_parameter("detector.inscribed_angle_stddev_threshold_deg").as_double()
+      get_parameter("detector.inscribed_angle_stddev_threshold_deg").as_double(),
+      static_cast<int>(get_parameter("detector.min_cluster_size").as_int())
     };
     detector_ = std::make_unique<turtlelib::CylinderDetector>(config);
 

@@ -184,7 +184,7 @@ namespace turtlelib
 
     auto circles = std::vector<Circle>{};
     for (const auto & cluster : clusters) {
-      if (cluster.size() >= 3) {
+      if (cluster.size() >= static_cast<size_t>(cfg_.min_cluster_size)) {
         try {
           const auto [circle, rmse] = fit_circle(cluster);
 

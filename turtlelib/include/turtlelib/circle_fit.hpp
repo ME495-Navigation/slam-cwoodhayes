@@ -41,6 +41,8 @@ namespace turtlelib
     std::pair<double, double> inscribed_angle_mean_range_deg{90.0, 130.0};
     /// @brief Threshold for standard deviation of inscribed angles (degrees)
     double inscribed_angle_stddev_threshold_deg = 10.0;
+    /// @brief Minimum number of points required in a cluster to attempt circle fitting
+    int min_cluster_size = 3;
   };
 
   class CylinderDetector
