@@ -12,3 +12,6 @@
 
     slam_n_max_landmarks: 10
     slam_new_landmark_variance: 1000.0
+
+    # Landmark detection parameters
+    distance_threshold: 0.01

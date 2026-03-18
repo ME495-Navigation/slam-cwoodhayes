@@ -47,6 +47,7 @@ target_link_libraries(landmarks PUBLIC
   ${geometry_msgs_TARGETS}
   ${visualization_msgs_TARGETS}
   rclcpp::rclcpp
+  turtlelib::turtlelib
   ${cpp_typesupport_target}
 )
 
