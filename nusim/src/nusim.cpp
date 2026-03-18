@@ -205,6 +205,11 @@ public:
       desc.description = "Variance of zero-mean Gaussian noise to add to LiDAR range measurements";
       declare_parameter("lidar_noise_variance", 0.0, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Height of cylinder obstacles";
+      declare_parameter("obstacles.h", 0.25, desc);
+    }
 
     auto wheel_radius = get_parameter("wheel_radius").as_double();
     auto track_width = get_parameter("track_width").as_double();
@@ -217,6 +222,7 @@ public:
     auto slip_fraction = get_parameter("slip_fraction").as_double();
     basic_sensor_variance_ = get_parameter("basic_sensor_variance").as_double();
     max_range_ = get_parameter("max_range").as_double();
+    cylinder_height_ = get_parameter("obstacles.h").as_double();
     noisy_diff_drive_ =
       std::make_unique<NoisyDiffDrive>(wheel_radius, track_width, input_noise, slip_fraction);
 
@@ -519,7 +525,7 @@ private:
   void publish_cyl_obstacles(
     const std::vector<double> & obs_x, const std::vector<double> & obs_y, const double obs_r)
   {
-    const auto cyl_height = 0.25;
+    const auto cyl_height = cylinder_height_;
 
     auto marker_array = visualization_msgs::msg::MarkerArray();
 
@@ -560,7 +566,7 @@ private:
   /// @brief Callback for fake sensor that publishes obstacles relative to robot with noise
   void fake_sensor_callback()
   {
-    const auto cyl_height = 0.25;
+    const auto cyl_height = cylinder_height_;
     auto marker_array = visualization_msgs::msg::MarkerArray();
 
     // Get transform from world to robot frame (inverse of robot pose in world)
@@ -685,6 +691,7 @@ private:
   // sensor parameters
   double basic_sensor_variance_{};
   double max_range_{};
+  double cylinder_height_{};
   std::mt19937 rand_gen_;
 };
 
