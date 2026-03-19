@@ -17,9 +17,10 @@
 
     # Landmark detection parameters
     detector:
-      distance_threshold: 0.2
-      rmse_threshold: 0.3
-      inscribed_angle_mean_range_deg: [70.0, 110.0]
-      inscribed_angle_stddev_threshold_deg: 100.0
+      distance_threshold: 0.18
+      rmse_threshold: 0.4
+      inscribed_angle_mean_range_deg: [70.0, 150.0]
+      inscribed_angle_stddev_threshold_deg: 60.0
       min_cluster_size: 5
-      concavity_threshold: 0.03
+      concavity_threshold: 0.02
+      # concavity_threshold: 1.0  # ignore
