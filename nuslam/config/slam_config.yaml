@@ -12,7 +12,8 @@
 
     slam_n_max_landmarks: 20
     slam_new_landmark_variance: 100.0
-    slam_mahalanobis_association_threshold: 0.3
+    slam_mahalanobis_association_threshold: 0.2
+    slam_mahalanobis_provisional_observation_count: 5
 
     # Landmark detection parameters
     detector:

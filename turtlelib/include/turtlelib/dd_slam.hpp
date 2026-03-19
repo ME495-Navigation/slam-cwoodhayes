@@ -131,15 +131,19 @@ public:
   /// @param new_landmark_variance Initial variance to assign to new landmarks when added.
   /// @param association_threshold Chi-square threshold for Mahalanobis distance 
   ///        Data association (default 5.991 for 95% confidence with 2 DOF)
+  /// @param provisional_observation_count Number of consecutive observations below the association threshold
+  ///        required before confirming a landmark association (to reduce false positives)
   DDSLAMMahalanobis(
     double wheel_radius, double wheel_track, arma::mat R, arma::mat Q_robot_pose,
     arma::vec initial_state, arma::mat initial_covariance,
     size_t max_landmarks,
     double new_landmark_variance = 1000.0,
-    double association_threshold = 5.991 
+    double association_threshold = 5.991,
+    size_t provisional_observation_count = 3
   ) : 
   DDSLAM(wheel_radius, wheel_track, R, Q_robot_pose, initial_state, initial_covariance, max_landmarks, new_landmark_variance),
-  association_threshold_(association_threshold)
+  association_threshold_(association_threshold),
+  provisional_observation_count_(provisional_observation_count)
   {}
 
   /// @brief Perform EKF update step given measurement (range and bearing to landmarks) with unknown data association.
@@ -152,8 +156,11 @@ public:
 private:
   size_t add_landmark_to_state_mahalanobis(double range, double bearing);
   size_t pop_landmark_from_state();
+  std::unordered_map<size_t, size_t> landmark_id_to_count_;
 
   double association_threshold_;
+  size_t provisional_observation_count_;
+
 };
 
 }  // namespace turtlelib

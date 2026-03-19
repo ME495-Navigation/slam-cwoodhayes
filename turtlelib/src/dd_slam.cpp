@@ -329,14 +329,20 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
     }
     // if best existing landmark is farther than threshold, add a new landmark instead.
     if (min_distance > association_threshold_) {
-      auto new_lm_slot = add_landmark_to_state_mahalanobis(range, bearing);
-      DDSLAM::measurement_update(new_lm_slot, range, bearing);
-      return new_lm_slot;
+      best_landmark_slot = add_landmark_to_state_mahalanobis(range, bearing);
+      landmark_id_to_count_[best_landmark_slot] = 0;
     }
-    else {
+    // increment the observation count
+    auto count = landmark_id_to_count_[best_landmark_slot];
+    if (count < provisional_observation_count_) {
+      landmark_id_to_count_[best_landmark_slot] = count + 1;
+      // if we haven't yet reached the required observation count,
+      // skip the EKF update to avoid contaminating estimate with false positives
+    } else {
       DDSLAM::measurement_update(best_landmark_slot, range, bearing);
-      return best_landmark_slot;
     }
+
+    return best_landmark_slot;
   }
 
   size_t DDSLAMMahalanobis::add_landmark_to_state_mahalanobis(double range, double bearing)

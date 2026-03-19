@@ -159,6 +159,11 @@ public:
       desc.description = "Chi-squared threshold (2 DOF) for Mahalanobis data association gating";
       declare_parameter("slam_mahalanobis_association_threshold", 5.991, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Number of consecutive observations required to confirm provisional Mahalanobis association";
+      declare_parameter("slam_mahalanobis_provisional_observation_count", 3, desc);
+    }
 
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
@@ -202,6 +207,8 @@ public:
     auto new_landmark_variance = get_parameter("slam_new_landmark_variance").as_double();
     auto mahalanobis_association_threshold =
       get_parameter("slam_mahalanobis_association_threshold").as_double();
+    auto mahalanobis_provisional_observation_count =
+      get_parameter("slam_mahalanobis_provisional_observation_count").as_int();
 
     if (R_values.size() != 4) {
       throw std::runtime_error("slam_R must contain exactly 4 values for a 2x2 matrix");
@@ -214,6 +221,9 @@ public:
     }
     if (!std::isfinite(mahalanobis_association_threshold) || mahalanobis_association_threshold <= 0.0) {
       throw std::runtime_error("slam_mahalanobis_association_threshold must be finite and > 0");
+    }
+    if (mahalanobis_provisional_observation_count <= 0) {
+      throw std::runtime_error("slam_mahalanobis_provisional_observation_count must be > 0");
     }
 
     auto R = arma::mat(2, 2, arma::fill::none);
@@ -234,10 +244,12 @@ public:
       "SLAM configuration:\n"
       "slam_n_max_landmarks: {}\n"
       "slam_new_landmark_variance: {}\n"
-      "slam_mahalanobis_association_threshold: {}\n",
+      "slam_mahalanobis_association_threshold: {}\n"
+      "slam_mahalanobis_provisional_observation_count: {}\n",
       n_max_landmarks,
       new_landmark_variance,
-      mahalanobis_association_threshold);
+      mahalanobis_association_threshold,
+      mahalanobis_provisional_observation_count);
     RCLCPP_INFO(get_logger(), "%s", config_msg.c_str());
 
     auto matrix_stream = std::ostringstream{};
@@ -258,7 +270,8 @@ public:
         wheel_radius_, track_width_, R, Q, initial_state, initial_covariance,
         static_cast<size_t>(n_max_landmarks),
         new_landmark_variance,
-        mahalanobis_association_threshold);
+        mahalanobis_association_threshold,
+        static_cast<size_t>(mahalanobis_provisional_observation_count));
     } else {
       RCLCPP_INFO(get_logger(), "Using known data association (given marker ID's for landmarks) for SLAM updates");
       dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
