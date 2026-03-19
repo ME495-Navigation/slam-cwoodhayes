@@ -314,14 +314,16 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
     size_t best_landmark_slot = 0;
     for (size_t slot = 0; slot < get_num_landmarks(); ++slot) {
       measurement_model_.observed_landmark_id = slot;
-      auto expected_measurement = measurement_model_.h(ekf_.get_state());
-      auto H = measurement_model_.H(ekf_.get_state());
-      auto phi = H * ekf_.get_covariance() * H.t() + ekf_.get_R();
+      arma::vec expected_measurement = measurement_model_.h(ekf_.get_state());
+      arma::mat H = measurement_model_.H(ekf_.get_state());
+      arma::mat covariance = ekf_.get_covariance();
+      arma::mat R = ekf_.get_R();
+      arma::mat phi = H * covariance * H.t() + R;
 
       arma::vec z_dist = arma::vec({range, bearing}) - expected_measurement;
       // must manually normalize bearing angle. 
       z_dist(1) = normalize_angle(z_dist(1)); 
-      auto d_mahalanobis = arma::as_scalar(z_dist.t() * arma::inv(phi) * z_dist);
+      auto d_mahalanobis = arma::as_scalar(z_dist.t() * arma::solve(phi, z_dist));
 
       if (d_mahalanobis < min_distance) {
         min_distance = d_mahalanobis;
