@@ -90,8 +90,10 @@ public:
     detector_ = std::make_unique<turtlelib::CylinderDetector>(config);
 
     // Create subscription to laser scan
+    auto scan_qos = rclcpp::QoS(rclcpp::KeepLast(10));
+    scan_qos.best_effort();
     scan_subscription_ = create_subscription<sensor_msgs::msg::LaserScan>(
-      "red/scan", 10,
+      "red/scan", scan_qos,
       std::bind(&LandmarkDetector::scan_callback, this, std::placeholders::_1));
 
     // Create publisher for landmarks

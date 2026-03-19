@@ -280,7 +280,10 @@ public:
         create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
       path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
       // laser scan publisher
-      laser_scan_publisher_ = create_publisher<sensor_msgs::msg::LaserScan>("red/scan", 10);
+      auto scan_qos = rclcpp::QoS(rclcpp::KeepLast(10));
+      scan_qos.best_effort();
+      laser_scan_publisher_ =
+        create_publisher<sensor_msgs::msg::LaserScan>("red/scan", scan_qos);
 
       // fake sensor publisher at 5Hz
       fake_sensor_publisher_ =

@@ -28,6 +28,13 @@
       <arg name="use_jsp" value="false"/>
   </include>
 
+  <!-- The nuwalls node publishes markers with frame_id="nusim/world".
+       On the real robot there is no nusim/world TF, so we publish a
+       static identity transform from map -> nusim/world so those markers render. -->
+  <!-- TODO - just change the nusim node to expose this as a parameter -->
+  <node pkg="tf2_ros" exec="static_transform_publisher" name="map_to_nusim_world_tf"
+    args="0 0 0 0 0 0 map nusim/world"/>
+
   <!-- robot-specific stuff -->
   <node pkg="nuslam" exec="slam_node" name="nuslam_node" output="screen">
     <param from="$(var diff_params)"/>
@@ -45,11 +52,13 @@
     <param name="slam_mahalanobis_association" value="true"/> 
   </node>
 
-  <!-- also launch landmark detection node -->
+  <!-- also launch landmark detection node.
+       The real robot publishes on /scan; remap so the node can find it. -->
   <node pkg="nuslam" exec="landmarks" name="landmarks" output="screen">
     <param from="$(find-pkg-share nuslam)/config/slam_demo_world.yaml"/>
     <param from="$(find-pkg-share nuslam)/config/slam_config.yaml"/>
     <remap from="landmarks" to="/detected_obstacles"/>
+    <remap from="red/scan" to="/scan"/>
     <param name="robot_frame" value="green/base_link"/>
   </node>
 
