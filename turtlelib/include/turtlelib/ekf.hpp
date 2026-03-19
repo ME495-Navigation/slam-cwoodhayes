@@ -83,6 +83,8 @@ namespace turtlelib
     /// @param Q new process noise covariance (must be square and match state dimension)
     void resize_filter(const arma::vec & state, const arma::mat & covariance, const arma::mat & Q);
 
+    arma::mat get_R() const { return R_; }
+
     // debugging vars. not used, just written to.
     // kalman gain from most recent update step
     arma::mat K_;

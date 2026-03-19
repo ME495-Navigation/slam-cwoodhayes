@@ -43,6 +43,14 @@ public:
 class DDSLAM
 {
 public:
+  /// @brief Construct DDSLAM object
+  /// @param wheel_radius Diff drive wheel radius
+  /// @param wheel_track Diff drive wheel track
+  /// @param R Measurement noise covariance
+  /// @param Q_robot_pose Process noise covariance for robot pose
+  /// @param initial_state Initial state vector
+  /// @param initial_covariance Initial state covariance matrix
+  /// @param max_landmarks Max number of landmarks allowed in state (for memory safety)
   DDSLAM(
     double wheel_radius, double wheel_track, arma::mat R, arma::mat Q_robot_pose,
     arma::vec initial_state, arma::mat initial_covariance,
@@ -59,7 +67,9 @@ public:
   /// @param landmark_id id of the observed landmark (key in the landmark_positions map)
   /// @param range measured range to the landmark
   /// @param bearing measured bearing to the landmark
-  void measurement_update(size_t landmark_id, const double range, const double bearing);
+  /// @return the id of the landmark that was updated. Same as input landmark id.
+  ///         (this changes in subclasses with unknown data association)
+  size_t measurement_update(size_t landmark_id, const double range, const double bearing);
 
   /// @brief Get current state estimate (robot pose and landmark positions)
   arma::vec get_state() const { return ekf_.get_state(); }
@@ -85,8 +95,13 @@ public:
   /// @return vector of landmark ids where element i corresponds to state entries (2*i+3, 2*i+4)
   std::vector<size_t> get_landmark_ids() const;
 
-private:
-  static arma::mat expand_process_noise(const arma::mat & Q_robot_pose, arma::uword state_dim);
+protected:
+  /// @brief Add a new landmark to the EKF state vector and covariance matrix,
+  /// initialized based on the given measurement and current robot pose estimate.
+  void add_landmark_to_state(size_t landmark_id, double range, double bearing);
+
+  /// @brief Helper function to expand the process noise covariance matrix for new landmarks.
+  static arma::mat resize_process_noise(const arma::mat & Q_robot_pose, arma::uword state_dim);
 
   DiffDrive diff_drive_;
   DDSLAMProcessModel process_model_;
@@ -97,6 +112,46 @@ private:
   std::unordered_map<size_t, size_t> landmark_id_to_slot_;
   std::vector<size_t> slot_to_landmark_id_;
   double new_landmark_variance_;
+};
+
+/// @brief SLAM with unknown data association using Mahalanobis distance
+class DDSLAMMahalanobis : public DDSLAM
+{
+public:
+  /// @brief Construct with same params as DDSLAM, plus association threshold.
+  /// @param wheel_radius Diff drive wheel radius
+  /// @param wheel_track Diff drive wheel track
+  /// @param R Measurement noise covariance
+  /// @param Q_robot_pose Process noise covariance for robot pose
+  /// @param initial_state Initial state vector
+  /// @param initial_covariance Initial state covariance matrix
+  /// @param max_landmarks Max number of landmarks allowed in state (for memory safety)
+  /// @param new_landmark_variance Initial variance to assign to new landmarks when added.
+  /// @param association_threshold Chi-square threshold for Mahalanobis distance 
+  ///        Data association (default 5.991 for 95% confidence with 2 DOF)
+  DDSLAMMahalanobis(
+    double wheel_radius, double wheel_track, arma::mat R, arma::mat Q_robot_pose,
+    arma::vec initial_state, arma::mat initial_covariance,
+    size_t max_landmarks,
+    double new_landmark_variance = 1000.0,
+    double association_threshold = 5.991 
+  ) : 
+  DDSLAM(wheel_radius, wheel_track, R, Q_robot_pose, initial_state, initial_covariance, max_landmarks, new_landmark_variance),
+  association_threshold_(association_threshold)
+  {}
+
+  /// @brief Perform EKF update step given measurement (range and bearing to landmarks) with unknown data association.
+  /// @param landmark_id Ignored (just included for compatibility with DDSLAM interface).
+  /// @param range landmark range measurement
+  /// @param bearing landmark bearing measurement
+  /// @return the id of the landmark that was updated, or newly added if no valid association was found.
+  size_t measurement_update(size_t landmark_id, const double range, const double bearing);
+
+private:
+  size_t add_landmark_to_state_mahalanobis(double range, double bearing);
+  size_t pop_landmark_from_state();
+
+  double association_threshold_;
 };
 
 }  // namespace turtlelib

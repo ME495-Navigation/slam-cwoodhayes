@@ -24,7 +24,7 @@ namespace turtlelib {
       process_model_,
       measurement_model_,
       R,
-      expand_process_noise(Q_robot_pose, 3),
+      resize_process_noise(Q_robot_pose, 3),
       initial_state,
       initial_covariance),
     Q_robot_pose_(Q_robot_pose),
@@ -39,7 +39,7 @@ namespace turtlelib {
     }
   }
 
-  arma::mat DDSLAM::expand_process_noise(const arma::mat & Q_robot_pose, arma::uword state_dim)
+  arma::mat DDSLAM::resize_process_noise(const arma::mat & Q_robot_pose, arma::uword state_dim)
   {
     if (Q_robot_pose.n_rows != 3 || Q_robot_pose.n_cols != 3) {
       throw std::runtime_error("Q_robot_pose must be a 3x3 matrix");
@@ -199,7 +199,7 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
     ekf_.step(control, arma::vec());
 }
 
-  void DDSLAM::measurement_update(size_t landmark_id, const double range, const double bearing)
+  size_t DDSLAM::measurement_update(size_t landmark_id, const double range, const double bearing)
   {
     if (!std::isfinite(range) || !std::isfinite(bearing) || range < 0.0) {
       throw std::runtime_error("Invalid landmark measurement: range and bearing must be finite, with non-negative range");
@@ -213,37 +213,53 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
           max_landmarks_);
         throw std::runtime_error(msg);
       }
-
-      auto state = ekf_.get_state();
-      auto covariance = ekf_.get_covariance();
-
-      auto th = state(0);
-      auto x = state(1);
-      auto y = state(2);
-
-      // resize the state & covariance to include the new landmark
-      auto new_state = arma::vec(state.n_rows + 2, arma::fill::zeros);
-      new_state.subvec(0, state.n_rows - 1) = state;
-      new_state(state.n_rows) = x + range * std::cos(th + bearing);
-      new_state(state.n_rows + 1) = y + range * std::sin(th + bearing);
-
-      auto new_covariance = arma::mat(covariance.n_rows + 2, covariance.n_cols + 2, arma::fill::zeros);
-      new_covariance.submat(0, 0, covariance.n_rows - 1, covariance.n_cols - 1) = covariance;
-      new_covariance(covariance.n_rows, covariance.n_cols) = new_landmark_variance_;
-      new_covariance(covariance.n_rows + 1, covariance.n_cols + 1) = new_landmark_variance_;
-
-      auto new_process_noise = expand_process_noise(Q_robot_pose_, new_state.n_rows);
-      ekf_.resize_filter(new_state, new_covariance, new_process_noise);
-
-      auto landmark_slot = slot_to_landmark_id_.size();
-      landmark_id_to_slot_[landmark_id] = landmark_slot;
-      slot_to_landmark_id_.push_back(landmark_id);
+      add_landmark_to_state(landmark_id, range, bearing);
     }
 
     // set the observed landmark id in the measurement model so that we calculate the measurement update for the correct landmark
     measurement_model_.observed_landmark_id = landmark_id_to_slot_.at(landmark_id);
     auto measurement = arma::vec({range, bearing});
     ekf_.step(arma::vec(), measurement); // empty control since we only want to do the measurement update step
+    return landmark_id;
+  }
+
+  void DDSLAM::add_landmark_to_state(size_t landmark_id, double range, double bearing)
+  {
+    if (landmark_id_to_slot_.contains(landmark_id)) {
+      throw std::runtime_error(std::format("Landmark id {} already exists in state", landmark_id));
+    }
+    if (get_num_landmarks() >= max_landmarks_) {
+      throw std::runtime_error(std::format(
+        "Cannot add landmark id {}: maximum of {} landmarks reached",
+        landmark_id,
+        max_landmarks_));
+    }
+
+    auto state = ekf_.get_state();
+    auto covariance = ekf_.get_covariance();
+
+    auto th = state(0);
+    auto x = state(1);
+    auto y = state(2);
+
+    // inverse measurement model to get landmark position in world frame.
+    auto new_state = arma::vec(state.n_rows + 2, arma::fill::zeros);
+    new_state.subvec(0, state.n_rows - 1) = state;
+    new_state(state.n_rows) = x + range * std::cos(th + bearing);
+    new_state(state.n_rows + 1) = y + range * std::sin(th + bearing);
+
+    // resize the state & covariance to include the new landmark
+    auto new_covariance = arma::mat(covariance.n_rows + 2, covariance.n_cols + 2, arma::fill::zeros);
+    new_covariance.submat(0, 0, covariance.n_rows - 1, covariance.n_cols - 1) = covariance;
+    new_covariance(covariance.n_rows, covariance.n_cols) = new_landmark_variance_;
+    new_covariance(covariance.n_rows + 1, covariance.n_cols + 1) = new_landmark_variance_;
+
+    auto new_process_noise = resize_process_noise(Q_robot_pose_, new_state.n_rows);
+    ekf_.resize_filter(new_state, new_covariance, new_process_noise);
+
+    auto landmark_slot = slot_to_landmark_id_.size();
+    landmark_id_to_slot_[landmark_id] = landmark_slot;
+    slot_to_landmark_id_.push_back(landmark_id);
   }
 
   Transform2D DDSLAM::get_map_to_body() const
@@ -276,4 +292,80 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
     return slot_to_landmark_id_;
   }
 
+
+  size_t DDSLAMMahalanobis::measurement_update(size_t landmark_id, const double range, const double bearing)
+  {
+    if (!std::isfinite(range) || !std::isfinite(bearing) || range < 0.0) {
+      throw std::runtime_error("Invalid landmark measurement: range and bearing must be finite, with non-negative range");
+    }
+
+    // temporarily add this new landmark to the state etc while we eval distance.
+    landmark_id = add_landmark_to_state_mahalanobis(range, bearing);
+
+    // find the closest landmark by Mahalanobis distance.
+    double min_distance = std::numeric_limits<double>::max();
+    size_t best_landmark_slot = 0;
+    for (size_t slot = 0; slot < get_num_landmarks(); ++slot) {
+      measurement_model_.observed_landmark_id = slot;
+      auto expected_measurement = measurement_model_.h(ekf_.get_state());
+      auto H = measurement_model_.H(ekf_.get_state());
+      auto phi = H * ekf_.get_covariance() * H.t() + ekf_.get_R();
+
+      arma::vec z_dist = arma::vec({range, bearing}) - expected_measurement;
+      // must manually normalize bearing angle. 
+      z_dist(1) = normalize_angle(z_dist(1)); 
+      auto d_mahalanobis = arma::as_scalar(z_dist.t() * arma::inv(phi) * z_dist);
+
+      if (d_mahalanobis < min_distance) {
+        min_distance = d_mahalanobis;
+        best_landmark_slot = slot;
+      }
+    }
+
+    // if the nearest estimate is the new landmark, leave it in!
+    // TODO can add a "provisional landmark list" and wait to see it more times.
+
+    // if it's an existing landmark, we remove our temporary landmark from the state.
+    if (best_landmark_slot != landmark_id) {
+      pop_landmark_from_state();
+    }
+    // perform measurement update with associated landmark
+    measurement_update(best_landmark_slot, range, bearing);
+    return best_landmark_slot;
+  }
+
+  size_t DDSLAMMahalanobis::add_landmark_to_state_mahalanobis(double range, double bearing)
+  {
+    // internally, just use the map index as the landmark id since we 
+    // manage data association outselves.
+    auto lm_id = get_num_landmarks();
+    add_landmark_to_state(lm_id, range, bearing);
+    return lm_id;
+  }
+
+  size_t DDSLAMMahalanobis::pop_landmark_from_state()
+  {
+    if (get_num_landmarks() == 0) {
+      throw std::runtime_error("No landmarks to pop");
+    }
+
+    auto state = ekf_.get_state();
+    auto covariance = ekf_.get_covariance();
+
+    // remove the last landmark from the state vector and covariance matrix
+    auto new_state = arma::vec(state.n_rows - 2, arma::fill::zeros);
+    new_state = state.subvec(0, state.n_rows - 3);
+
+    auto new_covariance = arma::mat(covariance.n_rows - 2, covariance.n_cols - 2, arma::fill::zeros);
+    new_covariance = covariance.submat(0, 0, covariance.n_rows - 3, covariance.n_cols - 3);
+
+    auto new_process_noise = resize_process_noise(Q_robot_pose_, new_state.n_rows);
+    ekf_.resize_filter(new_state, new_covariance, new_process_noise);
+
+    // also remove the landmark from our id-slot mapping
+    auto landmark_id = slot_to_landmark_id_.back();
+    slot_to_landmark_id_.pop_back();
+    landmark_id_to_slot_.erase(landmark_id);
+    return landmark_id;
+  }
 }
