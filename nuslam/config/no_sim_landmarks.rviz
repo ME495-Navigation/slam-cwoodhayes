@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
         - /TF1/Frames1
         - /MarkerArray - Obstacles (gt)1/Topic1
         - /SLAM Odometry1
@@ -52,7 +53,7 @@ Visualization Manager:
       Frames:
         All Enabled: false
         blue/base_footprint:
-          Value: true
+          Value: false
         blue/base_link:
           Value: false
         blue/base_scan:
@@ -66,7 +67,7 @@ Visualization Manager:
         blue/wheel_right_link:
           Value: false
         green/base_footprint:
-          Value: true
+          Value: false
         green/base_link:
           Value: false
         green/base_scan:
@@ -84,9 +85,9 @@ Visualization Manager:
         nusim/world:
           Value: false
         odom:
-          Value: true
+          Value: false
         red/base_footprint:
-          Value: true
+          Value: false
         red/base_link:
           Value: false
         red/base_scan:
@@ -601,7 +602,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 6.130216598510742
+      Distance: 5.700076103210449
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

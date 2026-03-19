@@ -2,9 +2,9 @@
 
 ## Demonstration in Nusim
 
-https://github.com/user-attachments/assets/8f95d7c8-a8a6-441a-91ff-cd5723f86deb
+https://github.com/user-attachments/assets/ea1a8a6e-004b-4681-86aa-999a3f587f48
 
-> Driving the robot around a closed path, observing the environment only using (simulated) lidar. The robot builds a map online (green) using EKF-SLAM, with circle detection + clustering to detect landmarks (blue) and data association using Mahalanobis distance. The map is visualized in RViz, and the ground truth map (red) + odometry-based estimate (blue robot) is shown for comparison. Note that when the robot collides with an obstacle, the odometry-based estimate diverges significantly, while the SLAM estimate remains accurate by leveraging the landmarks in the environment.
+> Driving the robot around a closed path, observing the environment only using (simulated) lidar. The robot builds a map online (green) using EKF-SLAM, with circle detection + clustering to detect landmarks (white) and data association using Mahalanobis distance. The map is visualized in RViz, and the ground truth map (red) + odometry-based estimate (blue robot) is shown for comparison. Note that when the robot collides with an obstacle, the odometry-based estimate diverges significantly, while the SLAM estimate remains accurate by leveraging the landmarks in the environment.
 
 After this closed loop is complete, the ground truth, odometry, and SLAM poses are as follows:
 
