@@ -24,6 +24,7 @@
 ///   - detector.rmse_threshold (double): RMSE threshold for accepting circle fits
 ///   - detector.inscribed_angle_mean_range_deg (array): Range of mean inscribed angles [min, max]
 ///   - detector.inscribed_angle_stddev_threshold_deg (double): Threshold for inscribed angle std dev
+///   - detector.concavity_threshold (double): Threshold for concavity check in circle validation
 class LandmarkDetector : public rclcpp::Node
 {
 public:
@@ -67,6 +68,11 @@ public:
       desc.description = "Minimum number of points required in a cluster to attempt circle fitting";
       declare_parameter("detector.min_cluster_size", 3, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Threshold for concavity check based on mean point location relative to endpoints";
+      declare_parameter("detector.concavity_threshold", 0.02, desc);
+    }
 
     cylinder_height_ = get_parameter("obstacles.h").as_double();
     robot_frame_ = get_parameter("robot_frame").as_string();
@@ -78,7 +84,8 @@ public:
       get_parameter("detector.rmse_threshold").as_double(),
       {angle_range[0], angle_range[1]},
       get_parameter("detector.inscribed_angle_stddev_threshold_deg").as_double(),
-      static_cast<int>(get_parameter("detector.min_cluster_size").as_int())
+      static_cast<int>(get_parameter("detector.min_cluster_size").as_int()),
+      get_parameter("detector.concavity_threshold").as_double()
     };
     detector_ = std::make_unique<turtlelib::CylinderDetector>(config);
 
