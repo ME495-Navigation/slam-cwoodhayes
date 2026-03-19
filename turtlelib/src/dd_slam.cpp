@@ -211,7 +211,7 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
           "Cannot add landmark id {}: maximum of {} landmarks reached",
           landmark_id,
           max_landmarks_);
-        throw std::runtime_error(msg);
+        return -1;
       }
       add_landmark_to_state(landmark_id, range, bearing);
     }
