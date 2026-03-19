@@ -25,6 +25,7 @@
 ///   - detector.inscribed_angle_mean_range_deg (array): Range of mean inscribed angles [min, max]
 ///   - detector.inscribed_angle_stddev_threshold_deg (double): Threshold for inscribed angle std dev
 ///   - detector.concavity_threshold (double): Threshold for concavity check in circle validation
+///   - detector.circle_radius_range (array): Accepted fitted circle radius range [min, max] in meters
 class LandmarkDetector : public rclcpp::Node
 {
 public:
@@ -73,19 +74,32 @@ public:
       desc.description = "Threshold for concavity check based on mean point location relative to endpoints";
       declare_parameter("detector.concavity_threshold", 0.02, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Accepted fitted circle radius range [min, max] in meters";
+      declare_parameter("detector.circle_radius_range", std::vector<double>{0.001, 2.0}, desc);
+    }
 
     cylinder_height_ = get_parameter("obstacles.h").as_double();
     robot_frame_ = get_parameter("robot_frame").as_string();
 
     // Create detector configuration
     auto angle_range = get_parameter("detector.inscribed_angle_mean_range_deg").as_double_array();
+    auto radius_range = get_parameter("detector.circle_radius_range").as_double_array();
+    if (angle_range.size() != 2) {
+      throw std::runtime_error("detector.inscribed_angle_mean_range_deg must contain exactly 2 values");
+    }
+    if (radius_range.size() != 2) {
+      throw std::runtime_error("detector.circle_radius_range must contain exactly 2 values");
+    }
     auto config = turtlelib::DetectorConfig{
       get_parameter("detector.distance_threshold").as_double(),
       get_parameter("detector.rmse_threshold").as_double(),
       {angle_range[0], angle_range[1]},
       get_parameter("detector.inscribed_angle_stddev_threshold_deg").as_double(),
       static_cast<int>(get_parameter("detector.min_cluster_size").as_int()),
-      get_parameter("detector.concavity_threshold").as_double()
+      get_parameter("detector.concavity_threshold").as_double(),
+      {radius_range[0], radius_range[1]}
     };
     detector_ = std::make_unique<turtlelib::CylinderDetector>(config);
 

@@ -45,6 +45,8 @@ namespace turtlelib
     int min_cluster_size = 3;
     /// @brief Threshold for concavity check based on mean point location relative to endpoints.
     double concavity_threshold = 0.02;  // meters
+    /// @brief Expected range of circle radii for valid cylinder detections (meters)
+    std::pair<double, double> circle_radius_range{0.001, 2.0}; // meters
   };
 
   class CylinderDetector

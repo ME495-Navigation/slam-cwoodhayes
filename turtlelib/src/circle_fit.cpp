@@ -188,6 +188,9 @@ namespace turtlelib
         try {
           const auto [circle, rmse] = fit_circle(cluster);
 
+          if (circle.radius < cfg_.circle_radius_range.first || circle.radius > cfg_.circle_radius_range.second) {
+            continue;  // filter out fits with unrealistic radii
+          }
           if (!std::isfinite(rmse) || rmse > cfg_.rmse_threshold) {
             continue;  // filter out bad fits based on RMSE threshold
           }
