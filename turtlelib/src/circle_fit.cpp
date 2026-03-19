@@ -230,7 +230,7 @@ namespace turtlelib
     // we only want convex obstacles.
     dist_mean /= static_cast<double>(points.size() - 2);
     const auto endpoints_dist = (std::hypot(p1.x, p1.y) + std::hypot(p2.x, p2.y)) / 2.0;
-    if (dist_mean >= endpoints_dist) {
+    if (dist_mean - cfg_.concavity_threshold >= endpoints_dist) {
       return false;  // likely concave, so fail the check
     }
 

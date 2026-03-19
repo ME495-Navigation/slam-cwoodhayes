@@ -43,6 +43,8 @@ namespace turtlelib
     double inscribed_angle_stddev_threshold_deg = 10.0;
     /// @brief Minimum number of points required in a cluster to attempt circle fitting
     int min_cluster_size = 3;
+    /// @brief Threshold for concavity check based on mean point location relative to endpoints.
+    double concavity_threshold = 0.02;  // meters
   };
 
   class CylinderDetector

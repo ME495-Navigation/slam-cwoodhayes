@@ -20,5 +20,5 @@
       distance_threshold: 0.18
       rmse_threshold: 0.3
       inscribed_angle_mean_range_deg: [70.0, 110.0]
-      inscribed_angle_stddev_threshold_deg: 50.0
+      inscribed_angle_stddev_threshold_deg: 100.0
       min_cluster_size: 5
