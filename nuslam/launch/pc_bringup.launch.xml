@@ -7,8 +7,12 @@
     <choice value="none"/>
   </arg>
 
+  <!-- constants -->
+  <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+  <let name="slam_params" value="$(find-pkg-share nuslam)/config/slam_irl_config.yaml"/>
+  <let name="world_config" value="$(find-pkg-share nuslam)/config/slam_irl_arena.yaml"/>
+
   <!-- stuff from start_robot.launch.xml -->
-  <let name="world_config" value="$(find-pkg-share nuslam)/config/slam_demo_world.yaml"/>
   <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
       <arg name="use_rviz" value="false"/>
       <arg name="color" value="blue"/>
@@ -31,10 +35,6 @@
       <env name="TURTLEBOT3_MODEL" value="burger" />
       </node>
   </group>
-
-  <!-- constants -->
-  <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-  <let name="slam_params" value="$(find-pkg-share nuslam)/config/slam_config.yaml"/>
 
   <!-- green robot for SLAM robot estimate -->
   <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
@@ -63,8 +63,8 @@
   <!-- also launch landmark detection node.
        The real robot publishes on /scan; remap so the node can find it. -->
   <node pkg="nuslam" exec="landmarks" name="landmarks" output="screen">
-    <param from="$(find-pkg-share nuslam)/config/slam_demo_world.yaml"/>
-    <param from="$(find-pkg-share nuslam)/config/slam_config.yaml"/>
+    <param from="$(var world_config)"/>
+    <param from="$(var slam_params)"/>
     <remap from="landmarks" to="/detected_obstacles"/>
     <remap from="red/scan" to="/scan"/>
     <param name="robot_frame" value="green/base_link"/>
