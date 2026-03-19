@@ -25,6 +25,7 @@
 #include <ranges>
 #include <format>
 #include <queue>
+#include <set>
 #include <sstream>
 
 /// \brief Node for SLAM + odometry estimation of the robot.
@@ -553,8 +554,10 @@ private:
     auto landmark_positions = dd_slam_->get_landmark_positions();
     auto landmark_ids = dd_slam_->get_landmark_ids();
 
+    std::set<int> current_landmark_ids;
     for (arma::uword landmark_slot = 0; landmark_slot < landmark_positions.n_cols; ++landmark_slot) {
       auto landmark_id = landmark_ids.at(landmark_slot);
+      current_landmark_ids.insert(landmark_id);
 
       auto marker = visualization_msgs::msg::Marker();
       marker.header.frame_id = map_id_;
@@ -581,6 +584,20 @@ private:
       marker_array.markers.push_back(marker);
     }
 
+    // Send DELETE markers for landmarks that were previously published but are no longer in SLAM
+    for (auto prev_id : published_landmark_ids_) {
+      if (current_landmark_ids.find(prev_id) == current_landmark_ids.end()) {
+        auto delete_marker = visualization_msgs::msg::Marker();
+        delete_marker.header.frame_id = map_id_;
+        delete_marker.header.stamp = get_clock()->now();
+        delete_marker.id = static_cast<int>(prev_id);
+        delete_marker.action = visualization_msgs::msg::Marker::DELETE;
+        delete_marker.ns = "slam_obstacles";
+        marker_array.markers.push_back(delete_marker);
+      }
+    }
+
+    published_landmark_ids_ = current_landmark_ids;
     slam_obstacles_pub_->publish(marker_array);
 
     publish_slam_pose(get_clock()->now());
@@ -626,6 +643,7 @@ private:
   std::unique_ptr<turtlelib::DDSLAM> dd_slam_;
   std::deque<geometry_msgs::msg::PoseStamped> path_buffer_;
   std::deque<geometry_msgs::msg::PoseStamped> slam_path_buffer_;
+  std::set<int> published_landmark_ids_;
   size_t max_path_size_;
   std::string body_id_;
   std::string odom_id_;
