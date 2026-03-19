@@ -301,13 +301,10 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
 
     // in this subclass we use slots as landmark ids since we manage data association ourselves.
 
-    // temporarily add this new landmark to the state etc while we eval distance.
-    auto new_lm_slot = add_landmark_to_state_mahalanobis(range, bearing);
-
-    if (get_num_landmarks() == 1) {
+    if (get_num_landmarks() == 0) {
       // if this is the first landmark, just add it, perform update, and return
-      DDSLAM::measurement_update(new_lm_slot, range, bearing);
-      return new_lm_slot;
+      DDSLAM::measurement_update(0, range, bearing);
+      return 0;
     }
     // find the closest landmark by Mahalanobis distance.
     double min_distance = std::numeric_limits<double>::max();
@@ -330,16 +327,16 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
         best_landmark_slot = slot;
       }
     }
-    // if the nearest estimate is the new landmark, leave it in!
-    // TODO can add a "provisional landmark list" and wait to see it more times.
-
-    // if it's an existing landmark, we remove our temporary landmark from the state.
-    if (best_landmark_slot != new_lm_slot) {
-      pop_landmark_from_state();
+    // if best existing landmark is farther than threshold, add a new landmark instead.
+    if (min_distance > association_threshold_) {
+      auto new_lm_slot = add_landmark_to_state_mahalanobis(range, bearing);
+      DDSLAM::measurement_update(new_lm_slot, range, bearing);
+      return new_lm_slot;
     }
-    // perform measurement update with associated landmark
-    DDSLAM::measurement_update(best_landmark_slot, range, bearing);
-    return best_landmark_slot;
+    else {
+      DDSLAM::measurement_update(best_landmark_slot, range, bearing);
+      return best_landmark_slot;
+    }
   }
 
   size_t DDSLAMMahalanobis::add_landmark_to_state_mahalanobis(double range, double bearing)
