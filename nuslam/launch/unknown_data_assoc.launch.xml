@@ -54,7 +54,7 @@
       <!-- additional params (different from odometry node) -->
       <param name="slam_body_id" value="green/base_footprint"/>
       <!-- NEW PARAM TO ENABLE MAHALANOBIS-BASED ASSOCIATION IN SLAM UPDATES -->
-      <param name="slam_mahalanobis_association" value="false"/> 
+      <param name="slam_mahalanobis_association" value="true"/> 
     </node>
   </group>
 

@@ -111,7 +111,7 @@ private:
     // Detect circles from the LiDAR scan
     auto detected_circles = detector_->detect(ranges, msg->angle_increment);
 
-    #ifdef DEBUG
+    #ifndef NDEBUG
     auto debugmsg = std::format(
       "Detected {} circles in laser scan ({})", 
       detected_circles.size(), ranges.size());

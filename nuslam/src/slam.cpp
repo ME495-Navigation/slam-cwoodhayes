@@ -238,8 +238,8 @@ public:
     // everything we figure out is relative to the start location anyhow.
     initial_covariance *= .01; 
 
-    auto use_mahalanobis = get_parameter("slam_mahalanobis_association").as_bool();
-    if (use_mahalanobis) {
+    use_mahalanobis_ = get_parameter("slam_mahalanobis_association").as_bool();
+    if (use_mahalanobis_) {
       RCLCPP_INFO(get_logger(), "Using Mahalanobis distance-based data association for SLAM updates");
       dd_slam_ = std::make_unique<turtlelib::DDSLAMMahalanobis>(
         wheel_radius_, track_width_, R, Q, initial_state, initial_covariance,
@@ -486,7 +486,14 @@ private:
       auto range = std::hypot(marker.pose.position.x, marker.pose.position.y);
       auto bearing = std::atan2(marker.pose.position.y, marker.pose.position.x);
 
-      dd_slam_->measurement_update(landmark_id, range, bearing);
+      auto actual_lm_id = dd_slam_->measurement_update(landmark_id, range, bearing);
+
+      if (use_mahalanobis_) {
+        auto msg = std::format(
+          "MSR UPDATE ID->SLOT = {}->{}: range={:.2f}, bearing={:.2f}",
+          landmark_id, actual_lm_id, range, bearing);
+        RCLCPP_INFO(get_logger(), msg.c_str());
+      }
 
 #ifndef NDEBUG
       auto y = dd_slam_->get_innovation();
@@ -596,6 +603,7 @@ private:
   double wheel_radius_;
   double track_width_;
   double obstacle_radius_;
+  bool use_mahalanobis_;
 };
 
 int main(int argc, char * argv[])

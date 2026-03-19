@@ -69,7 +69,7 @@ public:
   /// @param bearing measured bearing to the landmark
   /// @return the id of the landmark that was updated. Same as input landmark id.
   ///         (this changes in subclasses with unknown data association)
-  size_t measurement_update(size_t landmark_id, const double range, const double bearing);
+  virtual size_t measurement_update(size_t landmark_id, const double range, const double bearing);
 
   /// @brief Get current state estimate (robot pose and landmark positions)
   arma::vec get_state() const { return ekf_.get_state(); }
@@ -94,6 +94,8 @@ public:
   /// @brief Get landmark ids ordered by internal landmark slot.
   /// @return vector of landmark ids where element i corresponds to state entries (2*i+3, 2*i+4)
   std::vector<size_t> get_landmark_ids() const;
+
+  virtual ~DDSLAM() = default;
 
 protected:
   /// @brief Add a new landmark to the EKF state vector and covariance matrix,
@@ -145,7 +147,7 @@ public:
   /// @param range landmark range measurement
   /// @param bearing landmark bearing measurement
   /// @return the id of the landmark that was updated, or newly added if no valid association was found.
-  size_t measurement_update(size_t landmark_id, const double range, const double bearing);
+  size_t measurement_update(size_t landmark_id, const double range, const double bearing) override;
 
 private:
   size_t add_landmark_to_state_mahalanobis(double range, double bearing);
