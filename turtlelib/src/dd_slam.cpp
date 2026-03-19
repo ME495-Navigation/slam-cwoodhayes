@@ -207,10 +207,7 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
 
     if (!landmark_id_to_slot_.contains(landmark_id)) {
       if (get_num_landmarks() >= max_landmarks_) {
-        auto msg = std::format(
-          "Cannot add landmark id {}: maximum of {} landmarks reached",
-          landmark_id,
-          max_landmarks_);
+        // max number of landmarks reached.
         return -1;
       }
       add_landmark_to_state(landmark_id, range, bearing);

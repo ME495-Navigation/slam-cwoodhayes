@@ -105,6 +105,7 @@
         <node pkg="nusim" exec="nusim"  name="nuwalls" output="screen">>
             <param name="draw_only" value="true"/>
             <param from="$(var nusim_world_config)"/>
+            <param name="world_frame" value="nusim/world"/>
         </node>
     </group>
 

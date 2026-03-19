@@ -522,6 +522,14 @@ private:
 
       auto actual_lm_id = dd_slam_->measurement_update(landmark_id, range, bearing);
 
+      if (actual_lm_id == -1) {
+        auto n_landmarks = dd_slam_->get_num_landmarks();
+        auto msg = std::format(
+          "Cannot add landmark id {}: maximum of {} landmarks reached",
+          landmark_id, n_landmarks);
+        RCLCPP_WARN(get_logger(), msg.c_str());
+      }
+
 #ifndef NDEBUG
       if (use_mahalanobis_) {
         auto msg = std::format(

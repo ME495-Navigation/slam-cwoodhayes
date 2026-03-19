@@ -7,15 +7,30 @@
     <choice value="none"/>
   </arg>
 
-  <!-- launch normal SLAM nodes. SAME AS IN slam.launch.xml -->
+  <!-- stuff from start_robot.launch.xml -->
   <let name="world_config" value="$(find-pkg-share nuslam)/config/slam_demo_world.yaml"/>
-  <include file="$(find-pkg-share turtle_control)/launch/start_robot.launch.xml">
-    <arg name="cmd_src" value="$(var cmd_src)"/>
-    <arg name="robot" value="none"/>
-    <arg name="use_rviz" value="false"/>
-    <arg name="use_odom" value="false"/>
-    <arg name="nusim_world_config" value="$(var world_config)"/>
+  <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+      <arg name="use_rviz" value="false"/>
+      <arg name="color" value="blue"/>
+      <arg name="use_jsp" value="false"/>
   </include>
+  <!-- run nusim but only draw the landmarks -->
+  <node pkg="nusim" exec="nusim"  name="nuwalls" output="screen">>
+      <param name="draw_only" value="true"/>
+      <param from="$(var world_config)"/>
+      <param name="world_frame" value="map"/>
+  </node>
+  <group if="$(equals $(var cmd_src) circle)">
+      <node pkg="turtle_control" exec="circle" name="circle" output="screen"
+          on_exit="shutdown">
+      </node>
+  </group>
+  <group if="$(equals $(var cmd_src) teleop)">
+      <node pkg="teleop_twist_keyboard" exec="teleop_twist_keyboard"
+      name="teleop_twist_keyboard" launch-prefix="xterm -e">
+      <env name="TURTLEBOT3_MODEL" value="burger" />
+      </node>
+  </group>
 
   <!-- constants -->
   <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
@@ -27,13 +42,6 @@
       <arg name="color" value="green"/>
       <arg name="use_jsp" value="false"/>
   </include>
-
-  <!-- The nuwalls node publishes markers with frame_id="nusim/world".
-       On the real robot there is no nusim/world TF, so we publish a
-       static identity transform from map -> nusim/world so those markers render. -->
-  <!-- TODO - just change the nusim node to expose this as a parameter -->
-  <node pkg="tf2_ros" exec="static_transform_publisher" name="map_to_nusim_world_tf"
-    args="0 0 0 0 0 0 map nusim/world"/>
 
   <!-- robot-specific stuff -->
   <node pkg="nuslam" exec="slam_node" name="nuslam_node" output="screen">

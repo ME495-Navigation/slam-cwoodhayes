@@ -60,7 +60,7 @@ using namespace std::chrono_literals;
 ///   - `~/reset` (std_srvs::srv::Empty): Resets simulation timestep and robot pose to initial state
 ///
 /// @details Broadcasts:
-///   - Transform from "nusim/world" to "red/base_footprint" with ground truth pose at each timestep
+///   - Transform from `world_frame` to "red/base_footprint" with ground truth pose at each timestep
 class NUSimulator : public rclcpp::Node
 {
 public:
@@ -88,6 +88,11 @@ public:
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
       desc.description = "Initial theta angle";
       declare_parameter("theta0", 0.0, desc);
+    }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Frame ID for the world frame";
+      declare_parameter("world_frame", std::string("nusim/world"), desc);
     }
     {
       auto desc = rcl_interfaces::msg::ParameterDescriptor();
@@ -237,6 +242,7 @@ public:
       lidar_noise_variance);
 
     gt_pose_ = get_pose0();
+    world_frame_ = get_parameter("world_frame").as_string();
     sim_rate_ = get_parameter("rate").as_double();
     // Validate that x and y have same length
     auto obs_x = get_parameter("obstacles.x").as_double_array();
@@ -361,10 +367,10 @@ private:
     joint_states.name = {"wheel_left_joint", "wheel_right_joint"};
     joint_states.position = {noisy_wheel_angle_left, noisy_wheel_angle_right};
 
-    // broadcast transform from nusim/world to red/base_footprint
+    // broadcast transform from world frame to red/base_footprint
     auto transform = geometry_msgs::msg::TransformStamped();
     transform.header.stamp = get_clock()->now();
-    transform.header.frame_id = "nusim/world";
+    transform.header.frame_id = world_frame_;
     transform.child_frame_id = "red/base_footprint";
 
     // set translation from groundtruth pose
@@ -390,7 +396,7 @@ private:
     // publish a path for the ground truth robot position with max 500 poses
     auto pose_stamped = geometry_msgs::msg::PoseStamped();
     pose_stamped.header.stamp = get_clock()->now();
-    pose_stamped.header.frame_id = "nusim/world";
+    pose_stamped.header.frame_id = world_frame_;
     pose_stamped.pose.position.x = gt_pose_.translation().x;
     pose_stamped.pose.position.y = gt_pose_.translation().y;
     pose_stamped.pose.position.z = 0.0;
@@ -406,7 +412,7 @@ private:
 
     auto path_msg = nav_msgs::msg::Path();
     path_msg.header.stamp = get_clock()->now();
-    path_msg.header.frame_id = "nusim/world";
+    path_msg.header.frame_id = world_frame_;
     path_msg.poses =
       std::vector<geometry_msgs::msg::PoseStamped>(gt_path_buffer_.begin(), gt_path_buffer_.end());
     path_publisher_->publish(path_msg);
@@ -453,7 +459,7 @@ private:
   }
 
   /// @brief Publish the walls of the arena and return the inner surface line segments.
-  /// @return The four inner wall surfaces as line segments in the world (nusim/world) XY plane
+  /// @return The four inner wall surfaces as line segments in the configured world frame XY plane
   std::vector<turtlelib::LineSegment> publish_arena()
   {
     double x_len = get_parameter("arena_x_length").as_double();
@@ -483,7 +489,7 @@ private:
 
     for (const auto & [x_pos, y_pos, x_scale, y_scale] : walls) {
       auto marker = visualization_msgs::msg::Marker();
-      marker.header.frame_id = "nusim/world";
+      marker.header.frame_id = world_frame_;
       marker.header.stamp = get_clock()->now();
       marker.id = marker_id++;
       marker.type = visualization_msgs::msg::Marker::CUBE;
@@ -532,9 +538,13 @@ private:
 
     auto marker_array = visualization_msgs::msg::MarkerArray();
 
+    RCLCPP_INFO(
+      get_logger(),
+      std::format("Publishing obstacles in {} frame...", world_frame_).c_str());  
+
     for (size_t i = 0; i < obs_x.size(); ++i) {
       auto marker = visualization_msgs::msg::Marker();
-      marker.header.frame_id = "nusim/world";
+      marker.header.frame_id = world_frame_;
       marker.header.stamp = get_clock()->now();
       marker.id = i;
       marker.type = visualization_msgs::msg::Marker::CYLINDER;
@@ -678,6 +688,7 @@ private:
   double sim_rate_;
   /// @brief ground truth pose of the robot
   turtlelib::Transform2D gt_pose_;
+  std::string world_frame_;
   /// @brief ground truth path of the robot (deque with configurable max size)
   std::deque<geometry_msgs::msg::PoseStamped> gt_path_buffer_;
   size_t max_path_size_;
