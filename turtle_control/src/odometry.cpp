@@ -129,7 +129,7 @@ public:
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
     // publish an initial transform at the origin so that we have a valid tf as soon as possible
-    publish_pose_tf(turtlelib::Transform2D());
+    publish_pose_tf(turtlelib::Transform2D(), get_clock()->now());
 
     RCLCPP_INFO(get_logger(), "odometry node constructed.");
   }
@@ -192,7 +192,7 @@ private:
 
     // publish odometry msg and tf
     odom_pub_->publish(odom_msg);
-    publish_pose_tf(T_ob);
+    publish_pose_tf(T_ob, rclcpp::Time(msg->header.stamp));
 
     // publish path with max 500 poses
     auto pose_stamped = geometry_msgs::msg::PoseStamped();
@@ -213,11 +213,11 @@ private:
     path_pub_->publish(path_msg);
   }
 
-  void publish_pose_tf(const turtlelib::Transform2D & T_ob)
+  void publish_pose_tf(const turtlelib::Transform2D & T_ob, const rclcpp::Time & stamp)
   {
     const auto quat = turtlelib::angle_to_2d_planar_quaternion(T_ob.rotation());
     auto tf = geometry_msgs::msg::TransformStamped();
-    tf.header.stamp = get_clock()->now();
+    tf.header.stamp = stamp;
     tf.header.frame_id = odom_id_;
     tf.child_frame_id = body_id_;
 
@@ -243,7 +243,7 @@ private:
 
     turtlelib::Transform2D new_pose({request->x, request->y}, request->theta);
     diff_drive_->reset_to_configuration(new_pose);
-    publish_pose_tf(new_pose);
+    publish_pose_tf(new_pose, get_clock()->now());
     path_buffer_.clear();
     response->success = true;
   }

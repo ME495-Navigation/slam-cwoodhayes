@@ -122,7 +122,7 @@ private:
     for (size_t i = 0; i < detected_circles.size(); ++i) {
       auto marker = visualization_msgs::msg::Marker();
       marker.header.frame_id = robot_frame_;
-      marker.header.stamp = get_clock()->now();
+      marker.header.stamp = msg->header.stamp;
       marker.id = static_cast<int>(i);
       marker.type = visualization_msgs::msg::Marker::CYLINDER;
       marker.action = visualization_msgs::msg::Marker::ADD;

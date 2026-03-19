@@ -299,9 +299,16 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
       throw std::runtime_error("Invalid landmark measurement: range and bearing must be finite, with non-negative range");
     }
 
-    // temporarily add this new landmark to the state etc while we eval distance.
-    landmark_id = add_landmark_to_state_mahalanobis(range, bearing);
+    // in this subclass we use slots as landmark ids since we manage data association ourselves.
 
+    // temporarily add this new landmark to the state etc while we eval distance.
+    auto new_lm_slot = add_landmark_to_state_mahalanobis(range, bearing);
+
+    if (get_num_landmarks() == 1) {
+      // if this is the first landmark, just add it, perform update, and return
+      DDSLAM::measurement_update(new_lm_slot, range, bearing);
+      return new_lm_slot;
+    }
     // find the closest landmark by Mahalanobis distance.
     double min_distance = std::numeric_limits<double>::max();
     size_t best_landmark_slot = 0;
@@ -321,16 +328,15 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
         best_landmark_slot = slot;
       }
     }
-
     // if the nearest estimate is the new landmark, leave it in!
     // TODO can add a "provisional landmark list" and wait to see it more times.
 
     // if it's an existing landmark, we remove our temporary landmark from the state.
-    if (best_landmark_slot != landmark_id) {
+    if (best_landmark_slot != new_lm_slot) {
       pop_landmark_from_state();
     }
     // perform measurement update with associated landmark
-    measurement_update(best_landmark_slot, range, bearing);
+    DDSLAM::measurement_update(best_landmark_slot, range, bearing);
     return best_landmark_slot;
   }
 
@@ -338,9 +344,9 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
   {
     // internally, just use the map index as the landmark id since we 
     // manage data association outselves.
-    auto lm_id = get_num_landmarks();
-    add_landmark_to_state(lm_id, range, bearing);
-    return lm_id;
+    auto lm_slot = get_num_landmarks();
+    add_landmark_to_state(lm_slot, range, bearing);
+    return lm_slot;
   }
 
   size_t DDSLAMMahalanobis::pop_landmark_from_state()

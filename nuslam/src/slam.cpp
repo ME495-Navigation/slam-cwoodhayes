@@ -253,9 +253,10 @@ public:
 
     // publish initial transforms at the origin so that we have valid tf as soon as possible
     auto identity = turtlelib::Transform2D();
-    publish_pose_tf(identity, map_id_, odom_id_);
-    publish_pose_tf(identity, map_id_, body_id_);
-    publish_pose_tf(identity, odom_id_, slam_body_id_);
+    const auto now = get_clock()->now();
+    publish_pose_tf(identity, map_id_, odom_id_, now);
+    publish_pose_tf(identity, map_id_, body_id_, now);
+    publish_pose_tf(identity, odom_id_, slam_body_id_, now);
 
     RCLCPP_INFO(get_logger(), "SLAM node constructed.");
   }
@@ -331,7 +332,7 @@ private:
     // TODO make this concurrency safe by wrapping in a lock.
     // for now ok because we're using a single threaded executor
     dd_slam_->odom_update(left_pos, right_pos);
-    publish_slam_pose();
+    publish_slam_pose(rclcpp::Time(msg->header.stamp));
     auto T_mb = dd_slam_->get_map_to_body();
     // we need T_mo. derive this from T_mb and T_ob
     auto T_mo = T_mb * T_ob.inv();
@@ -340,12 +341,12 @@ private:
     // - map -> odom: SLAM correction
     // - map -> blue/base_footprint: pure odometry (stays fixed even as odom frame is corrected)
     // - odom -> green/base_footprint: SLAM estimate in odom frame
-    publish_pose_tf(T_mo, map_id_, odom_id_);
-    publish_pose_tf(T_ob, map_id_, body_id_);
+    publish_pose_tf(T_mo, map_id_, odom_id_, rclcpp::Time(msg->header.stamp));
+    publish_pose_tf(T_ob, map_id_, body_id_, rclcpp::Time(msg->header.stamp));
     
     // Compute SLAM estimate in odom frame for green robot
     auto T_og = T_mo.inv() * T_mb;
-    publish_pose_tf(T_og, odom_id_, slam_body_id_);
+    publish_pose_tf(T_og, odom_id_, slam_body_id_, rclcpp::Time(msg->header.stamp));
 
     // joint states can come from diff_drive because we don't need slam for encoder vals.
     publish_joint_states(
@@ -412,7 +413,7 @@ private:
     joint_states_publisher->publish(joint_states);
   }
 
-  void publish_slam_pose()
+  void publish_slam_pose(const rclcpp::Time & stamp)
   {
     auto cov = dd_slam_->get_covariance();
     if (cov.n_rows < 3 || cov.n_cols < 3) {
@@ -426,7 +427,7 @@ private:
 
     auto T_mb = dd_slam_->get_map_to_body();
     auto slam_pose_msg = nav_msgs::msg::Odometry();
-    slam_pose_msg.header.stamp = get_clock()->now();
+    slam_pose_msg.header.stamp = stamp;
     slam_pose_msg.header.frame_id = map_id_;
     slam_pose_msg.child_frame_id = slam_body_id_;
 
@@ -454,11 +455,15 @@ private:
     slam_pose_pub_->publish(slam_pose_msg);
   }
 
-  void publish_pose_tf(const turtlelib::Transform2D & T, const std::string & parent_frame, const std::string & child_frame)
+  void publish_pose_tf(
+    const turtlelib::Transform2D & T,
+    const std::string & parent_frame,
+    const std::string & child_frame,
+    const rclcpp::Time & stamp)
   {
     const auto quat = turtlelib::angle_to_2d_planar_quaternion(T.rotation());
     auto tf = geometry_msgs::msg::TransformStamped();
-    tf.header.stamp = get_clock()->now();
+    tf.header.stamp = stamp;
     tf.header.frame_id = parent_frame;
     tf.child_frame_id = child_frame;
 
@@ -550,7 +555,7 @@ private:
 
     slam_obstacles_pub_->publish(marker_array);
 
-    publish_slam_pose();
+    publish_slam_pose(get_clock()->now());
   }
 
   /// @brief Callback function for set_initial_pose service. Sets the initial pose of the robot for odometry.
@@ -565,14 +570,15 @@ private:
 
     turtlelib::Transform2D new_pose({request->x, request->y}, request->theta);
     diff_drive_->reset_to_configuration(new_pose);
+    const auto now = get_clock()->now();
     
     // Publish initial transforms for blue robot (odometry in map frame)
-    publish_pose_tf(new_pose, map_id_, body_id_);
+    publish_pose_tf(new_pose, map_id_, body_id_, now);
     path_buffer_.clear();
     
     // Also reset SLAM: identity map -> odom, and green robot at origin in odom frame
-    publish_pose_tf(turtlelib::Transform2D(), map_id_, odom_id_);
-    publish_pose_tf(new_pose, odom_id_, slam_body_id_);
+    publish_pose_tf(turtlelib::Transform2D(), map_id_, odom_id_, now);
+    publish_pose_tf(new_pose, odom_id_, slam_body_id_, now);
     slam_path_buffer_.clear();
     
     response->success = true;

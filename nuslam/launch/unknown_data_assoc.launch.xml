@@ -42,7 +42,8 @@
 
   <!-- robot-specific stuff -->
   <group if="$(equals $(var robot) nusim)">
-    <node pkg="nuslam" exec="slam_node" name="nuslam_node" output="screen">
+    <node pkg="nuslam" exec="slam_node" name="nuslam_node" output="screen"
+    launch-prefix="xterm -e gdb -ex run --args">
       <param from="$(var diff_params)"/>
       <param from="$(var slam_params)"/>
       <param from="$(var world_config)"/>
