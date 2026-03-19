@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- launch normal SLAM nodes. SAME AS IN slam.launch.xml -->
+  <let name="world_config" value="$(find-pkg-share nuslam)/config/slam_demo_world.yaml"/>
+  <include file="$(find-pkg-share turtle_control)/launch/start_robot.launch.xml">
+    <arg name="cmd_src" value="none"/>
+    <arg name="robot" value="localhost"/>
+    <arg name="use_rviz" value="false"/>
+    <arg name="use_odom" value="false"/>
+    <arg name="nusim_world_config" value="$(var world_config)"/>
+  </include>
+</launch>

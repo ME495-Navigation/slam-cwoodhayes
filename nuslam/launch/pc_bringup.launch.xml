@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- args -->
+  <arg name="cmd_src" default="teleop" description="Source of cmd_vel commands">
+    <choice value="circle"/>
+    <choice value="teleop"/>
+    <choice value="none"/>
+  </arg>
+
+  <!-- launch normal SLAM nodes. SAME AS IN slam.launch.xml -->
+  <let name="world_config" value="$(find-pkg-share nuslam)/config/slam_demo_world.yaml"/>
+  <include file="$(find-pkg-share turtle_control)/launch/start_robot.launch.xml">
+    <arg name="cmd_src" value="$(var cmd_src)"/>
+    <arg name="robot" value="none"/>
+    <arg name="use_rviz" value="false"/>
+    <arg name="use_odom" value="false"/>
+    <arg name="nusim_world_config" value="$(var world_config)"/>
+  </include>
+
+  <!-- constants -->
+  <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+  <let name="slam_params" value="$(find-pkg-share nuslam)/config/slam_config.yaml"/>
+
+  <!-- green robot for SLAM robot estimate -->
+  <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+      <arg name="use_rviz" value="false"/>
+      <arg name="color" value="green"/>
+      <arg name="use_jsp" value="false"/>
+  </include>
+
+  <!-- robot-specific stuff -->
+  <node pkg="nuslam" exec="slam_node" name="nuslam_node" output="screen">
+    <param from="$(var diff_params)"/>
+    <param from="$(var slam_params)"/>
+    <param from="$(var world_config)"/>
+    <param name="wheel_left" value="wheel_left_joint"/>
+    <param name="wheel_right" value="wheel_right_joint"/>
+    <param name="body_id" value="blue/base_footprint"/>
+    <param name="odom_id" value="odom"/>
+    <remap from="joint_states" to="blue/joint_states"/>
+    <!-- additional params (different from odometry node) -->
+    <param name="slam_body_id" value="green/base_footprint"/>
+    <param name="landmark_observations_topic" value="/detected_obstacles"/>
+    <!-- NEW PARAM TO ENABLE MAHALANOBIS-BASED ASSOCIATION IN SLAM UPDATES -->
+    <param name="slam_mahalanobis_association" value="true"/> 
+  </node>
+
+  <!-- also launch landmark detection node -->
+  <node pkg="nuslam" exec="landmarks" name="landmarks" output="screen">
+    <param from="$(find-pkg-share nuslam)/config/slam_demo_world.yaml"/>
+    <param from="$(find-pkg-share nuslam)/config/slam_config.yaml"/>
+    <remap from="landmarks" to="/detected_obstacles"/>
+    <param name="robot_frame" value="green/base_link"/>
+  </node>
+
+  <let name="rviz_config" value="$(find-pkg-share nuslam)/config/pc_bringup.rviz"/>
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
+      on_exit="shutdown"
+      args="-d $(var rviz_config)"
+      />
+
+</launch>

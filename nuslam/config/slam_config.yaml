@@ -23,4 +23,3 @@
       inscribed_angle_stddev_threshold_deg: 60.0
       min_cluster_size: 5
       concavity_threshold: 0.01
-      # concavity_threshold: 1.0  # ignore
