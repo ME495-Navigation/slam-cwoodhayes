@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /TF1/Frames1
         - /MarkerArray - Walls1/Topic1
+        - /LaserScan1
         - /LaserScan1/Topic1
       Splitter Ratio: 0.5231660008430481
     Tree Height: 812
@@ -51,8 +52,6 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_footprint:
-          Value: true
         blue/base_footprint:
           Value: false
         blue/base_link:
@@ -83,8 +82,6 @@ Visualization Manager:
           Value: false
         map:
           Value: true
-        nusim/world:
-          Value: false
         odom:
           Value: false
       Marker Scale: 1
@@ -106,8 +103,6 @@ Visualization Manager:
                 {}
               blue/wheel_right_link:
                 {}
-          nusim/world:
-            {}
           odom:
             green/base_footprint:
               green/base_link:
@@ -397,9 +392,9 @@ Visualization Manager:
       Size (m): 0.009999999776482582
       Style: Flat Squares
       Topic:
-        Depth: 5
+        Depth: 100
         Durability Policy: Volatile
-        Filter size: 10
+        Filter size: 50
         History Policy: Keep Last
         Reliability Policy: Best Effort
         Value: /scan
@@ -479,7 +474,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 14.948105812072754
+      Distance: 8.333958625793457
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -514,4 +509,4 @@ Window Geometry:
     collapsed: true
   Width: 1916
   X: 0
-  Y: 0
+  Y: 1080

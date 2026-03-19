@@ -1,24 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-  <!-- This launch file runs on the turtlebot itself.
-       It starts turtle_control (which publishes to blue/joint_states),
-       the numsr_turtlebot driver, and the hlds_laser driver (which publishes /scan).
-       The PC runs pc_bringup.launch.xml, which remaps /scan -> red/scan for the landmark detector. -->
-  <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-
-  <node pkg="turtle_control" exec="turtle_control_node" name="turtle_control" output="screen"
-    on_exit="shutdown">
-    <param from="$(var diff_params)"/>
-    <remap from="joint_states" to="blue/joint_states"/>
-  </node>
   <!-- this node only exists on the turtlebot itself. no need to depend on it; we won't use this arg on another machine -->
   <node pkg="numsr_turtlebot" exec="numsr_turtlebot"></node>
 
-  <!-- send the base_footprint outputted by numsr_turtlebot to blue/base_footprint expected everywhere else -->
-  <node pkg="tf2_ros" exec="static_transform_publisher" name="tb_base_footprint_to_blue_base_footprint" args="0 0 0 0 0 0 base_footprint blue/base_footprint"/>
-
   <!-- lidar -->
-  <include file="$(find-pkg-share hls_lfcd_lds_driver)/launch/hlds_laser.launch.py">
-    <arg name="port" value="/dev/ttyUSB0"/>
-  </include>
+  <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" output="screen">
+    <param name="frame_id" value="green/base_scan"/>
+    <param name="port" value="/dev/ttyUSB0"/>
+  </node>
 </launch> 

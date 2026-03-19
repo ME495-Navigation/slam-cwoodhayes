@@ -220,16 +220,13 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
     return landmark_id;
   }
 
-  void DDSLAM::add_landmark_to_state(size_t landmark_id, double range, double bearing)
+  size_t DDSLAM::add_landmark_to_state(size_t landmark_id, double range, double bearing)
   {
     if (landmark_id_to_slot_.contains(landmark_id)) {
       throw std::runtime_error(std::format("Landmark id {} already exists in state", landmark_id));
     }
     if (get_num_landmarks() >= max_landmarks_) {
-      throw std::runtime_error(std::format(
-        "Cannot add landmark id {}: maximum of {} landmarks reached",
-        landmark_id,
-        max_landmarks_));
+      return -1; // max number of landmarks reached. signal failure to add new landmark.
     }
 
     auto state = ekf_.get_state();
@@ -257,6 +254,7 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
     auto landmark_slot = slot_to_landmark_id_.size();
     landmark_id_to_slot_[landmark_id] = landmark_slot;
     slot_to_landmark_id_.push_back(landmark_id);
+    return landmark_slot;
   }
 
   Transform2D DDSLAM::get_map_to_body() const
@@ -327,6 +325,11 @@ void DDSLAM::odom_update(const double new_phi_left, const double new_phi_right)
     // if best existing landmark is farther than threshold, add a new landmark instead.
     if (min_distance > association_threshold_) {
       best_landmark_slot = add_landmark_to_state_mahalanobis(range, bearing);
+
+      if (best_landmark_slot == -1) {
+        // max number of landmarks reached. can't add new landmark, so skip update.
+        return -1;
+      }
       landmark_id_to_count_[best_landmark_slot] = 0;
     }
     // increment the observation count

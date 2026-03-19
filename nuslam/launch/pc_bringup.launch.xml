@@ -76,4 +76,11 @@
       args="-d $(var rviz_config)"
       />
 
+  <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+  <node pkg="turtle_control" exec="turtle_control_node" name="turtle_control" output="screen"
+    on_exit="shutdown">
+    <param from="$(var diff_params)"/>
+    <remap from="joint_states" to="blue/joint_states"/>
+  </node>
+
 </launch>

@@ -100,7 +100,7 @@ public:
 protected:
   /// @brief Add a new landmark to the EKF state vector and covariance matrix,
   /// initialized based on the given measurement and current robot pose estimate.
-  void add_landmark_to_state(size_t landmark_id, double range, double bearing);
+  size_t add_landmark_to_state(size_t landmark_id, double range, double bearing);
 
   /// @brief Helper function to expand the process noise covariance matrix for new landmarks.
   static arma::mat resize_process_noise(const arma::mat & Q_robot_pose, arma::uword state_dim);
