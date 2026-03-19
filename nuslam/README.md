@@ -28,3 +28,17 @@ After this closed loop is complete, the ground truth, odometry, and SLAM poses a
 https://github.com/user-attachments/assets/1179359c-8443-42d2-a3f8-9bd3460544c9
 
 > Above: Running `nuslam`'s SLAM algorithm in real-time on the  turtlebot3. Key: Green/multicolored dots: LIDAR scan points. Green obstacles+robot+path = SLAM estimate. Blue robot+path = odometry-only estimate. White obstacles=landmarks detected by the `landmarks` node (see below), which feed into SLAM. SLAM's robot pose covariance is shown as the purple ellipse and yellow cone. **Note that the odometry-only estimate gradually diverges from the ground truth as shown in the real-world video on the left, while the SLAM estimate correctly stays with ground truth.** See [here](images/slam_irl_result.png) for a still image of the robot poses at the end of the video demonstrating this.
+
+After this closed loop is complete, with the robot parked roughly at the real-world starting point, the odometry and SLAM poses are as follows:
+
+- Ground Truth (top left video -- rough estimate)
+	- (x, y, z) = (0, 0, 0)
+- SLAM estimate (green)
+	- (x, y, z) = 0.040364; 0.030199; 0.0
+	- (qx, qy, qz, qw) = 0; 0; 0.81067; 0.5855
+- Odometry-only estimate (blue)
+	- (x,y,z) = 0.010667; 0.29087; 0.0
+	- (qx, qy, qz, qw) = 0; 0; 0.72989; 0.68356
+
+**Final SLAM position error (estimated)**: 0.05m
+**Final Odometry-only position error (estimated)**: 0.29m

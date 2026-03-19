@@ -2,11 +2,6 @@
 * Conor Hayes
 * Winter 2025
 
-https://github.com/user-attachments/assets/1179359c-8443-42d2-a3f8-9bd3460544c9
-
-> Above: Running `nuslam`'s SLAM algorithm in real-time on the  turtlebot3. Key: Green/multicolored dots: LIDAR scan points. Green obstacles+robot+path = SLAM estimate. Blue robot+path = odometry-only estimate. White obstacles=landmarks detected by the `landmarks` node (see below), which feed into SLAM. SLAM's robot pose covariance is shown as the purple ellipse and yellow cone. **Note that the odometry-only estimate gradually diverges from the ground truth as shown in the real-world video on the left, while the SLAM estimate correctly stays with ground truth.** See [here](images/slam_irl_result.png) for a still image of the robot poses at the end of the video demonstrating this.
-
-
 # Setup
 ## System Requirements
 This repo has been tested with the following system configuration:
@@ -44,6 +39,12 @@ This repository consists of several ROS packages:
 # nuslam Description
 Implements EKF-SLAM for the turtlebot3.
 
+https://github.com/user-attachments/assets/1179359c-8443-42d2-a3f8-9bd3460544c9
+
+> Above: Running `nuslam`'s SLAM algorithm in real-time on the  turtlebot3. Key: Green/multicolored dots: LIDAR scan points. Green obstacles+robot+path = SLAM estimate. Blue robot+path = odometry-only estimate. White obstacles=landmarks detected by the `landmarks` node (see below), which feed into SLAM. SLAM's robot pose covariance is shown as the purple ellipse and yellow cone. **Note that the odometry-only estimate gradually diverges from the ground truth as shown in the real-world video on the left, while the SLAM estimate correctly stays with ground truth.** See [here](images/slam_irl_result.png) for a still image of the robot poses at the end of the video demonstrating this.
+
+
+
 https://github.com/user-attachments/assets/98b15d36-1264-4295-b9a9-0fb8c69cb47d
 
 > Above: The result of running `ros2 launch nuslam slam.launch.xml cmd_src:=teleop robot:=nusim use_rviz:=true`, then driving the robot around. Red obstacles, walls, and robot are ground-truth. Yellow obstacles are noisy landmark measurements provided by `nusim` and consumed by `nuslam`. Blue robot is an odometry-only pose estimate. Green robot + obstacles are the `nuslam` SLAM pose + map estimate, with robot pose covariance as an ellipse + angular field of view (purple & yellow, respectively). **Note that when the ground truth collides with an obstacle, the odometry estimate keeps driving, but the SLAM estimate correctly stays with ground truth.** See [here](images/slam_result.png) for a still image of the final poses.
@@ -51,6 +52,8 @@ https://github.com/user-attachments/assets/98b15d36-1264-4295-b9a9-0fb8c69cb47d
 Node summary:
 - `slam_node` (`nuslam_node` in launch): computes wheel-odometry and EKF-SLAM pose estimates, publishes `odom` (pure odometry-based estimate, like the `odometry` node below) and `/slam/pose` (odometry + LiDAR-based combined estimate using EKF SLAM), and broadcasts TF `map->odom->[robot]`.
     - EKF parameters, simulated noise configuration, and more are available as parameters (see `nuslam/config/*`)
+- `landmarks` (from `nuslam/src/landmark_detector.cpp`): subscribes to `red/scan` (`sensor_msgs/msg/LaserScan`), clusters scan points and fits circles using Al-Sharadqah-Chernov method to detect cylindrical landmarks, and publishes detections as `/landmarks` (`visualization_msgs/msg/MarkerArray`) in the configured robot frame for SLAM consumption.
+  - Detection behavior is parameterized (for example `detector.distance_threshold`, `detector.rmse_threshold`, `detector.inscribed_angle_mean_range_deg`, and `detector.circle_radius_range`; see `nuslam/config/*`).
 
 ## Launch File Details
 The `slam.launch.xml` launchfile starts robot control (sim or hardware), RViz visualization, the SLAM node, and supporting TF/static transforms.
@@ -68,6 +71,12 @@ Arguments (pass arguments as '<name>:=<value>'):
     what robot to control (sim vs hardware etc). Valid choices are: ['nusim', 'localhost', 'none']
     (default: 'nusim')
 ```
+
+Additional `nuslam` launch files:
+- `landmark_detect.launch.xml`: launches the standard SLAM stack (without RViz from `slam.launch.xml`), then adds the `landmarks` detector node and an RViz config focused on landmark detections. Useful for debugging landmark extraction and `/detected_obstacles` observations.
+- `unknown_data_assoc.launch.xml`: launches SLAM with landmark detector observations (`/detected_obstacles`) to exercise unknown data association behavior (Mahalanobis-gated association path) in a simulation-focused setup.
+- `pc_bringup.launch.xml`: PC-side bringup for hardware runs; launches blue/green visualization robots, SLAM + landmark detector configured for real-world arena/config YAML files, remaps `red/scan` to `/scan`, and starts RViz + `turtle_control`.
+- `turtlebot_bringup.launch.xml`: onboard TurtleBot bringup for hardware-only components (`numsr_turtlebot` and LiDAR driver publishing `green/base_scan`), typically used together with PC-side launch files.
 
 # turtle_control Description
 Controls the turtlebot3 in simulation or hardware and provides odometry. Node summary:
@@ -130,6 +139,7 @@ Kinematics:
 EKF, SLAM, and noisy simulation:
 - `dd_slam.hpp` - diff-drive specific EKF-SLAM wrapper and process/measurement models
 - `ekf.hpp` - generic Extended Kalman Filter interfaces and implementation for process/measurement models
+- `circle_fit.hpp` - LiDAR point clustering and circle-fitting utilities used for landmark/cylinder detection
 - `lidar.hpp` - LiDAR simulation utilities for generating noisy range scans from map obstacles
 - `noise_models.hpp` - simulation noise helpers (e.g., noisy diff-drive wheel and slip behavior)
 - `obstacles.hpp` - obstacle container and collision handling utilities for robot poses
