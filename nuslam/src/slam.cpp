@@ -149,6 +149,12 @@ public:
       desc.description = "Radius of obstacles used for SLAM marker visualization";
       declare_parameter("obstacles.r", 0.038, desc);
     }
+    {
+      auto desc = rcl_interfaces::msg::ParameterDescriptor();
+      desc.description = "Assume data associations are unknown and perform Mahalanobis distance-based association in SLAM update step";
+      declare_parameter("slam_mahalanobis_association", false, desc);
+    }
+
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
     map_id_ = "map"; 
@@ -161,7 +167,6 @@ public:
     max_path_size_ = get_parameter("max_path_size").as_int();
     obstacle_radius_ = get_parameter("obstacles.r").as_double();
     landmark_observations_topic_ = get_parameter("landmark_observations_topic").as_string();
-
     landmark_observations_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
       landmark_observations_topic_, qos,
       std::bind(&SLAMNode::landmark_observations_cb, this, std::placeholders::_1));
@@ -233,10 +238,18 @@ public:
     // everything we figure out is relative to the start location anyhow.
     initial_covariance *= .01; 
 
-    dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
-      wheel_radius_, track_width_, R, Q, initial_state, initial_covariance,
-      static_cast<size_t>(n_max_landmarks), new_landmark_variance
-    );
+    auto use_mahalanobis = get_parameter("slam_mahalanobis_association").as_bool();
+    if (use_mahalanobis) {
+      RCLCPP_INFO(get_logger(), "Using Mahalanobis distance-based data association for SLAM updates");
+      dd_slam_ = std::make_unique<turtlelib::DDSLAMMahalanobis>(
+        wheel_radius_, track_width_, R, Q, initial_state, initial_covariance,
+        static_cast<size_t>(n_max_landmarks), new_landmark_variance);
+    } else {
+      RCLCPP_INFO(get_logger(), "Using known data association (given marker ID's for landmarks) for SLAM updates");
+      dd_slam_ = std::make_unique<turtlelib::DDSLAM>(
+        wheel_radius_, track_width_, R, Q, initial_state, initial_covariance,
+        static_cast<size_t>(n_max_landmarks), new_landmark_variance);
+    }
 
     // publish initial transforms at the origin so that we have valid tf as soon as possible
     auto identity = turtlelib::Transform2D();
