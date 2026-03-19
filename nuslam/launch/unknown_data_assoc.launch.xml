@@ -53,6 +53,7 @@
       <remap from="joint_states" to="blue/joint_states"/>
       <!-- additional params (different from odometry node) -->
       <param name="slam_body_id" value="green/base_footprint"/>
+      <param name="landmark_observations_topic" value="/detected_obstacles"/>
       <!-- NEW PARAM TO ENABLE MAHALANOBIS-BASED ASSOCIATION IN SLAM UPDATES -->
       <param name="slam_mahalanobis_association" value="true"/> 
     </node>
