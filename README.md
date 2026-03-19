@@ -2,6 +2,11 @@
 * Conor Hayes
 * Winter 2025
 
+https://github.com/user-attachments/assets/1179359c-8443-42d2-a3f8-9bd3460544c9
+
+> Above: Running `nuslam`'s SLAM algorithm in real-time on the  turtlebot3. Key: Green/multicolored dots: LIDAR scan points. Green obstacles+robot+path = SLAM estimate. Blue robot+path = odometry-only estimate. White obstacles=landmarks detected by the `landmarks` node (see below), which feed into SLAM. SLAM's robot pose covariance is shown as the purple ellipse and yellow cone. **Note that the odometry-only estimate gradually diverges from the ground truth as shown in the real-world video on the left, while the SLAM estimate correctly stays with ground truth.** See [here](images/slam_irl_result.png) for a still image of the robot poses at the end of the video demonstrating this.
+
+
 # Setup
 ## System Requirements
 This repo has been tested with the following system configuration:
