@@ -1,29 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-  <!-- args -->
+  <!-- we only issue commands & run RVIZ on the PC; all other
+   nodes are run on the turtlebot itself. -->
   <arg name="cmd_src" default="teleop" description="Source of cmd_vel commands">
     <choice value="circle"/>
     <choice value="teleop"/>
     <choice value="none"/>
   </arg>
 
-  <!-- constants -->
-  <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-  <let name="slam_params" value="$(find-pkg-share nuslam)/config/slam_irl_config.yaml"/>
-  <let name="world_config" value="$(find-pkg-share nuslam)/config/slam_irl_arena.yaml"/>
+  <let name="rviz_config" value="$(find-pkg-share nuslam)/config/pc_bringup.rviz"/>
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
+      on_exit="shutdown"
+      args="-d $(var rviz_config)"
+      />
 
-  <!-- stuff from start_robot.launch.xml -->
-  <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
-      <arg name="use_rviz" value="false"/>
-      <arg name="color" value="blue"/>
-      <arg name="use_jsp" value="false"/>
-  </include>
-  <!-- run nusim but only draw the landmarks -->
-  <node pkg="nusim" exec="nusim"  name="nuwalls" output="screen">>
-      <param name="draw_only" value="true"/>
-      <param from="$(var world_config)"/>
-      <param name="world_frame" value="map"/>
-  </node>
   <group if="$(equals $(var cmd_src) circle)">
       <node pkg="turtle_control" exec="circle" name="circle" output="screen"
           on_exit="shutdown">
@@ -35,52 +25,5 @@
       <env name="TURTLEBOT3_MODEL" value="burger" />
       </node>
   </group>
-
-  <!-- green robot for SLAM robot estimate -->
-  <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
-      <arg name="use_rviz" value="false"/>
-      <arg name="color" value="green"/>
-      <arg name="use_jsp" value="false"/>
-  </include>
-
-  <!-- robot-specific stuff -->
-  <node pkg="nuslam" exec="slam_node" name="nuslam_node" output="screen">
-    <param from="$(var diff_params)"/>
-    <param from="$(var slam_params)"/>
-    <param from="$(var world_config)"/>
-    <param name="wheel_left" value="wheel_left_joint"/>
-    <param name="wheel_right" value="wheel_right_joint"/>
-    <param name="body_id" value="blue/base_footprint"/>
-    <param name="odom_id" value="odom"/>
-    <remap from="joint_states" to="blue/joint_states"/>
-    <!-- additional params (different from odometry node) -->
-    <param name="slam_body_id" value="green/base_footprint"/>
-    <param name="landmark_observations_topic" value="/detected_obstacles"/>
-    <!-- NEW PARAM TO ENABLE MAHALANOBIS-BASED ASSOCIATION IN SLAM UPDATES -->
-    <param name="slam_mahalanobis_association" value="true"/> 
-  </node>
-
-  <!-- also launch landmark detection node.
-       The real robot publishes on /scan; remap so the node can find it. -->
-  <node pkg="nuslam" exec="landmarks" name="landmarks" output="screen">
-    <param from="$(var world_config)"/>
-    <param from="$(var slam_params)"/>
-    <remap from="landmarks" to="/detected_obstacles"/>
-    <remap from="red/scan" to="/scan"/>
-    <param name="robot_frame" value="green/base_link"/>
-  </node>
-
-  <let name="rviz_config" value="$(find-pkg-share nuslam)/config/pc_bringup.rviz"/>
-  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
-      on_exit="shutdown"
-      args="-d $(var rviz_config)"
-      />
-
-  <let name="diff_params" value="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-  <node pkg="turtle_control" exec="turtle_control_node" name="turtle_control" output="screen"
-    on_exit="shutdown">
-    <param from="$(var diff_params)"/>
-    <remap from="joint_states" to="blue/joint_states"/>
-  </node>
 
 </launch>
