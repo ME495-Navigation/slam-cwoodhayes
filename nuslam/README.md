@@ -34,7 +34,7 @@ After this closed loop is complete, with the robot parked roughly at the real-wo
 - Ground Truth (top left video -- rough estimate)
 	- (x, y, z) = (0, 0, 0)
 - SLAM estimate (green)
-	- (x, y, z) = 0.040364; 0.030199; 0.0
+	- (x, y, z) = 0.030364; 0.020199; 0.0
 	- (qx, qy, qz, qw) = 0; 0; 0.81067; 0.5855
 - Odometry-only estimate (blue)
 	- (x,y,z) = 0.010667; 0.29087; 0.0
