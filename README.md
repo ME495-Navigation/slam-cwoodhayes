@@ -1,6 +1,9 @@
-# ME495 Sensing, Navigation, and Machine Learning for Robotics
-* Conor Hayes
-* Winter 2025
+# SLAM from Scratch for Turtlebot3
+
+https://github.com/user-attachments/assets/1179359c-8443-42d2-a3f8-9bd3460544c9
+
+> Above: Running `nuslam`'s SLAM algorithm in real-time on the  turtlebot3. Key: Green/multicolored dots: LIDAR scan points. Green obstacles+robot+path = SLAM estimate. Blue robot+path = odometry-only estimate. White obstacles=landmarks detected by the `landmarks` node (see below), which feed into SLAM. SLAM's robot pose covariance is shown as the purple ellipse and yellow cone. **Note that the odometry-only estimate gradually diverges from the ground truth as shown in the real-world video on the left, while the SLAM estimate correctly stays with ground truth.** See [here](images/slam_irl_result.png) for a still image of the robot poses at the end of the video demonstrating this.
+
 
 # Setup
 ## System Requirements
@@ -39,11 +42,7 @@ This repository consists of several ROS packages:
 # nuslam Description
 Implements EKF-SLAM for the turtlebot3.
 
-https://github.com/user-attachments/assets/1179359c-8443-42d2-a3f8-9bd3460544c9
-
-> Above: Running `nuslam`'s SLAM algorithm in real-time on the  turtlebot3. Key: Green/multicolored dots: LIDAR scan points. Green obstacles+robot+path = SLAM estimate. Blue robot+path = odometry-only estimate. White obstacles=landmarks detected by the `landmarks` node (see below), which feed into SLAM. SLAM's robot pose covariance is shown as the purple ellipse and yellow cone. **Note that the odometry-only estimate gradually diverges from the ground truth as shown in the real-world video on the left, while the SLAM estimate correctly stays with ground truth.** See [here](images/slam_irl_result.png) for a still image of the robot poses at the end of the video demonstrating this.
-
-The above video was achieved by running the following commands:
+The video at the top of the README was achieved by running the following commands:
 On the turtlebot3 (hardware):
 ```bash
 ros2 launch nuslam turtlebot_bringup.launch.xml

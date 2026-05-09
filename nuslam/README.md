@@ -42,3 +42,58 @@ After this closed loop is complete, with the robot parked roughly at the real-wo
 
 **Final SLAM position error (estimated)**: 0.05m
 **Final Odometry-only position error (estimated)**: 0.29m
+
+**SLAM Pipeline**
+
+- **Files:** [src/slam-cwoodhayes/nuslam/config/slam_config.yaml](src/slam-cwoodhayes/nuslam/config/slam_config.yaml) and [src/slam-cwoodhayes/nuslam/launch/slam.launch.xml](src/slam-cwoodhayes/nuslam/launch/slam.launch.xml)
+
+- **Overview:** Sensors (LIDAR / range) -> Detector (cluster + geometric tests) -> Data association (Mahalanobis gating) -> DDSLAM node (EKF predict/update, landmark management) -> Map & TF -> RViz visualization. Odometry feeds the motion-prediction step.
+
+```mermaid
+flowchart TD
+	subgraph Robot
+		A[Sensors: Lidar / Rangefinder]
+		B[Wheel odometry]
+	end
+
+	A -->|observations| Detect[Detector: cluster & feature tests]
+	B -->|pose predict| Prop[Motion Model / EKF predict]
+
+	Detect -->|measurements| Assoc[Data association (Mahalanobis)]
+	Prop --> Assoc
+
+	Assoc --> DDSLAM[DDSLAM SLAM Node]
+	DDSLAM --> Map[Landmark Management & Map]
+	DDSLAM --> TF[pose estimate -> TF]
+	Map -->|visualize| RViz[RViz2]
+
+	style DDSLAM fill:#f9f,stroke:#333,stroke-width:2px
+	style Detect fill:#ff9,stroke:#333
+	style Assoc fill:#9ff,stroke:#333
+	style Prop fill:#9f9,stroke:#333
+
+	%% Annotations from config/launch
+	subgraph Config
+		C1[slam_config.yaml: slam_Q, slam_R,
+			mahalanobis thresholds,
+			detector params]
+		C2[slam.launch.xml: launches nuslam_node,
+			rviz2, static transform]
+	end
+	C1 -.-> DDSLAM
+	C2 -.-> DDSLAM
+	C2 -.-> RViz
+```
+
+- **Key configuration parameters (from `slam_config.yaml`):**
+	- **`slam_Q` / `slam_R`:** process and measurement covariances for EKF predict/update.
+	- **`slam_n_max_landmarks`:** maximum number of landmarks tracked.
+	- **`slam_new_landmark_variance`:** initial variance for newly created landmarks.
+	- **`slam_mahalanobis_association_threshold`:** gating threshold for association.
+	- **`slam_mahalanobis_provisional_observation_count`:** observations required before confirming a landmark.
+	- **`detector` params:** distance and RMSE thresholds, inscribed-angle limits, minimum cluster size, concavity threshold (controls landmark detection quality).
+
+- **Launch behavior (from `slam.launch.xml`):**
+	- Launches `nuslam` node with parameters loaded from the config files and remaps `joint_states` for the simulated robot.
+	- Starts `rviz2` with `nuslam` RViz configuration when `use_rviz=true`.
+	- Publishes a static transform between `nusim/world` and `map` for visualization alignment.
