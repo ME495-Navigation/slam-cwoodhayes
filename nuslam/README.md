@@ -43,51 +43,53 @@ After this closed loop is complete, with the robot parked roughly at the real-wo
 **Final SLAM position error (estimated)**: 0.05m
 **Final Odometry-only position error (estimated)**: 0.29m
 
-**SLAM Pipeline**
-
-- **Files:** [src/slam-cwoodhayes/nuslam/config/slam_config.yaml](src/slam-cwoodhayes/nuslam/config/slam_config.yaml) and [src/slam-cwoodhayes/nuslam/launch/slam.launch.xml](src/slam-cwoodhayes/nuslam/launch/slam.launch.xml)
-
-- **Overview:** Sensors (LIDAR / range) -> Detector (cluster + geometric tests) -> Data association (Mahalanobis gating) -> DDSLAM node (EKF predict/update, landmark management) -> Map & TF -> RViz visualization. Odometry feeds the motion-prediction step.
+## SLAM Pipeline Summary
 
 ```mermaid
 flowchart TD
-  Sensors["Sensors<br/>(LIDAR / range)"]
-  Odom[Wheel odometry]
-  Detector["Detector<br/>(cluster + geometry checks)"]
-  Motion["Motion model<br/>(EKF predict)"]
-  Assoc["Data association<br/>(Mahalanobis gate)"]
-  SLAMNode["DDSLAM<br/>(EKF SLAM)"]
-  Map[Map / Landmarks]
-  TF["Pose → TF"]
-  RViz[RViz2]
+  LIDAR["LIDAR ranges"]
+  Odom["Wheel odometry"]
+  Discard([Discard])
+  Map["Map / Pose estimate"]
 
-  Sensors -->|observations| Detector
-  Odom -->|odometry| Motion
-  Detector -->|measurements| Assoc
-  Motion --> Assoc
-  Assoc --> SLAMNode
-  SLAMNode --> Map
-  SLAMNode --> TF
-  Map -->|visualize| RViz
-
-  subgraph Config
-    C1["slam_config.yaml:<br/>slam_Q / slam_R,<br/>mahalanobis & detector params"]
-    C2["slam.launch.xml:<br/>start nuslam, rviz, static TF"]
+  subgraph Detection["Landmark Detection (CylinderDetector)"]
+    Cluster["1 · Cluster by proximity<br/>(distance_threshold)"]
+    SizeFilter["2 · Min size filter<br/>(min_cluster_size)"]
+    CircleFit["3 · Algebraic circle fit<br/>(SVD + eigendecomposition)"]
+    GeoFilter["4 · Geometric filters<br/>(radius range, rmse_threshold)"]
+    AngleCheck["5 · Inscribed angle check<br/>(concavity, angle mean and stddev thresholds)"]
   end
-  C1 -.-> SLAMNode
-  C2 -.-> SLAMNode
-  C2 -.-> RViz
+
+  subgraph EKF["EKF-SLAM (DDSLAMMahalanobis)"]
+    EKFPredict["EKF predict (slam_Q)"]
+    Mahal["6 · Mahalanobis association<br/>(association_threshold, n_max_landmarks)"]
+    Provisional["7 · Provisional gate<br/>(provisional_observation_count)"]
+    EKFUpdate["8 · EKF update (slam_R)"]
+  end
+
+  LIDAR --> Cluster
+  Cluster --> SizeFilter
+  SizeFilter -->|too small| Discard
+  SizeFilter --> CircleFit
+  CircleFit --> GeoFilter
+  GeoFilter -->|bad fit| Discard
+  GeoFilter --> AngleCheck
+  AngleCheck -->|concave or inconsistent| Discard
+  AngleCheck -->|detected landmark| Mahal
+
+  Odom --> EKFPredict
+  EKFPredict --> Mahal
+  Mahal --> Provisional
+  Provisional -->|count not reached| Discard
+  Provisional -->|confirmed| EKFUpdate
+  EKFUpdate --> Map
 ```
 
-- **Key configuration parameters (from `slam_config.yaml`):**
-	- **`slam_Q` / `slam_R`:** process and measurement covariances for EKF predict/update.
-	- **`slam_n_max_landmarks`:** maximum number of landmarks tracked.
-	- **`slam_new_landmark_variance`:** initial variance for newly created landmarks.
-	- **`slam_mahalanobis_association_threshold`:** gating threshold for association.
-	- **`slam_mahalanobis_provisional_observation_count`:** observations required before confirming a landmark.
-	- **`detector` params:** distance and RMSE thresholds, inscribed-angle limits, minimum cluster size, concavity threshold (controls landmark detection quality).
-
-- **Launch behavior (from `slam.launch.xml`):**
-	- Launches `nuslam` node with parameters loaded from the config files and remaps `joint_states` for the simulated robot.
-	- Starts `rviz2` with `nuslam` RViz configuration when `use_rviz=true`.
-	- Publishes a static transform between `nusim/world` and `map` for visualization alignment.
+1. **Cluster raw LIDAR points** — convert range readings to Cartesian, group consecutive points within `distance_threshold`. A wrap-around check merges the last cluster with the first if they are close.
+2. **Minimum size filter** — clusters with fewer than `min_cluster_size` points are discarded.
+3. **Algebraic circle fit** — fits a circle to the cluster via SVD + eigendecomposition (Taubin method). Produces a center, radius, and RMSE.
+4. **Geometric filters** — rejects fits whose radius falls outside the realistic cylinder range for the obstacles we're using, or whose RMSE exceeds `rmse_threshold`.
+5. **Inscribed angle check** — three sub-checks: (a) concavity: interior points must be closer to the sensor than the endpoints (rejects walls), controlled by `concavity_threshold`; (b) mean inscribed angle must fall within `inscribed_angle_mean_range_deg`; (c) std dev of inscribed angles must be below `inscribed_angle_stddev_threshold_deg`.
+6. **Mahalanobis data association** — for each surviving detected circle, compute Mahalanobis distance to every known landmark in the EKF state. Best match below `slam_mahalanobis_association_threshold` associates with that landmark; otherwise a new landmark is created (up to `slam_n_max_landmarks`).
+7. **Provisional gate** — new landmarks must accumulate `slam_mahalanobis_provisional_observation_count` observations before their measurements feed into the EKF, preventing transient detections from corrupting the map.
+8. **EKF update** — confirmed measurements update the EKF state using measurement covariance `slam_R`.
