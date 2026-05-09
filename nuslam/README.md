@@ -45,9 +45,18 @@ After this closed loop is complete, with the robot parked roughly at the real-wo
 
 ## SLAM Pipeline Summary
 
-As seen in the demo videos (both in simulation and IRL), this pipeline detects cylindrical obstacles, associates them to a consistent internal ID and uses them to construct a map, and then localizes the robot in this map.
+As seen in the demo videos (both in simulation and IRL), this pipeline:
+1. detects cylindrical obstacles
+2. associates them to a consistent internal ID 
+3. places them on an internal map (which is used to drive the association in step 2), and then
+4. localizes the robot in this map.
 
-It took a fair amount of good old fashioned fiddling, adding steps & tuning parameters, but as seen in the demo videos, it is very rare for invalid landmarks to make it into the SLAM state, and very rare for the landmark detector to miss real landmarks.
+It took a fair amount of good old fashioned fiddling, adding steps & tuning parameters, but as seen in the demo videos, the final algorithm performs very well in both simulation & deployment. In particular:
+1. very rare for invalid landmarks to make it into the SLAM state
+2. very rare for the landmark detector to miss real landmarks
+3. EKF is tuned well enough to the respective landmark + odometry uncertainties to fuse the two into a very good estimate.
+
+Here is how the pipeline works at a high level (diagram & text below):
 
 ```mermaid
 flowchart TD
