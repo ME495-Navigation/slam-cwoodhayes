@@ -51,38 +51,32 @@ After this closed loop is complete, with the robot parked roughly at the real-wo
 
 ```mermaid
 flowchart TD
-	subgraph Robot
-		A[Sensors: Lidar / Rangefinder]
-		B[Wheel odometry]
-	end
+  Sensors["Sensors<br/>(LIDAR / range)"]
+  Odom[Wheel odometry]
+  Detector["Detector<br/>(cluster + geometry checks)"]
+  Motion["Motion model<br/>(EKF predict)"]
+  Assoc["Data association<br/>(Mahalanobis gate)"]
+  SLAMNode["DDSLAM<br/>(EKF SLAM)"]
+  Map[Map / Landmarks]
+  TF["Pose → TF"]
+  RViz[RViz2]
 
-	A -->|observations| Detect[Detector: cluster & feature tests]
-	B -->|pose predict| Prop[Motion Model / EKF predict]
+  Sensors -->|observations| Detector
+  Odom -->|odometry| Motion
+  Detector -->|measurements| Assoc
+  Motion --> Assoc
+  Assoc --> SLAMNode
+  SLAMNode --> Map
+  SLAMNode --> TF
+  Map -->|visualize| RViz
 
-	Detect -->|measurements| Assoc[Data association (Mahalanobis)]
-	Prop --> Assoc
-
-	Assoc --> DDSLAM[DDSLAM SLAM Node]
-	DDSLAM --> Map[Landmark Management & Map]
-	DDSLAM --> TF[pose estimate -> TF]
-	Map -->|visualize| RViz[RViz2]
-
-	style DDSLAM fill:#f9f,stroke:#333,stroke-width:2px
-	style Detect fill:#ff9,stroke:#333
-	style Assoc fill:#9ff,stroke:#333
-	style Prop fill:#9f9,stroke:#333
-
-	%% Annotations from config/launch
-	subgraph Config
-		C1[slam_config.yaml: slam_Q, slam_R,
-			mahalanobis thresholds,
-			detector params]
-		C2[slam.launch.xml: launches nuslam_node,
-			rviz2, static transform]
-	end
-	C1 -.-> DDSLAM
-	C2 -.-> DDSLAM
-	C2 -.-> RViz
+  subgraph Config
+    C1["slam_config.yaml:<br/>slam_Q / slam_R,<br/>mahalanobis & detector params"]
+    C2["slam.launch.xml:<br/>start nuslam, rviz, static TF"]
+  end
+  C1 -.-> SLAMNode
+  C2 -.-> SLAMNode
+  C2 -.-> RViz
 ```
 
 - **Key configuration parameters (from `slam_config.yaml`):**
