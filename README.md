@@ -40,7 +40,7 @@ This repository consists of several ROS packages:
 - `turtlelib` - pure C++ library that implements helper code for the packages above (geometry, kinematics, EKF + SLAM abstract implementations)
 
 # nuslam Description
-Implements EKF-SLAM for the turtlebot3.
+Implements EKF-SLAM for the turtlebot3. See [SLAM readme](nuslam/README.md) for more algorithm details.
 
 The video at the top of the README was achieved by running the following commands:
 On the turtlebot3 (hardware):

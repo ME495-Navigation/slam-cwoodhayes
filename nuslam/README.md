@@ -45,6 +45,10 @@ After this closed loop is complete, with the robot parked roughly at the real-wo
 
 ## SLAM Pipeline Summary
 
+As seen in the demo videos (both in simulation and IRL), this pipeline detects cylindrical obstacles, associates them to a consistent internal ID and uses them to construct a map, and then localizes the robot in this map.
+
+It took a fair amount of good old fashioned fiddling, adding steps & tuning parameters, but as seen in the demo videos, it is very rare for invalid landmarks to make it into the SLAM state, and very rare for the landmark detector to miss real landmarks.
+
 ```mermaid
 flowchart TD
   LIDAR["LIDAR ranges"]
@@ -53,18 +57,19 @@ flowchart TD
   Map["Map / Pose estimate"]
 
   subgraph Detection["Landmark Detection (CylinderDetector)"]
-    Cluster["1 · Cluster by proximity<br/>(distance_threshold)"]
-    SizeFilter["2 · Min size filter<br/>(min_cluster_size)"]
-    CircleFit["3 · Algebraic circle fit<br/>(SVD + eigendecomposition)"]
-    GeoFilter["4 · Geometric filters<br/>(radius range, rmse_threshold)"]
-    AngleCheck["5 · Inscribed angle check<br/>(concavity, angle mean and stddev thresholds)"]
+    Cluster["1 - Cluster by proximity<br/>(distance_threshold)"]
+    SizeFilter["2 - Min cluster size filter<br/>(min_cluster_size)"]
+    CircleFit["3 - Algebraic circle fit<br/>(SVD + eigendecomposition)"]
+    GeoFilter["4 - Geometric filters<br/>(radius range, rmse_threshold)"]
+	ConcavityCheck["5 - Concavity check<br/>(concavity_threshold)"]
+    AngleCheck["6 - Inscribed angle check<br/>(angle mean and stddev thresholds)"]
   end
 
   subgraph EKF["EKF-SLAM (DDSLAMMahalanobis)"]
     EKFPredict["EKF predict (slam_Q)"]
-    Mahal["6 · Mahalanobis association<br/>(association_threshold, n_max_landmarks)"]
-    Provisional["7 · Provisional gate<br/>(provisional_observation_count)"]
-    EKFUpdate["8 · EKF update (slam_R)"]
+    Mahal["6 - Mahalanobis association<br/>(association_threshold, n_max_landmarks)"]
+    Provisional["7 - Provisional gate<br/>(provisional_observation_count)"]
+    EKFUpdate["8 - EKF update (slam_R)"]
   end
 
   LIDAR --> Cluster
@@ -73,8 +78,10 @@ flowchart TD
   SizeFilter --> CircleFit
   CircleFit --> GeoFilter
   GeoFilter -->|bad fit| Discard
-  GeoFilter --> AngleCheck
-  AngleCheck -->|concave or inconsistent| Discard
+  GeoFilter --> ConcavityCheck
+  ConcavityCheck --> |convex| AngleCheck
+  ConcavityCheck -->|concave| Discard
+  AngleCheck -->|too far from 90deg| Discard
   AngleCheck -->|detected landmark| Mahal
 
   Odom --> EKFPredict
@@ -85,11 +92,12 @@ flowchart TD
   EKFUpdate --> Map
 ```
 
-1. **Cluster raw LIDAR points** — convert range readings to Cartesian, group consecutive points within `distance_threshold`. A wrap-around check merges the last cluster with the first if they are close.
-2. **Minimum size filter** — clusters with fewer than `min_cluster_size` points are discarded.
-3. **Algebraic circle fit** — fits a circle to the cluster via SVD + eigendecomposition (Taubin method). Produces a center, radius, and RMSE.
-4. **Geometric filters** — rejects fits whose radius falls outside the realistic cylinder range for the obstacles we're using, or whose RMSE exceeds `rmse_threshold`.
-5. **Inscribed angle check** — three sub-checks: (a) concavity: interior points must be closer to the sensor than the endpoints (rejects walls), controlled by `concavity_threshold`; (b) mean inscribed angle must fall within `inscribed_angle_mean_range_deg`; (c) std dev of inscribed angles must be below `inscribed_angle_stddev_threshold_deg`.
-6. **Mahalanobis data association** — for each surviving detected circle, compute Mahalanobis distance to every known landmark in the EKF state. Best match below `slam_mahalanobis_association_threshold` associates with that landmark; otherwise a new landmark is created (up to `slam_n_max_landmarks`).
-7. **Provisional gate** — new landmarks must accumulate `slam_mahalanobis_provisional_observation_count` observations before their measurements feed into the EKF, preventing transient detections from corrupting the map.
-8. **EKF update** — confirmed measurements update the EKF state using measurement covariance `slam_R`.
+1. **Cluster raw LIDAR points** — convert range readings to Cartesian, group consecutive points within `distance_threshold` (0.1m). A wrap-around check merges the last cluster with the first if they are close.
+2. **Minimum size filter** — clusters with fewer than `min_cluster_size` (8) points are discarded.
+3. **Algebraic circle fit** — fits a circle to each cluster via SVD + eigendecomposition (Taubin method). Produces a center, radius, and RMSE.
+4. **Geometric filters** — rejects fits whose RMSE exceeds `rmse_threshold`, or whose radius falls outside the realistic cylinder range for the obstacles we're using (this second check is a bit of a cheat; the algorithm still performs pretty well without it, but it'd be nice if this worked for _any_ obstacles. However, I wanted to squeeze the best performance I could out of the real-world demo and so I put this in.)
+5. **Inscribed angle check** — This includes 2 sub-checks, based on the property that inscribed angles of a perfect circle are always 90deg: (a) mean inscribed angle must fall within `inscribed_angle_mean_range_deg` (70, 140); (c) std dev of inscribed angles must be below `inscribed_angle_stddev_threshold_deg` (20).
+6. **Concavity Check** -- I added this in response to the circle detector often detecting the (concave) corners of the arena wall as circles. Checks that interior points must be closer to the sensor than the endpoints of each clustered arc, controlled by `concavity_threshold`; 
+7. **Mahalanobis data association** — for each surviving detected circle, compute Mahalanobis distance to every known landmark in the EKF state. This is a distance metric for distributions that's like a euclidean distance between means, but weighted by uncertainty. Best match below `slam_mahalanobis_association_threshold` associates with that landmark; otherwise a new landmark is created (up to `slam_n_max_landmarks`).
+8. **Provisional gate** — new landmarks must accumulate `slam_mahalanobis_provisional_observation_count` observations before their measurements feed into the EKF, preventing brief mistaken detections from corrupting the map.
+9. **EKF update** — confirmed measurements update the EKF state using measurement covariance `slam_R`.
